@@ -149,7 +149,7 @@ def decode():
             reference = {int(r["concurrency"]): float(r["total_tok_s"]) for r in published if r["output_type"] == kind}
             if run == "tensorfold" and reference:
                 rows.append(["", "TensorFold, published values", *[n0(reference[c]) for c in (1, 2, 4, 8, 16)]])
-    return table(["Output", "Server", "1", "2", "4", "8", "16"], rows, ["---", "---", "---:", "---:", "---:", "---:", "---:"])
+    return table(["Output", "Inference stack", "1", "2", "4", "8", "16"], rows, ["---", "---", "---:", "---:", "---:", "---:", "---:"])
 
 
 def greedy_1k():
@@ -160,7 +160,7 @@ def greedy_1k():
     for server, source in sources:
         cells = wave_cells(1.0, "off", probe="greedy_1k", **source)
         rows.append([server, *[n0(cells[c]) for c in (1, 8, 12, 16)]])
-    return table(["Server", "1", "8", "12", "16"], rows)
+    return table(["Inference stack", "1", "8", "12", "16"], rows)
 
 
 def prefill():
@@ -175,7 +175,7 @@ def prefill():
         cells = [v for _, v in published] if run is None else \
             [v for _, v in sorted((int(r["target_tokens"]), float(r["prefill_tok_s"])) for r in data if r["run"] == run)]
         rows.append([server, *[n0(v) for v in cells]])
-    return table(["Server", "8K", "16K", "32K", "64K", "128K", "256K"], rows)
+    return table(["Inference stack", "8K", "16K", "32K", "64K", "128K", "256K"], rows)
 
 
 def decode_body():
@@ -185,7 +185,7 @@ def decode_body():
     for server, run in DECODE_RUNS:
         cells = {(r["output_type"], int(r["concurrency"])): float(r["total_tok_s"]) for r in data if r["run"] == run}
         rows.append([server, *[n0(cells[(kind, c)]) for kind, _ in KINDS for c in (1, 16)]])
-    return table(["Server", *[f"{name}, {c}" for _, name in KINDS for c in (1, 16)]], rows)
+    return table(["Inference stack", *[f"{name}, {c}" for _, name in KINDS for c in (1, 16)]], rows)
 
 
 def prefill_body():
@@ -195,7 +195,7 @@ def prefill_body():
     for server, run in DECODE_RUNS:
         cells = {r["target_tokens"]: float(r["prefill_tok_s"]) for r in data if r["run"] == run}
         rows.append([server, *[n0(cells[size]) for size in ("8192", "65536", "262144")]])
-    return table(["Server", "8K", "64K", "256K"], rows)
+    return table(["Inference stack", "8K", "64K", "256K"], rows)
 
 
 def long_context():
@@ -205,7 +205,7 @@ def long_context():
             rows.append([concurrency if i == 0 else "", server,
                          *[long_text(server, setting, concurrency) for setting in ("k20", "off", "p1")],
                          n1(long_cell(server, "off", concurrency, field="median_ttft_s"))])
-    return table(["Requests", "Server", "top_p 0.95, top_k 20", "top_p 0.95, no top_k", "top_p 1.0, no top_k",
+    return table(["Requests", "Inference stack", "top_p 0.95, top_k 20", "top_p 0.95, no top_k", "top_p 1.0, no top_k",
                   "Time to first token, s"], rows, ["---:", "---", "---:", "---:", "---:", "---:"])
 
 
@@ -244,7 +244,7 @@ def reuse():
             cells = reuse_cells(run, size)
             rows.append([name if i == 0 else "", server,
                          *[", ".join(seconds(v) for v in cells[case]) for case in REUSE_CASES]])
-    return table(["Prompt", "Server", *REUSE_HEADER], rows, ["---", "---", "---:", "---:", "---:", "---:"])
+    return table(["Prompt", "Inference stack", *REUSE_HEADER], rows, ["---", "---", "---:", "---:", "---:", "---:"])
 
 
 def reuse_body():
@@ -253,7 +253,7 @@ def reuse_body():
     for server, run in REUSE_RUNS:
         cells = reuse_cells(run, "56000")
         rows.append([server, *[", ".join(seconds(v) for v in cells[case]) for case in REUSE_CASES]])
-    return table(["Server", *REUSE_HEADER], rows)
+    return table(["Inference stack", *REUSE_HEADER], rows)
 
 
 def burst():
@@ -345,7 +345,7 @@ def quality_paired(short=False):
         return table(["Pair", "Only the first passes", "Only the second passes",
                       "Second minus first, percentage points (95% interval)", "Exact McNemar test, p"],
                      [[r[0], r[2], r[3], r[5], r[6]] for r in rows if r[0] in BODY_PAIRS])
-    return table(["Pair", "The two servers pass", "Only the first passes", "Only the second passes", "No server passes",
+    return table(["Pair", "The two inference stacks pass", "Only the first passes", "Only the second passes", "No inference stack passes",
                   "Second minus first, percentage points (95% interval)", "Exact McNemar test, p"], rows)
 
 
@@ -474,7 +474,7 @@ def burst_body():
     """The four cold requests on each server: the seconds to the first token of each request, lowest first."""
     rows = [[server, ", ".join(str(n1(v)) for v in sorted(burst_times(label)))]
             for server, label in BURST_BODY if burst_times(label)]
-    return table(["Server", "Time to the first token of each of the four requests, s"], rows, ["---", "---:"])
+    return table(["Inference stack", "Time to the first token of each of the four requests, s"], rows, ["---", "---:"])
 
 
 def burst_vllm():
@@ -558,7 +558,7 @@ def long_context_system():
         if block:
             block[0][0] = concurrency
             rows += block
-    return table(["Requests", "Server", "top_p 0.95, top_k 20", "top_p 0.95, no top_k", "top_p 1.0, no top_k",
+    return table(["Requests", "Inference stack", "top_p 0.95, top_k 20", "top_p 0.95, no top_k", "top_p 1.0, no top_k",
                   "Time to first token, s"], rows, ["---:", "---", "---:", "---:", "---:", "---:"])
 
 
@@ -688,7 +688,7 @@ def estimate_check():
     for server, run in ((TENSORFOLD, "tensorfold_session3"), (MODIFIED, "tensorfold_modified_best")):
         values = [float(r["probe_percent_of_log"]) for r in data if r["run"] == run]
         rows.append([server, len(values), f"{n0(min(values))}% to {n0(max(values))}%"])
-    return table(["Server", "Waves", "Speed from the probe, as a percentage of the speed from the log"], rows)
+    return table(["Inference stack", "Waves", "Speed from the probe, as a percentage of the speed from the log"], rows)
 
 
 def overview():

@@ -48,7 +48,7 @@ This directory contains the output of the tools and the probes, as the test host
 - `checkpoint-policy.log` contains the lines of the server log of one start that name the rule for the recurrent
   state. `first-start-prefix-cache-hit-rate.log` contains the status lines of the server log during the three
   long-context tests of the first start of release r28.1.
-- `session5/cold-requests/` contains the test with four cold requests on the vLLM servers, and the requests.
+- `session5/cold-requests/` contains the test with four cold requests on the vLLM inference stacks, and the requests.
   `burst-jovian-r24-live.jsonl` is a first attempt, before the probe had the option `--no-token-ids`. The probe
   recorded an error for each request, and the paper does not use this file. After that attempt, the server had the
   prompts in its cache. Thus the requests of the test got a new first line.

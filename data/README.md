@@ -9,23 +9,23 @@ tables. The two types come from the same files.
 
 | File | Contents |
 |---|---|
-| `decode_sparkdash.csv` | Decode test of sparkDash: each server, output type, and number of streams |
-| `prefill_sparkdash.csv` | Prefill test of sparkDash: each server and prompt size |
+| `decode_sparkdash.csv` | Decode test of sparkDash: each inference stack, output type, and number of streams |
+| `prefill_sparkdash.csv` | Prefill test of sparkDash: each inference stack and prompt size |
 | `concurrent_waves.csv` | `longctx.py`: the 1K greedy test and the long-context test, one row for each wave. The probe `long_context_sampled_system_message` is the long-context test with the context in a system message. A row with the status `no_overlap` has no speed: no time interval of more than one second contained the output of all its requests. |
-| `prefix_reuse_check.csv` | `prefix_reuse_check.py`: the seconds to the full reply of each step, for each server and for the two forms of the check |
+| `prefix_reuse_check.csv` | `prefix_reuse_check.py`: the seconds to the full reply of each step, for each inference stack and for the two forms of the check |
 | `chat_reuse_ttft.csv` | `warm_chat.py`: the time to the first token for each case and round |
 | `integrity.csv`, `integrity_recheck.csv` | `integrity.py`: the passphrase test, and the test with a limit of 300 tokens |
-| `thinking_off_forms.csv` | `thinkoff_probe.py`: the chat form and the raw form on each server |
+| `thinking_off_forms.csv` | `thinkoff_probe.py`: the chat form and the raw form on each inference stack |
 | `tensorfold_sampling_sensitivity.csv` | The eight sampler tests of Appendix C.5 |
 | `tensorfold_round_times.csv` | The time of a decode round, from the request logs of TensorFold and of TensorFold modified |
 | `longctx_estimate_check.csv` | The check of the token estimate of `longctx.py`: the total speed from the probe and the sum of the request speeds from the log, for each wave |
 | `gpu_to_gpu_copy.csv` | `p2p_test.py`: the copy test for each GPU pair |
 | `b12x_allreduce_limits.csv` | The size limits of the B12X PCIe all-reduce, from the start log of Jovian Judgement r24 (Appendix G) |
 | `modified_arms.csv` | TensorFold modified: the waves of `longctx.py` for each group of settings |
-| `cold_burst.csv` | `burst_reuse.py`: four cold requests with a shared prefix, on each server |
+| `cold_burst.csv` | `burst_reuse.py`: four cold requests with a shared prefix, on each inference stack |
 | `modified_prefill_direct.csv` | `prefill_direct.py`: two prefill chunk sizes |
 | `modified_round_profile.csv` | The report lines of the profiler |
-| `quality_pi_tasks.csv` | The quality run: one row for each task and server |
+| `quality_pi_tasks.csv` | The quality run: one row for each task and inference stack |
 | `quality_pi_summary.csv` | The pass counts and the 95% Wilson intervals |
 | `quality_pi_paired.csv` | The paired counts, the difference of the pass rates with its interval, and the exact McNemar test |
 | `quality_pi_calls.csv` | The model calls of each run, from the relay log |
@@ -42,7 +42,7 @@ tables. The two types come from the same files.
 
 The column `run` of the CSV files has these values.
 
-| Run | Server and configuration | Session |
+| Run | Inference stack and configuration | Session |
 |---|---|---|
 | `tensorfold` | TensorFold | 1 |
 | `tensorfold_session3` | TensorFold, the long-context test with top_k 20 and with no top_k | 3 |

@@ -1,6 +1,6 @@
 # GLM-5.3-Flash on four RTX PRO 6000 Blackwell GPUs: tests of TensorFold and vLLM on one host
 
-Authors: [commdata2338](https://github.com/commdata2338) and [Claude Opus 5.5](https://www.anthropic.com/claude), an AI model of Anthropic. Version 1.1, 4 October 2026.
+Authors: [commdata2338](https://github.com/commdata2338) and [Claude Opus 5.5](https://www.anthropic.com/claude), an AI model of Anthropic. Version 1.2, 4 October 2026.
 
 Each result is from one run on one host, unless the text gives a different number of runs. Tell us if you find an
 error.
@@ -28,12 +28,14 @@ Other people made the model and the software that this paper tests.
 
 ## Summary
 
-**No server was the fastest for all loads.**
+**No inference stack was the fastest for all loads.**
 
-GLM-5.3-Flash is a language model of Z.ai. We did tests of five servers for this model on one workstation with four
-RTX PRO 6000 Blackwell GPUs. The tests used the same tools and the same construction of the prompts.
+GLM-5.3-Flash is a language model of Z.ai. We did tests of five inference stacks for this model on one workstation
+with four RTX PRO 6000 Blackwell GPUs. An inference stack is the software that serves the model. Each inference
+stack operated as a server on the same workstation, and only one operated at a time. The tests used the same tools
+and the same construction of the prompts.
 
-**What we tested.** A server has three parts.
+**What we tested.** An inference stack has three parts.
 
 - **The engine** is the software that loads the model and calculates the tokens. This paper has two engines:
   TensorFold and vLLM.
@@ -51,7 +53,7 @@ For each engine, we did tests of two versions: one as its authors published it, 
   for its release images. In this paper, the name refers to the two release images that we measured: r24 and r28.1.
   It does not refer to the latest code of the branch. With no release number, it is release r24.
 
-| Server | What it is | Made by | Weights | Draft method |
+| Inference stack | What it is | Made by | Weights | Draft method |
 |---|---|---|---|---|
 | **TensorFold** | The TensorFold engine in a recipe for four RTX PRO 6000 GPUs. The recipe adds 87 patches to the engine. | Aevonix Research (recipe), ashhart (engine) | EXL3 at 4 bits for each weight | A separate draft model (DFlash2), and copy drafts |
 | **TensorFold modified** | TensorFold with our changes: a sampler on the GPU for requests with no top_k, and one prefill for requests that arrive together. | The authors of this paper | The same | The same |
@@ -68,14 +70,14 @@ For each engine, we did tests of two versions: one as its authors published it, 
 - **Release r28.1** shows if a later release of Jovian Judgement changes the results.
 
 Section 1 gives the differences between Jovian Judgement and the official vLLM, and between TensorFold modified
-and TensorFold. These are comparisons of recipes. The servers have
+and TensorFold. These are comparisons of recipes. The inference stacks have
 different weights, draft methods, kernels, and settings.
 
 **What we found.** Figure 1 and the points below it give the primary results.
 
-<img src="figures/figure1-three-loads.png" alt="Three loads on each server" width="840">
+<img src="figures/figure1-three-loads.png" alt="Three loads on each inference stack" width="840">
 
-*Figure 1. Three loads on each server. Panel A is the decode test with one greedy code request. Panel B is the
+*Figure 1. Three loads on each inference stack. Panel A is the decode test with one greedy code request. Panel B is the
 prefill of one cold prompt of 64K tokens. Panel C is the test with a shared context of 56K tokens and 16 requests,
 with thinking on, temperature 1, top_p 0.95, and top_k 20. With its default settings, release r28.1 of Jovian
 Judgement gave no speed in panel C. With one more setting, it gave 1,101 tokens/s (section 4). Sections
@@ -88,13 +90,13 @@ equality test that we did (section 8.2).*
 - **A long shared context with a sampler.** With top_p 0.95 and top_k 20, Jovian Judgement was 1.2 to 1.4 times faster
   than TensorFold. It was 1.1 to 1.5 times faster than the official vLLM. With top_p 1.0 and no top_k, TensorFold
   decreased to approximately 10 tokens/s for each stream (section 4).
-- **Reuse of a prompt.** The servers did not use their cache for the same types of prompt. Jovian Judgement r24 did
+- **Reuse of a prompt.** The inference stacks did not use their cache for the same types of prompt. Jovian Judgement r24 did
   the prefill again for a prompt that a client sent a second time. With its default settings, release r28.1 did the
   prefill again for a shared context in a user message with a different question. The official vLLM used its cache
   in these two tests (section 5).
 - **Direct GPU links.** With PCIe peer-to-peer transfers on, the prefill speed of Jovian Judgement increased 51% to
   59%. On our host, the IOMMU prevented these transfers until we changed a kernel parameter (section 6).
-- **Quality.** Through the pi agent, the servers passed 469 to 479 of 542 Python tasks, and the paired tests found
+- **Quality.** Through the pi agent, the inference stacks passed 469 to 479 of 542 Python tasks, and the paired tests found
   no difference. Two runs of Jovian Judgement r24 gave 478 and 475 tasks (section 7).
 - **Release r28.1 of Jovian Judgement** had 89% to 106% of the decode speed of release r24 at 1 and at 16 requests
   (section 2). With its default settings, it keeps the cache state at three points of a request only. In the agent
@@ -102,7 +104,7 @@ equality test that we did (section 8.2).*
 - **TensorFold modified** removed two problems of TensorFold and gave the same replies. It was not faster than Jovian
   Judgement with a long shared context (section 9).
 
-**Which server had the best result for each load in our tests**
+**Which inference stack had the best result for each load in our tests**
 
 | Load | Best result | Section |
 |---|---|---|
@@ -110,9 +112,9 @@ equality test that we did (section 8.2).*
 | Short greedy answers, 16 concurrent requests | No clear difference between TensorFold, TensorFold modified, and Jovian Judgement for prose, code, and JSON. For the count task, TensorFold was 11% faster than Jovian Judgement. | 2 |
 | A long prompt that the server reads for the first time | Jovian Judgement, the two releases | 3 |
 | A long shared context, 4 to 16 requests with a sampler | Jovian Judgement r24, and release r28.1 with the policy `aligned` | 4 |
-| A client that sends top_p 1.0 and no top_k | All servers that have this test, but not TensorFold. Release r28.1 has this test with the policy `aligned` only. | 4 |
-| A client that sends the same prompt again | All servers but Jovian Judgement r24 | 5 |
-| A shared context in a user message, with a different question in each request | All servers but Jovian Judgement r28.1 with its default settings | 5 |
+| A client that sends top_p 1.0 and no top_k | All inference stacks that have this test, but not TensorFold. Release r28.1 has this test with the policy `aligned` only. | 4 |
+| A client that sends the same prompt again | All inference stacks but Jovian Judgement r24 | 5 |
+| A shared context in a user message, with a different question in each request | All inference stacks but Jovian Judgement r28.1 with its default settings | 5 |
 | Four cold requests that arrive together with a shared prefix | Jovian Judgement r28.1 with the policy `aligned`, and TensorFold modified | 5 |
 | An agent with a small context and many short model calls | TensorFold, TensorFold modified, and Jovian Judgement r28.1, with unequal work | 7 |
 | Accuracy of Python tasks through an agent | No difference found | 7 |
@@ -121,10 +123,10 @@ This table is for one host and for these tests. It is not a general recommendati
 
 ## Contents
 
-The body gives the results. The appendixes give the servers, the method, the full tables, and the analysis.
+The body gives the results. The appendixes give the inference stacks, the method, the full tables, and the analysis.
 Appendix G explains the B12X kernels of Jovian Judgement in simple words, with diagrams.
 
-- [1. The servers](#1-the-servers)
+- [1. The inference stacks](#1-the-inference-stacks)
 - [2. Short greedy answers](#2-short-greedy-answers)
 - [3. Prefill of a cold prompt](#3-prefill-of-a-cold-prompt)
 - [4. Long shared context and sampler settings](#4-long-shared-context-and-sampler-settings)
@@ -134,19 +136,19 @@ Appendix G explains the B12X kernels of Jovian Judgement in simple words, with d
 - [8. Correctness](#8-correctness)
 - [9. TensorFold modified](#9-tensorfold-modified)
 - [10. Limits](#10-limits)
-- [Appendix A. The servers and the host](#appendix-a-the-servers-and-the-host): [A.1](#a1-the-two-recipes), [A.2](#a2-the-official-vllm), [A.3](#a3-tensorfold-modified), [A.4](#a4-the-host), [A.5](#a5-direct-gpu-links)
+- [Appendix A. The inference stacks and the host](#appendix-a-the-inference-stacks-and-the-host): [A.1](#a1-the-two-recipes), [A.2](#a2-the-official-vllm), [A.3](#a3-tensorfold-modified), [A.4](#a4-the-host), [A.5](#a5-direct-gpu-links)
 - [Appendix B. Method](#appendix-b-method): [B.1](#b1-tools), [B.2](#b2-how-we-made-the-requests-equal), [B.3](#b3-the-quality-run), [B.4](#b4-the-equality-tests-of-tensorfold-modified), [B.5](#b5-sessions-and-test-sequence), [B.6](#b6-variation-between-runs)
 - [Appendix C. Full speed results](#appendix-c-full-speed-results): [C.1](#c1-all-tests-in-one-table), [C.2](#c2-short-greedy-answers), [C.3](#c3-prefill-of-a-cold-prompt), [C.4](#c4-long-shared-context-with-thinking-on), [C.5](#c5-sampler-settings-and-tensorfold), [C.6](#c6-time-to-the-first-token-and-reuse-of-a-prompt), [C.7](#c7-the-direct-gpu-links-and-jovian-judgement), [C.8](#c8-the-two-checkpoint-policies-of-jovian-judgement-r281)
 - [Appendix D. Full results of the quality run](#appendix-d-full-results-of-the-quality-run): [D.1](#d1-task-accuracy), [D.2](#d2-the-work-of-the-agent), [D.3](#d3-what-this-result-shows-and-what-it-does-not-show)
-- [Appendix E. Why the servers are different, and the changes of TensorFold modified](#appendix-e-why-the-servers-are-different-and-the-changes-of-tensorfold-modified): [E.1](#e1-jovian-judgement-and-the-official-vllm), [E.2](#e2-tensorfold-the-sampler-the-reuse-the-prefill-and-the-parts-of-a-round), [E.3](#e3-functions-of-jovian-judgement-and-their-equivalents-in-tensorfold), [E.4](#e4-the-changes-of-tensorfold-modified), [E.5](#e5-settings-of-the-release-that-we-measured)
+- [Appendix E. Why the inference stacks are different, and the changes of TensorFold modified](#appendix-e-why-the-inference-stacks-are-different-and-the-changes-of-tensorfold-modified): [E.1](#e1-jovian-judgement-and-the-official-vllm), [E.2](#e2-tensorfold-the-sampler-the-reuse-the-prefill-and-the-parts-of-a-round), [E.3](#e3-functions-of-jovian-judgement-and-their-equivalents-in-tensorfold), [E.4](#e4-the-changes-of-tensorfold-modified), [E.5](#e5-settings-of-the-release-that-we-measured)
 - [Appendix F. Limits, and how to do the tests again](#appendix-f-limits-and-how-to-do-the-tests-again): [F.1](#f1-limits), [F.2](#f2-how-to-do-the-tests-again)
 - [Appendix G. B12X in simple words](#appendix-g-b12x-in-simple-words): [G.1](#g1-what-b12x-is), [G.2](#g2-the-two-types-of-work), [G.3](#g3-three-ideas-that-can-make-a-kernel-faster), [G.4](#g4-what-our-tests-show), [G.5](#g5-the-costs), [G.6](#g6-when-b12x-is-a-good-selection)
 - [License](#license)
 - [About the text](#about-the-text)
 
-## 1. The servers
+## 1. The inference stacks
 
-**The two TensorFold servers use EXL3 weights at 4 bits. Jovian Judgement and the official vLLM use the same NVFP4
+**The two TensorFold inference stacks use EXL3 weights at 4 bits. Jovian Judgement and the official vLLM use the same NVFP4
 weights.**
 
 **The two engines.** TensorFold and vLLM are different programs. TensorFold operates with four ranks, one for each
@@ -156,7 +158,7 @@ GPU. vLLM operates with tensor parallel 4. Thus each engine divides the model be
 started from the source code of vLLM of 25 August 2026, and it has 220 more commits. Its image also contains
 [B12X](https://github.com/local-inference-lab/b12x), the kernel package of the same lab. The vLLM project changed its code after
 that date, and release 0.31.0 has its own support for GLM-5.3. Thus Jovian Judgement is not release 0.31.0 with
-changes. The two servers have the same base and different later changes. The table shows the primary differences.
+changes. The two inference stacks have the same base and different later changes. The table shows the primary differences.
 Appendix E.1 gives all the differences that we found. Appendix G explains B12X in simple words.
 
 | Function | Jovian Judgement r24 | Official vLLM 0.31.0 |
@@ -202,7 +204,7 @@ default. Appendix A.3 gives the settings, and Appendix E.4 gives each change.
 | Official vLLM, default | NVFP4 | MTP at depth 3, greedy | 16 | with the thinking switch | 3.38M tokens (memory fraction 0.90) | 2, 5 |
 | Official vLLM, tuned | NVFP4 | MTP at depth 3, from the sampler | 16 | with the thinking switch | memory fraction 0.90 | 2, 5 |
 
-The context limit was 1,048,576 tokens on the two TensorFold servers and 524,288 tokens on the vLLM servers. No test
+The context limit was 1,048,576 tokens on the two TensorFold inference stacks and 524,288 tokens on the vLLM inference stacks. No test
 used more than 262K tokens. Appendix B.5 gives the sessions.
 
 - **The host** has four NVIDIA RTX PRO 6000 Blackwell GPUs with 96 GB, and a power limit of 250 W for each GPU. Each
@@ -227,13 +229,13 @@ less for prose, code, and JSON.**
 The decode test of sparkDash sends greedy requests with thinking off. Each stream writes 400 tokens. The test has
 four prompt types, and 1 to 16 concurrent requests.
 
-<img src="figures/figure2-decode-by-output-type.png" alt="Total decode speed for each output type on each server" width="840">
+<img src="figures/figure2-decode-by-output-type.png" alt="Total decode speed for each output type on each inference stack" width="840">
 
 *Figure 2. Decode test of sparkDash: greedy, thinking off, 400 tokens for each stream. The two axes are
 logarithmic. Thus an equal distance between two lines is an equal ratio of their speeds. For the official vLLM, the
 figure shows the second of two runs.*
 
-| Server | Prose, 1 | Prose, 16 | Code, 1 | Code, 16 | Count task, 1 | Count task, 16 | JSON, 1 | JSON, 16 |
+| Inference stack | Prose, 1 | Prose, 16 | Code, 1 | Code, 16 | Count task, 1 | Count task, 16 | JSON, 1 | JSON, 16 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | TensorFold | 247 | 1,091 | 426 | 1,319 | 498 | 1,930 | 349 | 1,475 |
 | TensorFold modified | 261 | 1,134 | 422 | 1,350 | 500 | 2,015 | 352 | 1,457 |
@@ -267,12 +269,12 @@ vLLM. It also gives a second greedy test with a context of 1K tokens.
 The prefill test of sparkDash sends one cold prompt of 8K to 256K tokens. The speed is the prompt tokens divided by
 the time to the first token.
 
-<img src="figures/figure3-cold-prompt-prefill.png" alt="Prefill speed for each prompt size on each server" width="840">
+<img src="figures/figure3-cold-prompt-prefill.png" alt="Prefill speed for each prompt size on each inference stack" width="840">
 
 *Figure 3. Prefill test of sparkDash with one cold prompt. The speed axis starts at 5,000 tokens/s. For the
 official vLLM, the figure shows the second of two runs.*
 
-| Server | 8K | 64K | 256K |
+| Inference stack | 8K | 64K | 256K |
 |---|---:|---:|---:|
 | TensorFold | 8,300 | 9,263 | 8,679 |
 | TensorFold modified | 7,274 | 9,370 | 8,766 |
@@ -314,7 +316,7 @@ with the context in the cache. A point is the mean of two runs where Appendix C.
 the other cells. The labels show the highest value and the lowest value at 16 requests. The figure does not show
 release r28.1 of Jovian Judgement. The table gives its results.*
 
-| Requests | Server | top_p 0.95, top_k 20 | top_p 0.95, no top_k | top_p 1.0, no top_k | Time to first token, s |
+| Requests | Inference stack | top_p 0.95, top_k 20 | top_p 0.95, no top_k | top_p 1.0, no top_k | Time to first token, s |
 |---:|---|---:|---:|---:|---:|
 | 4 | TensorFold | 471 | 325 | 40 | 0.6 |
 |  | TensorFold modified | 464 | 475 | 391 | 0.6 |
@@ -348,7 +350,7 @@ all requests.
   Top_k 20 is the default of TensorFold. With a top_k value, TensorFold uses its GPU sampler.
 - **With top_p 0.95 and no top_k,** TensorFold makes each sampler decision on the CPU. With top_p 0.95, the top_k
   setting changed the speed of TensorFold by 45% to 62%. It did not change the speed of Jovian Judgement.
-- **With top_p 1.0 and no top_k,** TensorFold gave a total of 40 tokens/s for four streams. The other servers that
+- **With top_p 1.0 and no top_k,** TensorFold gave a total of 40 tokens/s for four streams. The other inference stacks that
   have this test did not show this large decrease. Release r28.1 has this test with the policy `aligned` only. The server defaults of TensorFold are top_p 0.95 and top_k 20. Thus a client that sends no
   sampler settings does not get this decrease. A client that sends top_p 1.0 and no top_k gets it.
 - **TensorFold modified with top_p 0.95** had the same speed with top_k 20 and with no top_k. The difference was 3%
@@ -365,7 +367,7 @@ all requests.
   5% or less in each cell.
 - **TensorFold and TensorFold modified gave the first token in the least time.** With the context in the cache,
   top_p 0.95, and no top_k, their time to the first token was approximately half that of Jovian Judgement.
-- **The token count** of the two TensorFold servers is an estimate in this test. In 20 waves with the context in the
+- **The token count** of the two TensorFold inference stacks is an estimate in this test. In 20 waves with the context in the
   cache, the probe gave a speed 2% to 6% lower than the server log (Appendix B.1). This check does not measure the
   error of the estimate.
 
@@ -374,14 +376,14 @@ the test of six groups of sampler settings on TensorFold, with a context of 1K t
 
 ## 5. Time to the first token, and reuse of a prompt
 
-**The servers did not use their cache for the same types of prompt. Jovian Judgement r24 did the prefill again for
+**The inference stacks did not use their cache for the same types of prompt. Jovian Judgement r24 did the prefill again for
 a prompt that a client sent a second time. With its default settings, release r28.1 did the prefill again for a
 shared context with a different question.**
 
 The table shows the seconds to the first token for a chat of 83.6K tokens. Each cell shows two runs. The two
 releases of Jovian Judgement had 16 slots in this test.
 
-| Server | Cold | Same prompt again | Same prompt and a new turn | Answer of the model and a new turn |
+| Inference stack | Cold | Same prompt again | Same prompt and a new turn | Answer of the model and a new turn |
 |---|---:|---:|---:|---:|
 | TensorFold | 10.3, 10.3 | 0.16, 0.02 | 0.37, 10.4 | 0.32, 0.29 |
 | TensorFold modified | 10.2, 10.2 | 0.18, 0.02 | 0.39, 10.4 | 0.34, 0.28 |
@@ -396,7 +398,7 @@ releases of Jovian Judgement had 16 slots in this test.
 - **The same prompt again.** TensorFold, TensorFold modified, the official vLLM, and Jovian Judgement r28.1 used
   their cache. Jovian Judgement r24 did the prefill again. With MTP draft tokens, release r24 finds no cache entry
   for a prompt that stops at the same point as an earlier prompt.
-- **The answer of the model and a new turn.** This is the usual sequence of a conversation, and each server used
+- **The answer of the model and a new turn.** This is the usual sequence of a conversation, and each inference stack used
   its cache. The first token came after 0.3 s on TensorFold and after 0.7 s on the official vLLM. It came after
   0.6 s on Jovian Judgement r24 and after 0.4 s on release r28.1.
 - **The same prompt and a new turn, with no answer between.** TensorFold and TensorFold modified did the full
@@ -438,7 +440,7 @@ Each request had temperature 1, top_p 0.95, top_k 20, and 128 output tokens. The
 token of the four requests. The two releases of Jovian Judgement had 8 slots in this test, and release r28.1 with
 the policy `aligned` had 16 slots.
 
-| Server | Time to the first token of each of the four requests, s |
+| Inference stack | Time to the first token of each of the four requests, s |
 |---|---:|
 | TensorFold | 9.0, 14.4, 18.6, 21.8 |
 | TensorFold modified | 5.5, 5.5, 5.5, 5.5 |
@@ -449,7 +451,7 @@ the policy `aligned` had 16 slots.
 | Official vLLM, tuned | 9.1, 14.2, 14.7, 15.1 |
 
 - **TensorFold** did the prefill of the shared part for each request. **TensorFold modified** did it one time, and
-  the replies had the same token ids on the two servers. For this test, TensorFold modified had the three sampler
+  the replies had the same token ids on the two inference stacks. For this test, TensorFold modified had the three sampler
   settings and burst reuse on, and CUDA IPC off.
 - **Jovian Judgement r24** gave the first token of one request after 4.4 s, and of the other three requests after
   8.4 s to 8.8 s.
@@ -496,17 +498,17 @@ two measurements were in the same boot of the host. The change is the effect of 
 
 ## 7. Quality through an agent
 
-**Through the pi agent, the servers passed 469 to 479 of 542 Python tasks. The paired
+**Through the pi agent, the inference stacks passed 469 to 479 of 542 Python tasks. The paired
 tests found no difference. Two runs of Jovian Judgement r24 gave 478 and 475 tasks.**
 
 The two recipes use different approximations of the model. Thus equal speed does not show equal answers. The agent
 is [pi](https://github.com/earendil-works/pi) 0.86.1. It did the 542 Python tasks of EvalPlus (HumanEval+ and MBPP+)
-on five servers. Each task got one attempt, with temperature 0 and thinking at effort max. Jovian Judgement r24 has
+on five inference stacks. Each task got one attempt, with temperature 0 and thinking at effort max. Jovian Judgement r24 has
 two runs. The official vLLM was in its default configuration. Appendix B.3 gives the method.
 
 <img src="figures/figure6-quality-through-an-agent.png" alt="Task accuracy through the pi agent" width="840">
 
-*Figure 6. The tasks that pass, with the 95% Wilson interval. Each point is one run of the pi agent on one server,
+*Figure 6. The tasks that pass, with the 95% Wilson interval. Each point is one run of the pi agent on one inference stack,
 with one attempt for each task.*
 
 | Tasks that pass all tests | TensorFold | TensorFold modified | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
@@ -515,8 +517,8 @@ with one attempt for each task.*
 | MBPP+, 378 tasks | 323 (85.4%) | 324 (85.7%) | 322 (85.2%) | 322 (85.2%) | 316 (83.6%) | 324 (85.7%) |
 | The two data sets, 542 tasks | 475 (87.6%) | 476 (87.8%) | 478 (88.2%) | 475 (87.6%) | 469 (86.5%) | 479 (88.4%) |
 
-The paired comparison shows the tasks that have a different result on two servers. The difference is the pass rate
-of the second server minus the pass rate of the first server.
+The paired comparison shows the tasks that have a different result on two inference stacks. The difference is the pass rate
+of the second inference stack minus the pass rate of the first inference stack.
 
 | Pair | Only the first passes | Only the second passes | Second minus first, percentage points (95% interval) | Exact McNemar test, p |
 |---|---:|---:|---:|---:|
@@ -526,22 +528,22 @@ of the second server minus the pass rate of the first server.
 | Jovian Judgement r24 and Jovian Judgement r28.1 | 18 | 9 | −1.7 (−3.5 to +0.2) | 0.12 |
 | Jovian Judgement r24 and the official vLLM, default | 15 | 16 | +0.2 (−1.8 to +2.2) | 1.00 |
 
-- **We found no difference in accuracy between the servers.** TensorFold and Jovian Judgement had a different
+- **We found no difference in accuracy between the inference stacks.** TensorFold and Jovian Judgement had a different
   result for 29 tasks. TensorFold passed 13 of these tasks, and Jovian Judgement passed 16 (p = 0.71).
-- **Two runs of one server were as different as two servers.** The two runs of Jovian Judgement r24 had a different
+- **Two runs of one inference stack were as different as two inference stacks.** The two runs of Jovian Judgement r24 had a different
   result for 29 tasks. The first run passed 16 of these tasks, and the second run passed 13.
 - **Jovian Judgement r28.1** passed 469 tasks. The first run of release r24 passed 9 tasks more (p = 0.12), and the
   second run passed 6 tasks more (p = 0.34).
 - **The official vLLM** passed 479 tasks in its default configuration. Its result was different from the
   first run of Jovian Judgement r24 for 31 tasks (p = 1.00).
-- **This result does not show that the servers are equal.** The 95% interval of the difference between TensorFold
+- **This result does not show that the inference stacks are equal.** The 95% interval of the difference between TensorFold
   and Jovian Judgement is −1.4 to +2.5 percentage points.
 - **TensorFold and TensorFold modified** have the same weights. Their results were different for 3 of the 542
   tasks.
 - **Do not compare these scores with scores from single requests.** The agent can run its code, read the errors,
   and write the file again.
 
-The servers did different work for the same tasks.
+The inference stacks did different work for the same tasks.
 
 |  | TensorFold | TensorFold modified | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
 |---|---:|---:|---:|---:|---:|---:|
@@ -579,7 +581,7 @@ started with a sentence about the task. The limit of 40 tokens stopped the answe
 new 200K prompts to each configuration, with a limit of 300 tokens. Each answer contained the correct passphrase and
 had 47 to 98 tokens. These prompts were not the same text as the first prompt.
 
-On each server, the thinking-off probe showed the same prompt token counts and the same speeds for its two forms
+On each inference stack, the thinking-off probe showed the same prompt token counts and the same speeds for its two forms
 (Appendix B.2). We did not do the passphrase test on TensorFold modified.
 
 ### 8.2 The replies of TensorFold modified
@@ -617,7 +619,7 @@ and each setting is off by default.
 | First token for four cold requests with a shared prefix of 42K tokens, s | 9 to 22 | 5.5 | 4.4 to 8.8 |
 | Prefill of a cold prompt of 64K tokens, tokens/s | 9,263 | 9,370 | 11,141 |
 
-The table shows the three servers in the tests that the changes apply to. The values of TensorFold modified are
+The table shows the three inference stacks in the tests that the changes apply to. The values of TensorFold modified are
 from its last configuration (Appendix A.3), with one exception. The test with four cold requests had the sampler
 settings and burst reuse on, and CUDA IPC off. Jovian Judgement had its usual 8 slots in that test.
 
@@ -654,16 +656,16 @@ TensorFold modified. [`recipes/tensorfold-modified.md`](recipes/tensorfold-modif
 ## 10. Limits
 
 **Each result is from one run on one host, unless the text gives a different number of runs. A difference of less
-than 10% between two servers is not a reliable result.**
+than 10% between two inference stacks is not a reliable result.**
 
-- **These are comparisons of recipes.** The servers are different in weights, draft method, kernels, libraries,
-  slots, and cache design. A difference between two servers is the effect of all these items together.
+- **These are comparisons of recipes.** The inference stacks are different in weights, draft method, kernels, libraries,
+  slots, and cache design. A difference between two inference stacks is the effect of all these items together.
 - **More than one run.** Some cells of the long-context test are the mean of two runs (Appendix C.4). For the
   official vLLM, the sparkDash tables show the second of two runs.
 - **Variation.** Two runs of the long-context test with the same settings were different by 0% to 12%
   (Appendix B.6). On the official vLLM in the default configuration, the first sparkDash run was 13% to 26% slower
   than the second run in six cells (Appendix C.2).
-- **The servers were not in the same session.** The five sessions were in the same boot of the host, during 23
+- **The inference stacks were not in the same session.** The five sessions were in the same boot of the host, during 23
   hours.
 - **The official vLLM.** Its tests are from the day of its release and from the subsequent day. It has a quality
   run in its default configuration only.
@@ -672,14 +674,14 @@ than 10% between two servers is not a reliable result.**
   available, and we did not use it.
 - **We did no test with more than 16 concurrent requests.** TensorFold has 40 slots.
 - **The quality result has a narrow scope.** It is from one agent and two data sets of small Python tasks. Each
-  server has one run, and Jovian Judgement r24 has two. It does not show that the servers are equal.
+  inference stack has one run, and Jovian Judgement r24 has two. It does not show that the inference stacks are equal.
 - **TensorFold modified is not a release.** AI tools for code wrote its changes, and the TensorFold project did not
   examine them. Section 8.2 gives the scope of our equality tests.
 - **License.** The DFlash2 drafter weights that TensorFold uses have the CC BY-NC-ND 4.0 license (non-commercial).
 
 Appendix F.1 gives all the limits. Appendix F.2 gives the steps to do the tests again.
 
-## Appendix A. The servers and the host
+## Appendix A. The inference stacks and the host
 
 In this paper, "Jovian Judgement" is the vLLM fork by local-inference-lab: the vLLM in the image of the second
 recipe. The lab uses this name for the development branch of the fork (`dev/jovian-judgement`), for its release
@@ -916,8 +918,8 @@ in the TensorFold recipe come from this tool.
   - the chat and a new turn
   - the chat, the answer of the model, and a new turn
 - `burst_reuse.py`: This probe sends four cold requests with a shared prefix at the same time. It records the time
-  to the first token, the cached tokens, and the token ids of each reply. The vLLM servers do not give the token ids
-  of a reply. For these servers, the probe records the times only.
+  to the first token, the cached tokens, and the token ids of each reply. The vLLM inference stacks do not give the token ids
+  of a reply. For these inference stacks, the probe records the times only.
 - `prefix_reuse_check.py`: This probe sends one request at a time. Each request has the 56K context of `longctx.py`
   and a short question. The probe sends a request, the same request again, and the same context with different
   questions. It records the seconds to the full reply of each request. It has one form with the context in the user
@@ -927,17 +929,17 @@ in the TensorFold recipe come from this tool.
 - `thinkoff_probe.py`: This probe sends the same prompt in two forms. The first form is a chat request with
   thinking-off flags. The second form is a raw completion with a prompt that we rendered manually.
 - `reply_equality.py`: This probe sends 36 requests with a seed and records the token ids of each reply. Then it
-  compares the replies of two servers.
+  compares the replies of two inference stacks.
 
 **How the probes count.**
 
 - The total speed of `longctx.py` is for the time in which all C streams decode together.
 - The speed of each stream and the time to the first token are the median of the C streams.
-- The vLLM servers give the number of output tokens with each part of a stream. TensorFold gives it only at the end
+- The vLLM inference stacks give the number of output tokens with each part of a stream. TensorFold gives it only at the end
   of a stream. For TensorFold and TensorFold modified, `longctx.py` thus counts the characters of the stream and
   scales them to the token count at the end.
 - The scaled count is exact at the end of a stream. Before the end, it is an estimate. It applies to the results of
-  the two TensorFold servers in three tests. These are the long-context test, the test of Appendix C.5, and the
+  the two TensorFold inference stacks in three tests. These are the long-context test, the test of Appendix C.5, and the
   second test of Appendix C.2.
 - The prefill speed is the prompt tokens divided by the time to the first token.
 
@@ -946,7 +948,7 @@ the long-context test, we compared two values. The first value is the total spee
 is the sum of the request speeds from the log. The comparison uses the waves of sessions 3 and 4 in which each request
 found the shared context in the cache. There are 20 of these waves.
 
-| Server | Waves | Speed from the probe, as a percentage of the speed from the log |
+| Inference stack | Waves | Speed from the probe, as a percentage of the speed from the log |
 |---|---:|---:|
 | TensorFold | 8 | 94% to 98% |
 | TensorFold modified | 12 | 95% to 98% |
@@ -955,7 +957,7 @@ In each of these waves, the value from the probe was 2% to 6% lower than the val
 not have the same definition. The log uses the decode time of each request, and the probe uses the time in which
 all streams decode together. Thus this comparison does not measure the error of the estimate, and it does not give
 a limit for that error. In these 20 waves, we found no sign that the estimate increases the speeds of the two
-TensorFold servers.
+TensorFold inference stacks.
 [`data/longctx_estimate_check.csv`](data/longctx_estimate_check.csv) gives each wave.
 
 **The quality harness.** The directory [`quality/`](quality/) contains it. The agent is
@@ -993,8 +995,8 @@ These checks show equal token counts and equal text for the tested prompts. They
 each request of the speed tests.
 
 **The prompts.** sparkDash, `thinkoff_probe.py`, `reply_equality.py`, `burst_reuse.py`, and the quality run send
-the same prompt text to each server. `longctx.py` and `integrity.py` make new text for each run. Thus their prompts
-have the same construction on each server, but not the same text.
+the same prompt text to each inference stack. `longctx.py` and `integrity.py` make new text for each run. Thus their prompts
+have the same construction on each inference stack, but not the same text.
 
 **Sampler defaults.** If a request gives no sampler settings, TensorFold uses top_p 0.95 and top_k 20. Jovian Judgement
 and the official vLLM use top_p 1.0 and no top_k. Our probes send temperature, top_p, and top_k in each request. The
@@ -1007,7 +1009,7 @@ The template of GLM-5.3 then writes the same effort line on each engine.
 
 The two recipes use different approximations of the model. TensorFold has EXL3 experts at 4 bits for each weight
 and FP8 dense layers. Jovian Judgement has NVFP4 experts. The draft methods are also different. Thus equal speed does
-not show equal answers. We measured the accuracy of five servers on Python tasks, through an agent.
+not show equal answers. We measured the accuracy of five inference stacks on Python tasks, through an agent.
 
 - **The agent is [pi](https://github.com/earendil-works/pi) 0.86.1.** It is the npm package
   `@earendil-works/pi-coding-agent` with no changes and no extensions. The system prompt and the tool descriptions
@@ -1024,14 +1026,14 @@ not show equal answers. We measured the accuracy of five servers on Python tasks
 - **Eight tasks** were in operation at the same time. Each task had a time limit of 1,200 s.
 - **The grade** comes from the tests of EvalPlus. "Base tests" are the tests of the original data set. "All tests"
   are the base tests and the added tests of EvalPlus. Each task gets one attempt.
-- **The servers** were TensorFold modified, TensorFold, Jovian Judgement r24 (two runs), Jovian Judgement r28.1, and
+- **The inference stacks** were TensorFold modified, TensorFold, Jovian Judgement r24 (two runs), Jovian Judgement r28.1, and
   the official vLLM. The two releases of Jovian Judgement were in the usual 8-slot configuration with the direct GPU
   links on and the standard chat template. The official vLLM was in its default configuration, with 16 slots and
   the chat template with the thinking switch.
 - **The statistics.** Each pass rate has a 95% Wilson interval. This interval describes one pass rate for these
-  tasks. For each pair of servers, we give the tasks that only one server passes. We also give the difference of the
+  tasks. For each pair of inference stacks, we give the tasks that only one inference stack passes. We also give the difference of the
   two pass rates with its 95% interval, and the exact McNemar test.
-- **What the test can show.** A paired test that finds no difference does not show that two servers are equal.
+- **What the test can show.** A paired test that finds no difference does not show that two inference stacks are equal.
 
 The agent can run its code, read the errors, and write the file again. **Do not compare these scores with scores
 from single requests.** [`quality/README.md`](quality/README.md) gives the settings of the harness and the commands.
@@ -1054,13 +1056,13 @@ groups are the larger prefill chunks and the profiler (Appendix E.5). Section 8 
 
 ### B.5 Sessions and test sequence
 
-| Session | Local time | Servers and tests |
+| Session | Local time | Inference stacks and tests |
 |---|---|---|
 | 1 | 3 October, 19:11 to 20:28 | TensorFold and Jovian Judgement r24: all speed tests |
 | 2 | 3 October, 22:17 to 22:56 | The official vLLM in two configurations: all speed tests |
 | 3 | 3 October, 23:41 to 23:59 | TensorFold and Jovian Judgement r24: the long-context test with top_k 20 |
-| 4 | 4 October, 00:43 to 04:11 | TensorFold modified: equality tests and speed tests. The quality run on three servers. |
-| 5 | 4 October, 14:39 to 18:18 | Jovian Judgement r24: a second quality run and the test with four cold requests. Jovian Judgement r28.1: all tests. The official vLLM: the long-context test with top_k 20, the test with four cold requests, and a quality run. The prompt-reuse check on each of these servers. |
+| 4 | 4 October, 00:43 to 04:11 | TensorFold modified: equality tests and speed tests. The quality run on three inference stacks. |
+| 5 | 4 October, 14:39 to 18:18 | Jovian Judgement r24: a second quality run and the test with four cold requests. Jovian Judgement r28.1: all tests. The official vLLM: the long-context test with top_k 20, the test with four cold requests, and a quality run. The prompt-reuse check on each of these inference stacks. |
 
 One measurement is from before these sessions and before the last restart of the host. It is the prefill speed of
 Jovian Judgement with the direct GPU links off and 16 slots (Appendix C.7).
@@ -1111,14 +1113,14 @@ A table cell with more than one run shows the mean of the runs. [`data/`](data/)
 - **The sparkDash tests** have one run on TensorFold, on TensorFold modified, and on Jovian Judgement. In tests before
   these sessions, greedy cells on Jovian Judgement changed by 3% to 6% between runs. Those tests are not in this
   repository.
-- **The official vLLM.** We did the sparkDash tests two times on each server, and the tables show the second run.
+- **The official vLLM.** We did the sparkDash tests two times on each of its two configurations, and the tables show the second run.
   The first run was slower in some cells (Appendix C.2).
 - **The long-context test with no top_k** has two runs on TensorFold and on Jovian Judgement, approximately four hours
   apart. The difference was 3% or less on TensorFold and 5% or less on Jovian Judgement.
-- **The long-context test with top_p 0.95 and top_k 20** has two runs on each server. The difference between the two runs was
+- **The long-context test with top_p 0.95 and top_k 20** has two runs on each inference stack. The difference between the two runs was
   1% to 4% on TensorFold and 0% to 9% on Jovian Judgement. On TensorFold modified, it was 1% to 9%. On Jovian
   Judgement r28.1 with the policy `aligned`, it was 1% to 5%. The last item of this list gives the official vLLM.
-- **The quality run** has two runs on Jovian Judgement r24 and one run on each other server. The two runs of
+- **The quality run** has two runs on Jovian Judgement r24 and one run on each other inference stack. The two runs of
   release r24 passed 478 and 475 tasks, and they had a different result for 29 tasks. TensorFold and TensorFold
   modified have the same weights, and their two runs were different for 3 of 542 tasks (Appendix D.1).
 - **Release r28.1 of Jovian Judgement** has two runs of the sparkDash tests: one with its default settings and one
@@ -1129,7 +1131,7 @@ A table cell with more than one run shows the mean of the runs. [`data/`](data/)
   by 1% to 3% in the default configuration. In the tuned configuration, they were different by 5% to 12%.
 
 Cells with a sampler change more than greedy cells, because the number of accepted draft tokens changes with the
-text. A difference of less than 10% between two servers in one run is not a reliable result.
+text. A difference of less than 10% between two inference stacks in one run is not a reliable result.
 
 ## Appendix C. Full speed results
 
@@ -1163,7 +1165,7 @@ of Jovian Judgement had 8 slots. "No value" is a test that gave no speed (sectio
 
 Section 2 gives the summary of this test and Figure 2.
 
-| Output | Server | 1 | 2 | 4 | 8 | 16 |
+| Output | Inference stack | 1 | 2 | 4 | 8 | 16 |
 |---|---|---:|---:|---:|---:|---:|
 | Prose | TensorFold | 247 | 419 | 594 | 844 | 1,091 |
 |  | TensorFold, published values | 264 | 434 | 586 | 821 | 1,061 |
@@ -1194,7 +1196,7 @@ Section 2 gives the summary of this test and Figure 2.
 |  | Official vLLM, tuned | 239 | 383 | 590 | 847 | 1,177 |
 
 The table shows the total tokens/s for each number of concurrent requests. Each row is one run. For the official
-vLLM, the table shows the second of two runs on each server. The published values are from the README of the
+vLLM, the table shows the second of two runs on each of its two configurations. The published values are from the README of the
 TensorFold recipe. The file [`data/decode_sparkdash.csv`](data/decode_sparkdash.csv) contains the speed of each
 stream and the time to the first token.
 
@@ -1225,7 +1227,7 @@ Our second greedy test used approximately 1K tokens of source code as context, t
 output. The columns show the number of concurrent requests. In this test, Jovian Judgement was 6% faster than
 TensorFold at 16 requests, and the difference was 1% at one request.
 
-| Server | 1 | 8 | 12 | 16 |
+| Inference stack | 1 | 8 | 12 | 16 |
 |---|---:|---:|---:|---:|
 | TensorFold | 233 | 746 | 885 | 1,000 |
 | TensorFold modified | 219 | 761 | 889 | 1,033 |
@@ -1238,7 +1240,7 @@ TensorFold at 16 requests, and the difference was 1% at one request.
 
 Section 3 gives the summary of this test and Figure 3.
 
-| Server | 8K | 16K | 32K | 64K | 128K | 256K |
+| Inference stack | 8K | 16K | 32K | 64K | 128K | 256K |
 |---|---:|---:|---:|---:|---:|---:|
 | TensorFold | 8,300 | 8,729 | 9,093 | 9,263 | 9,100 | 8,679 |
 | TensorFold, published values | 8,416 | 6,903 | 6,508 | 5,527 | 8,272 | 7,842 |
@@ -1285,7 +1287,7 @@ Section 4 gives the summary of this test, the table, and Figure 4.
   For that cell, the two runs gave 480 and 463 tokens/s on TensorFold. They gave 484 and 444 tokens/s on TensorFold
   modified, and 588 and 540 tokens/s on Jovian Judgement. On Jovian Judgement r28.1 with its default settings,
   no request found the context in the cache.
-- **The token count** of the two TensorFold servers is an estimate in this test (Appendix B.1).
+- **The token count** of the two TensorFold inference stacks is an estimate in this test (Appendix B.1).
 
 The results are:
 
@@ -1369,7 +1371,7 @@ bar is one run.*
   406 tokens/s and 390 tokens/s. We did no test of other top_p values.
 - **A top_k value moves the sampler to the GPU.** These rows gave 549 tokens/s with top_k 50 and 792 tokens/s with
   the server defaults, which contain top_k 20.
-- **The other servers showed no decrease.** At top_p 1.0 with no top_k and 4 requests, the long-context test gave
+- **The other inference stacks showed no decrease.** At top_p 1.0 with no top_k and 4 requests, the long-context test gave
   579 tokens/s on Jovian Judgement. It gave 382 and 445 tokens/s on the official vLLM, and 391 tokens/s on TensorFold
   modified.
 - **TensorFold modified** gave 760 tokens/s in the test of this section with top_p 1.0 and no top_k (thinking on).
@@ -1386,7 +1388,7 @@ Section 5 gives the summary of this test.
 The table shows the seconds to the first token for two runs of each case. The small prompt has 13.5K tokens, and
 the large prompt has 83.6K tokens.
 
-| Prompt | Server | Cold | Same prompt again | Same prompt and a new turn | Answer of the model and a new turn |
+| Prompt | Inference stack | Cold | Same prompt again | Same prompt and a new turn | Answer of the model and a new turn |
 |---|---|---:|---:|---:|---:|
 | 13.5K | TensorFold | 1.98, 2.54 | 0.06, 0.04 | 0.29, 1.94 | 0.27, 0.25 |
 |  | TensorFold modified | 1.92, 2.47 | 0.05, 0.04 | 0.28, 1.95 | 0.27, 0.28 |
@@ -1408,14 +1410,14 @@ the large prompt has 83.6K tokens.
 - **The same prompt again.** TensorFold, TensorFold modified, the official vLLM, and Jovian Judgement r28.1 used
   their cache. Jovian Judgement r24 did the prefill again. With MTP draft tokens, release r24 finds no cache entry
   for a prompt that stops at the same point as an earlier prompt.
-- **The answer of the model and a new turn.** Each server used its cache for a conversation that has one more turn.
+- **The answer of the model and a new turn.** Each inference stack used its cache for a conversation that has one more turn.
   The first token came after 0.3 s on TensorFold and after 0.7 s on the official vLLM. It came after 0.6 s on
   Jovian Judgement r24 and after 0.4 s on release r28.1.
 - **The same prompt and a new turn, with no answer between.** TensorFold and TensorFold modified did the full prefill
   again in one of the two rounds. The cause is below. Jovian Judgement r28.1 with its default settings did the full
   prefill again in each round. With the policy `aligned`, it used its cache.
 
-**The prompt-reuse check.** Section 5 gives this check for four servers. The first table shows each server that
+**The prompt-reuse check.** Section 5 gives this check for four inference stacks. The first table shows each inference stack that
 has the check, with the context and the question in one user message. The second table shows the second form of the
 check: the context is a system message, and the question is the user message. The tables show the seconds to the
 full reply. "Dense retention" is release r28.1 with `--prefix-cache-retention-interval None` and the default policy.
@@ -1458,10 +1460,10 @@ top_p 0.95, top_k 20, and 128 output tokens. The first table shows TensorFold an
 | 4 | 14.4 | 0 | 5.5 | 42,240 |
 
 TensorFold did the prefill of the shared part four times. TensorFold modified did it one time, and the other three
-requests copied the engine state at token 42,240. The replies had the same token ids on the two servers.
+requests copied the engine state at token 42,240. The replies had the same token ids on the two inference stacks.
 
-For the vLLM servers, the requests had a different first line and no priority field, and each prompt had 42,251
-tokens. These servers do not give the token ids of a reply, and they did not give the number of cached tokens. The
+For the vLLM inference stacks, the requests had a different first line and no priority field, and each prompt had 42,251
+tokens. These inference stacks do not give the token ids of a reply, and they did not give the number of cached tokens. The
 table shows the seconds to the first token of each request, in the sequence of the first tokens.
 
 | Request, in the sequence of the first tokens | Jovian Judgement r24, 8 slots | Jovian Judgement r28.1, 8 slots | Jovian Judgement r28.1, 16 slots | Jovian Judgement r28.1, 16 slots, checkpoint policy aligned | Official vLLM, default | Official vLLM, tuned |
@@ -1484,7 +1486,7 @@ The first wave of the long-context test shows a related condition. Before that w
 the 56K context. That request has a different question. The log of TensorFold shows that the four requests of the
 wave found no cached tokens. The table shows the median time to the first token of the four requests of the wave.
 
-| Server | First wave of four requests, s | A subsequent wave of four requests, s |
+| Inference stack | First wave of four requests, s | A subsequent wave of four requests, s |
 |---|---:|---:|
 | TensorFold | 24.2 | 0.6 |
 | TensorFold modified | 7.8 | 0.6 |
@@ -1566,7 +1568,7 @@ system message, and the question is the user message. The other conditions are t
 exception. The time to the first token is from the first run with top_p 0.95 and top_k 20. With these settings,
 the speeds of the two servers with 8 slots are the mean of two runs. The other cells are one run.
 
-| Requests | Server | top_p 0.95, top_k 20 | top_p 0.95, no top_k | top_p 1.0, no top_k | Time to first token, s |
+| Requests | Inference stack | top_p 0.95, top_k 20 | top_p 0.95, no top_k | top_p 1.0, no top_k | Time to first token, s |
 |---:|---|---:|---:|---:|---:|
 | 4 | Jovian Judgement r24, 8 slots | 581 | 578 | 556 | 1.1 |
 |  | Jovian Judgement r28.1, 8 slots | 582 | 593 | 571 | 0.7 |
@@ -1586,7 +1588,7 @@ the speeds of the two servers with 8 slots are the mean of two runs. The other c
 
 ## Appendix D. Full results of the quality run
 
-The pi agent (version 0.86.1) did 542 Python tasks of EvalPlus on five servers. Jovian Judgement r24 has two runs.
+The pi agent (version 0.86.1) did 542 Python tasks of EvalPlus on five inference stacks. Jovian Judgement r24 has two runs.
 Each task got one attempt in each run. Appendix B.3 gives the method.
 
 ### D.1 Task accuracy
@@ -1604,15 +1606,15 @@ Section 7 gives the summary of this test and Figure 6.
 
 The table shows the number of tasks that pass.
 
-**We found no difference in accuracy between the servers.** For all tests on the 542 tasks, the largest
+**We found no difference in accuracy between the inference stacks.** For all tests on the 542 tasks, the largest
 difference between two runs is 10 tasks. The 95% intervals of the pass rates are between
 83% and 91%. Such an interval describes one pass rate. It is not the interval of a
-difference between two servers.
+difference between two inference stacks.
 
-The paired comparison shows how many tasks have a different result on two servers (all tests, 542 tasks). The
-difference is the pass rate of the second server minus the pass rate of the first server.
+The paired comparison shows how many tasks have a different result on two inference stacks (all tests, 542 tasks). The
+difference is the pass rate of the second inference stack minus the pass rate of the first inference stack.
 
-| Pair | The two servers pass | Only the first passes | Only the second passes | No server passes | Second minus first, percentage points (95% interval) | Exact McNemar test, p |
+| Pair | The two inference stacks pass | Only the first passes | Only the second passes | No inference stack passes | Second minus first, percentage points (95% interval) | Exact McNemar test, p |
 |---|---:|---:|---:|---:|---:|---:|
 | TensorFold and TensorFold modified | 474 | 1 | 2 | 65 | +0.2 (−0.4 to +0.8) | 1.00 |
 | TensorFold and Jovian Judgement r24 | 462 | 13 | 16 | 51 | +0.6 (−1.4 to +2.5) | 0.71 |
@@ -1625,11 +1627,11 @@ difference is the pass rate of the second server minus the pass rate of the firs
 
 - **TensorFold and Jovian Judgement** had a different result for 29 tasks. TensorFold passed 13 of these tasks, and Jovian
   Judgement passed 16. The difference of the pass rates is 0.6 percentage points, with a 95% interval of −1.4 to
-  +2.5. The test did not find a difference (p = 0.71). It does not show that the two servers are equal.
+  +2.5. The test did not find a difference (p = 0.71). It does not show that the two inference stacks are equal.
 - **TensorFold and TensorFold modified** have the same weights. Their results were different for 3 of the 542 tasks.
 - **The two runs of Jovian Judgement r24** had a different result for 29 tasks. The first run passed 16 of these
-  tasks, and the second run passed 13. Thus a difference of this size between two servers is in the range of the
-  variation between two runs of one server.
+  tasks, and the second run passed 13. Thus a difference of this size between two inference stacks is in the range of the
+  variation between two runs of one inference stack.
 - **Jovian Judgement r28.1** passed 469 tasks. Its result was different from the first run of release r24 for 27
   tasks, and it passed 9 of these tasks (p = 0.12). The comparison with the second run of release r24 gave
   p = 0.34. The tests did not find a difference.
@@ -1644,8 +1646,8 @@ difference is the pass rate of the second server minus the pass rate of the firs
 
 ### D.2 The work of the agent
 
-The first prompt of each task had 1,384 tokens on each server
-([`data/quality_pi_tasks.csv`](data/quality_pi_tasks.csv)). After that, the servers did different work for the same
+The first prompt of each task had 1,384 tokens on each inference stack
+([`data/quality_pi_tasks.csv`](data/quality_pi_tasks.csv)). After that, the inference stacks did different work for the same
 tasks.
 
 |  | TensorFold | TensorFold modified | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
@@ -1662,7 +1664,7 @@ tasks.
 
 - **In its first run, Jovian Judgement r24 wrote 43% more output tokens than TensorFold for the same tasks.** It had
   16 tasks with more than 10,000 output tokens, and TensorFold had 7. For the 524 tasks with 10,000 output tokens or
-  less on the two servers, it wrote 23% more tokens. It wrote more tokens than TensorFold for 315 tasks and fewer
+  less on the two inference stacks, it wrote 23% more tokens. It wrote more tokens than TensorFold for 315 tasks and fewer
   tokens for 224 tasks. In its second run, it wrote 25% more output tokens than TensorFold. Release r28.1 wrote 28%
   more, and the official vLLM wrote 30% more.
 - **A model call was shorter on TensorFold than on Jovian Judgement r24.** The load has a small context, short
@@ -1683,7 +1685,7 @@ tasks.
   task passed all tests, and the file of the other task passed the base tests only. On the official vLLM, the limit stopped one task during a
   command, and the file of that task passed all tests.
 
-**This table is not a speed test with equal work.** The servers wrote different numbers of tokens and made
+**This table is not a speed test with equal work.** The inference stacks wrote different numbers of tokens and made
 different numbers of calls. The two releases of Jovian Judgement were in the 8-slot configuration, and the
 official vLLM had 16 slots. The relay of the harness recorded the time of each model call.
 
@@ -1703,10 +1705,10 @@ official vLLM had 16 slots. The relay of the harness recorded the time of each m
   harness. Our value for TensorFold through the agent is 475 tasks (87.6%). The two values come from different
   methods.
 - TensorFold and TensorFold modified had the same result for 539 of the 542 tasks.
-- The two runs of Jovian Judgement r24 had the same result for 513 of the 542 tasks. Thus one run for each server
+- The two runs of Jovian Judgement r24 had the same result for 513 of the 542 tasks. Thus one run for each inference stack
   cannot show a difference of a few tasks.
 
-## Appendix E. Why the servers are different, and the changes of TensorFold modified
+## Appendix E. Why the inference stacks are different, and the changes of TensorFold modified
 
 Appendixes E.1 to E.3 come from the source code, from the start logs, and from one profile. We did not measure the effect
 of each function. Where the text gives a cause, it is a possible cause, unless a test of this paper isolates it.
@@ -1715,7 +1717,7 @@ of each function. Where the text gives a cause, it is a possible cause, unless a
 
 Jovian Judgement has [220 commits](https://github.com/local-inference-lab/vllm/compare/299ebd094a9c...d49385468458cf97dff0fc8d9c8863f8082abf4f) more than the official vLLM of 25 August 2026 (`299ebd094a`). The official vLLM
 changed after that date, and release 0.31.0 has its own support for GLM-5.3. We compared the source code of Jovian
-Judgement with the source code of release 0.31.0. We also compared the start logs of the two servers. Appendix G
+Judgement with the source code of release 0.31.0. We also compared the start logs of the two inference stacks. Appendix G
 explains the B12X kernels of this table in simple words.
 
 | Function | Jovian Judgement r24 | Official vLLM 0.31.0 |
@@ -1914,18 +1916,18 @@ We did no test of `TF_GLM_FILL_ROWS=4096`, which gives full prefill chunks while
 
 - **Each result is from one run** on one host, unless the text gives a different number of runs. Each GPU had a
   power limit of 250 W.
-- **A difference of less than 10% between two servers is not a reliable result.** Two runs of the long-context test
+- **A difference of less than 10% between two inference stacks is not a reliable result.** Two runs of the long-context test
   with the same settings were different by 0% to 12% (Appendix B.6). On the official vLLM in the default
   configuration, the first sparkDash run was 13% to 26% slower than the second run in six cells (Appendix C.2).
-- **The servers were not in the same session.** The five sessions were in the same boot of the host, during 23
+- **The inference stacks were not in the same session.** The five sessions were in the same boot of the host, during 23
   hours.
-- **These are comparisons of recipes.** The servers are different in weights, draft method, kernels, libraries,
-  slots, and cache design. A difference between two servers is the effect of all these items together.
-- **The token count of the long-context probe is an estimate on the two TensorFold servers** (Appendix B.1). We did
+- **These are comparisons of recipes.** The inference stacks are different in weights, draft method, kernels, libraries,
+  slots, and cache design. A difference between two inference stacks is the effect of all these items together.
+- **The token count of the long-context probe is an estimate on the two TensorFold inference stacks** (Appendix B.1). We did
   not measure its error. In 20 waves with the context in the cache, the probe gave a speed 2% to 6% lower than the
   server log.
 - **Two probes make new prompt text for each run** (Appendix B.2). Thus the long-context test and the passphrase test
-  did not send the same text to each server.
+  did not send the same text to each inference stack.
 - **We did no test with more than 16 concurrent requests.** TensorFold has 40 slots. We did not use more than 16
   slots on Jovian Judgement or on the official vLLM.
 - **Jovian Judgement has two configurations in this paper.** The speed tests used 16 slots and the chat template with
@@ -1933,9 +1935,9 @@ We did no test of `TF_GLM_FILL_ROWS=4096`, which gives full prefill chunks while
   Section 5 has tests with each configuration.
 - **The chat template with the thinking switch is our change.** It is not a part of Jovian Judgement or of the official
   vLLM.
-- **Other processes on the GPUs.** A different process used 1.9 GB on GPU 3 during the tests of the vLLM servers.
+- **Other processes on the GPUs.** A different process used 1.9 GB on GPU 3 during the tests of the vLLM inference stacks.
   It was not in operation during the TensorFold tests (Appendix A.4). We did not measure its GPU load or its effect.
-  The 16-slot vLLM servers used a GPU memory fraction of 0.90 to keep memory free for it.
+  The 16-slot vLLM inference stacks used a GPU memory fraction of 0.90 to keep memory free for it.
 
 **The official vLLM**
 
@@ -1957,17 +1959,17 @@ We did no test of `TF_GLM_FILL_ROWS=4096`, which gives full prefill chunks while
 
 **The quality result**
 
-- **It has a narrow scope.** It is from one agent and two data sets of small Python tasks. Each server has one
+- **It has a narrow scope.** It is from one agent and two data sets of small Python tasks. Each inference stack has one
   run, and Jovian Judgement r24 has two. We did not measure other types of work. We also did not measure how near the output distribution of each
   engine is to the original model. The TensorFold recipe publishes a fidelity table for its settings.
-- **It does not show that the servers are equal.** The paired test did not find a difference. The 95% interval of
+- **It does not show that the inference stacks are equal.** The paired test did not find a difference. The 95% interval of
   the difference between TensorFold and Jovian Judgement is −1.4 to +2.5 percentage points.
 - **Only Jovian Judgement r24 has two runs.** Its two runs had a different result for 29 tasks. We do not know the
-  variation between two runs on the other servers.
+  variation between two runs on the other inference stacks.
 - **It does not show the effect of the quantization alone.** EXL3 at 4 bits for each weight with FP8 dense layers is
   one approximation of the model. NVFP4 is a different approximation. The draft methods and the parsers for tool
   calls are also different.
-- **The times of the agent run are not a speed test with equal work.** The servers wrote different numbers of
+- **The times of the agent run are not a speed test with equal work.** The inference stacks wrote different numbers of
   tokens for the same tasks.
 
 **The analysis and TensorFold modified**
@@ -1996,7 +1998,7 @@ We did no test of `TF_GLM_FILL_ROWS=4096`, which gives full prefill chunks while
 4. For Jovian Judgement, run the image with the settings in
    [`recipes/jovian-judgement.md`](recipes/jovian-judgement.md).
 5. For the official vLLM, use the commands in [`recipes/vllm-official.md`](recipes/vllm-official.md).
-6. Run sparkDash and then the probes on each server. Refer to [`recipes/method.md`](recipes/method.md) for the
+6. Run sparkDash and then the probes on each inference stack. Refer to [`recipes/method.md`](recipes/method.md) for the
    commands.
 7. For TensorFold modified, build the image and do the equality tests first. Refer to
    [`recipes/tensorfold-modified.md`](recipes/tensorfold-modified.md).
@@ -2015,7 +2017,7 @@ Jovian Judgement uses the kernels of B12X for important parts of this model (sec
 B12X for a reader who does not know GPU software. Appendix E.1 gives the same subject for a specialist.
 
 The description is for the package `b12x` at `e3d0ae06` (version 1.3.0), from the image of Jovian Judgement r24. It
-comes from the source code of the package and of the server, from the configuration of the model, and from the
+comes from the source code of the package and of Jovian Judgement, from the configuration of the model, and from the
 start logs. We did not measure B12X alone. We also did not measure the GPU time of each part of the model.
 
 ### G.1 What B12X is
@@ -2063,7 +2065,7 @@ and some steps do the same work on each GPU.*
 the four partial results and gives the sum to each GPU. On our host, the data of an all-reduce goes through the
 PCIe slots (Appendix A.5).
 
-The table shows the source of the kernels on the two vLLM servers in our tests.
+The table shows the source of the kernels on the two vLLM inference stacks in our tests.
 
 | Part of the model | Jovian Judgement r24 | Official vLLM 0.31.0 |
 |---|---|---|
@@ -2160,7 +2162,7 @@ a test can show it.
 ### G.4 What our tests show
 
 Jovian Judgement and the official vLLM use the same weights on the same host. Thus these tests compare the software
-of the two servers. The variation between runs also changes a measured difference (Appendix B.6). The table shows
+of the two inference stacks. The variation between runs also changes a measured difference (Appendix B.6). The table shows
 three tests.
 
 | Test | Jovian Judgement r24 | Official vLLM, default | Official vLLM, tuned |
@@ -2169,8 +2171,8 @@ three tests.
 | 56K context, thinking on, top_p 0.95, top_k 20, 16 requests, tokens/s | 1,123 | 841 | 978 |
 | Short greedy answers (prose), 16 requests, tokens/s | 1,105 | 866 | 958 |
 
-The row for the 56K context shows the mean of two runs for each server. The other two rows show one run for each
-server. For the official vLLM, these two rows show the second of its two runs.
+The row for the 56K context shows the mean of two runs for each inference stack. The other two rows show one run for each
+inference stack. For the official vLLM, these two rows show the second of its two runs.
 
 - **Jovian Judgement was faster than the official vLLM in these three tests.** Sections 2, 3, and 4 give the
   conditions.
@@ -2180,10 +2182,10 @@ server. For the official vLLM, these two rows show the second of its two runs.
   links off, the speed was near to the speed of the official vLLM.
 - **That test does not show the effect of B12X alone.** It changed two settings together: the PCIe all-reduce of
   B12X and the direct transfers of NCCL (Appendix C.7).
-- **B12X does not make a server the fastest for each load.** TensorFold does not use B12X. For one greedy code
+- **B12X does not make an inference stack the fastest for each load.** TensorFold does not use B12X. For one greedy code
   request, TensorFold was 35% faster than Jovian Judgement (section 2).
-- **The two vLLM servers are different in more than the kernels.** The scheduler, the draft tokens, and the cache
-  are also different (Appendix E.1). Our tests compare complete servers.
+- **The two vLLM inference stacks are different in more than the kernels.** The scheduler, the draft tokens, and the cache
+  are also different (Appendix E.1). Our tests compare complete inference stacks.
 
 ### G.5 The costs
 

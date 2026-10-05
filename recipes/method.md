@@ -101,8 +101,8 @@ For the long-context test with the context in a system message, add `--context-a
       --top-p 0.95 --top-k 20 --thinking-on max --context-as-system \
       --raw longctx-system-p95-topk20-raw.jsonl > longctx-system-p95-topk20.log
 
-**9. Four cold requests with a shared prefix (the vLLM servers).** [`tensorfold-modified.md`](tensorfold-modified.md) gives
-this test for the two TensorFold servers. A vLLM server does not accept the priority field as text, and it gives no
+**9. Four cold requests with a shared prefix (the vLLM inference stacks).** [`tensorfold-modified.md`](tensorfold-modified.md) gives
+this test for the two TensorFold inference stacks. A vLLM server does not accept the priority field as text, and it gives no
 token ids. Make the requests with a new first line for each start of a server, and record the times only:
 
     python3 probes/burst_reuse.py make --workload burst --lines 2800 --streams 4 --output-tokens 128 \
