@@ -1,0 +1,102 @@
+{
+ "benchId": "739db866-dd55-4e29-b4c6-5698b2ac9fe9",
+ "sparkId": "glm-host",
+ "status": "completed",
+ "startedAt": 1791225448007,
+ "completedAt": 1791225497399,
+ "config": {
+  "port": 8801,
+  "modelId": "glm-5.3-flash",
+  "contextSizes": [
+   8192,
+   16384,
+   32768,
+   65536,
+   131072,
+   262144
+  ]
+ },
+ "progress": {
+  "currentContext": null,
+  "completedLevels": 6,
+  "totalLevels": 6,
+  "message": "Done"
+ },
+ "results": [
+  {
+   "targetTokens": 8192,
+   "promptTokens": 8216,
+   "promptChars": 32767,
+   "prefillTps": 11455.16,
+   "ttftMs": 717.23,
+   "ttftContentMs": 717.23,
+   "completionTokens": 2,
+   "durationMs": 728.3,
+   "model": "glm-5.3-flash",
+   "error": null
+  },
+  {
+   "targetTokens": 16384,
+   "promptTokens": 16408,
+   "promptChars": 65535,
+   "prefillTps": 11678.51,
+   "ttftMs": 1404.97,
+   "ttftContentMs": 1404.97,
+   "completionTokens": 2,
+   "durationMs": 1414.62,
+   "model": "glm-5.3-flash",
+   "error": null
+  },
+  {
+   "targetTokens": 32768,
+   "promptTokens": 32792,
+   "promptChars": 131071,
+   "prefillTps": 11704.37,
+   "ttftMs": 2801.69,
+   "ttftContentMs": 2801.69,
+   "completionTokens": 2,
+   "durationMs": 2802.28,
+   "model": "glm-5.3-flash",
+   "error": null
+  },
+  {
+   "targetTokens": 65536,
+   "promptTokens": 65560,
+   "promptChars": 262143,
+   "prefillTps": 11558.52,
+   "ttftMs": 5672.01,
+   "ttftContentMs": 5672.01,
+   "completionTokens": 2,
+   "durationMs": 5672.74,
+   "model": "glm-5.3-flash",
+   "error": null
+  },
+  {
+   "targetTokens": 131072,
+   "promptTokens": 131094,
+   "promptChars": 524287,
+   "prefillTps": 10216.36,
+   "ttftMs": 12831.78,
+   "ttftContentMs": 12831.78,
+   "completionTokens": 2,
+   "durationMs": 12832.88,
+   "model": "glm-5.3-flash",
+   "error": null
+  },
+  {
+   "targetTokens": 262144,
+   "promptTokens": 262169,
+   "promptChars": 1048575,
+   "prefillTps": 10257.6,
+   "ttftMs": 25558.51,
+   "ttftContentMs": 25558.51,
+   "completionTokens": 2,
+   "durationMs": 25561.75,
+   "model": "glm-5.3-flash",
+   "error": null
+  }
+ ],
+ "error": null,
+ "durationMs": 49392,
+ "owner": null
+}

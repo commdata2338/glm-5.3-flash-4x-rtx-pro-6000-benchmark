@@ -1,0 +1,3 @@
+{"target_tokens": 2000, "prompt_tokens": 2061, "passphrase": "velvet-79242-meadow", "answer": "The user wants me to find the passphrase in the notes. Looking at the text, I can see it explicitly stated: \"The passphr", "ok": true, "seconds": 0.49}
+{"target_tokens": 30000, "prompt_tokens": 29849, "passphrase": "quartz-22695-ledger", "answer": "The user wants me to find the passphrase in the notes. Looking at the text, I can see \"The passphrase is quartz-22695-le", "ok": true, "seconds": 2.84}
+{"target_tokens": 200000, "prompt_tokens": 199192, "passphrase": "falcon-20469-willow", "answer": "The user has provided a large block of text with many word-number pairs, and states \"The passphrase is falcon-20469-will", "ok": true, "seconds": 19.81}

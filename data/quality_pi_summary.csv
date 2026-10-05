@@ -17,3 +17,6 @@ jovian_r281_8,Jovian Judgement r28.1,"8 slots, GPU links on, stock template",bot
 official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce",HumanEval+,164,161,155,98.2,94.8,99.4,94.5,89.9,97.1
 official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce",MBPP+,378,369,324,97.6,95.5,98.7,85.7,81.8,88.9
 official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce",both,542,530,479,97.8,96.2,98.7,88.4,85.4,90.8
+jovian_r38_8,Jovian Judgement r38,"8 slots, GPU links on, stock template",HumanEval+,164,163,155,99.4,96.6,99.9,94.5,89.9,97.1
+jovian_r38_8,Jovian Judgement r38,"8 slots, GPU links on, stock template",MBPP+,378,365,317,96.6,94.2,98.0,83.9,79.8,87.2
+jovian_r38_8,Jovian Judgement r38,"8 slots, GPU links on, stock template",both,542,528,472,97.4,95.7,98.5,87.1,84.0,89.6

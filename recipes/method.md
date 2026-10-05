@@ -110,6 +110,12 @@ token ids. Make the requests with a new first line for each start of a server, a
     python3 probes/burst_reuse.py run --fixtures burst-requests-vllm.json --base-url $URL --concurrency 4 \
       --no-token-ids --output burst-<server>.jsonl
 
+**10. The last tokens of a short prompt.** This probe is for the change of Appendix C.9 of the paper. It sends 1,080
+prompts of 8 to 6,007 tokens as token ids:
+
+    python3 probes/short_context.py run --base-url $URL --out shortctx.jsonl > shortctx.log
+    python3 probes/short_context.py summary shortctx.jsonl <the file of a different server>
+
 ## The check of the chat template
 
     python3 probes/template_check.py <checkpoint dir> <patched template>
@@ -126,6 +132,7 @@ The script uses `transformers`. We ran it in the image of Jovian Judgement with 
 | `warm_chat.py` | off | temperature 0 | 16 tokens |
 | `prefix_reuse_check.py` | the default of the server | temperature 0 | 16 tokens, and 300 tokens in one step, fixed with `ignore_eos` |
 | `integrity.py` | off | temperature 0 | 40 tokens maximum |
+| `short_context.py` | not applicable: the prompt is a list of token ids | temperature 0 | 1 token |
 | `thinkoff_probe.py` | off, in two forms | temperature 0, top_p 1 | 400 tokens, fixed |
 
 TensorFold does not use `min_tokens`, and it obeys `ignore_eos`. It reads `top_k: -1` as "no top_k". If a request

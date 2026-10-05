@@ -143,6 +143,54 @@ jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,2,identical resend,83584,,0.474
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,2,resend + new turn,84464,,0.571
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,2,own reply + new turn,84515,,0.573
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",9000,1,cold,13526,,1.245
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",9000,1,identical resend,13526,,0.048
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",9000,1,resend + new turn,14424,,1.287
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",9000,1,own reply + new turn,14543,,0.328
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",9000,2,cold,13505,,1.232
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",9000,2,identical resend,13505,,0.046
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",9000,2,resend + new turn,14385,,1.291
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",9000,2,own reply + new turn,14424,,0.313
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",56000,1,cold,83571,,7.802
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",56000,1,identical resend,83571,,0.139
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",56000,1,resend + new turn,84469,,7.886
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",56000,1,own reply + new turn,84527,,0.321
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",56000,2,cold,83584,,7.625
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",56000,2,identical resend,83584,,0.144
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",56000,2,resend + new turn,84464,,7.738
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",56000,2,own reply + new turn,84507,,0.329
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",9000,1,cold,13526,,1.216
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",9000,1,identical resend,13526,,0.41
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",9000,1,resend + new turn,14424,,0.583
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",9000,1,own reply + new turn,14483,,0.561
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",9000,2,cold,13505,,1.209
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",9000,2,identical resend,13505,,0.415
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",9000,2,resend + new turn,14385,,0.572
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",9000,2,own reply + new turn,14448,,0.539
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",56000,1,cold,83571,,7.574
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",56000,1,identical resend,83571,,0.553
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",56000,1,resend + new turn,84469,,0.715
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",56000,1,own reply + new turn,84527,,0.738
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",56000,2,cold,83584,,7.567
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",56000,2,identical resend,83584,,0.538
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",56000,2,resend + new turn,84464,,0.683
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",56000,2,own reply + new turn,84506,,0.716
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",9000,1,cold,13526,,1.248
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",9000,1,identical resend,13526,,1.327
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",9000,1,resend + new turn,14424,,0.415
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",9000,1,own reply + new turn,14468,,0.422
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",9000,2,cold,13505,,1.241
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",9000,2,identical resend,13505,,1.296
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",9000,2,resend + new turn,14385,,0.416
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",9000,2,own reply + new turn,14439,,0.418
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",56000,1,cold,83571,,8.266
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",56000,1,identical resend,83571,,8.016
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",56000,1,resend + new turn,84469,,0.769
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",56000,1,own reply + new turn,84536,,0.572
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",56000,2,cold,83584,,8.044
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",56000,2,identical resend,83584,,8.015
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",56000,2,resend + new turn,84464,,0.558
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",56000,2,own reply + new turn,84585,,0.571
 tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,1,cold,13526,0,1.923
 tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,1,identical resend,13526,13504,0.053
 tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,1,resend + new turn,14424,13504,0.277

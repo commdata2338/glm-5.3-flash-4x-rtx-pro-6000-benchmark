@@ -35,3 +35,23 @@ server,request,prompt_tokens,cached_tokens_reported,completion_tokens,ttft_s,rep
 "Official vLLM, tuned",sibling-1,42251,,128,15.137,,the same requests with a different first line and no priority field
 "Official vLLM, tuned",sibling-2,42251,,128,14.184,,the same requests with a different first line and no priority field
 "Official vLLM, tuned",sibling-3,42251,,128,14.675,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 8 slots",sibling-0,42251,,128,4.697,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 8 slots",sibling-1,42251,,128,13.804,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 8 slots",sibling-2,42251,,128,16.975,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 8 slots",sibling-3,42251,,128,9.444,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 16 slots",sibling-0,42251,,128,9.24,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 16 slots",sibling-1,42251,,128,12.649,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 16 slots",sibling-2,42251,,128,4.412,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 16 slots",sibling-3,42251,,128,16.562,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 16 slots, checkpoint policy aligned",sibling-0,42251,,128,4.534,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 16 slots, checkpoint policy aligned",sibling-1,42251,,128,4.532,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 16 slots, checkpoint policy aligned",sibling-2,42251,,128,4.533,,the same requests with a different first line and no priority field
+"Jovian Judgement r38, 16 slots, checkpoint policy aligned",sibling-3,42251,,128,4.895,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 16 slots, session 6",sibling-0,42251,,128,4.821,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 16 slots, session 6",sibling-1,42251,,128,9.889,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 16 slots, session 6",sibling-2,42251,,128,14.122,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 16 slots, session 6",sibling-3,42251,,128,14.124,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 8 slots, session 6",sibling-0,42251,,128,4.748,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 8 slots, session 6",sibling-1,42251,,128,9.014,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 8 slots, session 6",sibling-2,42251,,128,9.012,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 8 slots, session 6",sibling-3,42251,,128,9.556,,the same requests with a different first line and no priority field

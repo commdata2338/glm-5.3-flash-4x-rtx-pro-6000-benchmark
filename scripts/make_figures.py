@@ -10,13 +10,13 @@ One style for all figures:
   - IBM Plex Sans (scripts/fonts/, SIL Open Font License), no text below 9.5 points.
   - One line below the plot and no line at the left. Light horizontal lines show the values.
   - The two recipes (TensorFold and Jovian Judgement r24) have thick lines. TensorFold modified, Jovian Judgement
-    r28.1 and the official vLLM have thin lines.
+    r28.1 and r38, and the official vLLM have thin lines.
   - A legend above the panels, panel letters, units in the axis labels, a comma in each number of four digits.
 
 Colors are four slots of a color-blind-checked categorical palette; each series also has its own marker, so
 identity never rests on color alone. The two configurations of the official vLLM share one hue; the marker and the
 line style show which is which. TensorFold and TensorFold modified share one hue in the same way, and so do the
-two releases of Jovian Judgement. Every plotted value is also in a table in the README (scripts/make_tables.py makes
+three releases of Jovian Judgement. Every plotted value is also in a table in the README (scripts/make_tables.py makes
 those tables from the same data).
 
 The figure numbers follow the sequence of the paper: Figures 1 to 6 are in the body, Figure 7 is in Appendix A,
@@ -24,6 +24,7 @@ Figure 8 is in Appendix C, and Figures 9 to 11 are in Appendix G. Figures 7, 9, 
 """
 import csv
 import json
+import os
 from collections import defaultdict
 from pathlib import Path
 
@@ -38,7 +39,10 @@ from matplotlib.ticker import FuncFormatter, NullLocator  # noqa: E402
 from matplotlib.transforms import blended_transform_factory  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA, OUT, FONTS = ROOT / "data", ROOT / "figures", Path(__file__).resolve().parent / "fonts"
+# PAPER_DATA and PAPER_FIGURES: different directories for the CSV files and for the figures (for a comparison)
+DATA = Path(os.environ.get("PAPER_DATA") or ROOT / "data")
+OUT = Path(os.environ.get("PAPER_FIGURES") or ROOT / "figures")
+FONTS = Path(__file__).resolve().parent / "fonts"
 for font in sorted(FONTS.glob("*.ttf")):
     font_manager.fontManager.addfont(str(font))
 FAMILY = "IBM Plex Sans" if any(FONTS.glob("IBMPlexSans-*.ttf")) else "DejaVu Sans"
@@ -54,19 +58,19 @@ STYLE = {  # run id: (label, color, marker, line style, line width, marker size)
     "vllm_links_on_16": ("Jovian Judgement r24", ORANGE, "s", "-", 2.1, 5.6),
     # Release r28.1 has the hue of release r24. The marker and the line style show which is which.
     "jovian_r281_16": ("Jovian Judgement r28.1", ORANGE, "P", (0, (4, 2)), 1.3, 5.4),
+    "jovian_r38_16": ("Jovian Judgement r38", ORANGE, "X", (0, (1, 1.6)), 1.3, 5.6),
     "vllm_links_on_8": ("Jovian Judgement r24, links on", ORANGE, "s", "-", 2.1, 5.6),
     "vllm_links_off_8": ("Jovian Judgement r24, links off", AQUA, "^", "-", 2.1, 6.2),
     # One hue for the official vLLM. The marker and the line style show its two configurations.
     "official_default_16_pass2": ("Official vLLM, default", VIOLET, "v", (0, (4, 2)), 1.3, 4.8),
     "official_pcie_16_pass2": ("Official vLLM, tuned", VIOLET, "D", "-", 1.3, 4.4),
 }
-# The six configurations of the speed tests, in the sequence of the tables. The sparkDash tests show the second
+# The seven configurations of the speed tests, in the sequence of the tables. The sparkDash tests show the second
 # run of the official vLLM.
-SERVERS = ["tensorfold", "tensorfold_modified_best", "vllm_links_on_16", "jovian_r281_16", "official_default_16_pass2",
+# The releases of Jovian Judgement that the charts show beside release r24. The tables show each release.
+CHART_RELEASES = ("jovian_r281_16", "jovian_r38_16")
+SERVERS = ["tensorfold", "tensorfold_modified_best", "vllm_links_on_16", *CHART_RELEASES, "official_default_16_pass2",
            "official_pcie_16_pass2"]
-# The servers of the long-context chart. Jovian Judgement r28.1 gave no speed in that test (see NO_VALUE).
-LONG_SERVERS = [run for run in SERVERS if run != "jovian_r281_16"]
-NO_VALUE = {"jovian_r281_16"}   # the test ran, but no time interval had the decode of all its requests
 
 plt.rcParams.update({
     "font.family": FAMILY, "font.size": 10, "axes.titlesize": 10.5, "axes.titleweight": "semibold",
@@ -105,11 +109,19 @@ def series(ax, run, points):
 def legend(fig, runs, left, ncol=3, y=0.995):
     """The legend above the panels. `left` is the left edge of the plots, in inches. A column of the legend has
     two related servers: TensorFold and TensorFold modified, then the two releases of Jovian Judgement, then the
-    two configurations of the official vLLM."""
+    two configurations of the official vLLM. With seven configurations the legend has three rows: an empty entry
+    below the two TensorFold servers keeps the three releases of Jovian Judgement in one column."""
     handles = [Line2D([], [], color=STYLE[r][1], marker=STYLE[r][2], linestyle=STYLE[r][3], linewidth=STYLE[r][4],
                       markersize=STYLE[r][5], label=STYLE[r][0]) for r in runs]
+    if len(runs) > 6 and ncol == 3:
+        handles.insert(2, Line2D([], [], linestyle="none", label=" "))
     fig.legend(handles=handles, loc="upper left", ncol=ncol, bbox_to_anchor=(left / WIDTH - 0.016, y),
                columnspacing=1.6, handlelength=2.3, labelspacing=0.4, borderaxespad=0.2)
+
+
+def legend_room(runs):
+    """Inches for the rows of the legend above two: a legend with seven configurations has three rows."""
+    return 0.21 if len(runs) > 6 else 0.0
 
 
 def margins(height, left, right, top, bottom):
@@ -160,6 +172,8 @@ LONG_RUNS = {
                          "off": ("waves", ("vllm_links_on_16", "vllm_links_on_16_session3")),
                          "p1": ("waves", ("vllm_links_on_16",))},
     "jovian_r281_16": {},
+    "jovian_r38_16": {"k20": ("waves", ("jovian_r38_16_topk",)),
+                      "off": ("waves", ("jovian_r38_16", "jovian_r38_16_topk")), "p1": ("waves", ("jovian_r38_16",))},
     "official_default_16_pass2": {"k20": ("waves", ("official_default_16_session5",)),
                                   "off": ("waves", ("official_default_16", "official_default_16_session5")),
                                   "p1": ("waves", ("official_default_16",))},
@@ -185,12 +199,18 @@ def long_cells(run, setting, field="total_tok_s"):
     return sorted((c, sum(v) / len(v)) for c, v in found.items())
 
 
+# A release of Jovian Judgement with no speed in the long-context test: the test ran, but no time interval had the
+# decode of all its requests (release r28.1 with its default checkpoint policy). It has no line in that chart.
+NO_VALUE = {run for run in CHART_RELEASES if not long_cells(run, "k20")}
+LONG_SERVERS = [run for run in SERVERS if run not in NO_VALUE]
+
+
 def figure_three_loads():
     """Figure 1. Three loads on each server: the best server is not the same for each load."""
     titles = ["A  Short code answer\n1 request, greedy", "B  Cold 64K prompt\nprefill",
               "C  Shared 56K context\n16 requests\ntop_p 0.95, top_k 20"]
     limits = [(600, [0, 250, 500]), (17000, [0, 6000, 12000]), (1700, [0, 600, 1200])]
-    height = 3.3 + NOTE_ROOM
+    height = 3.3 + 0.36 * (len(SERVERS) - 6) + NOTE_ROOM   # one more row for each configuration above six
     fig, axes = plt.subplots(1, 3, figsize=(WIDTH, height), sharey=True)
     for panel, ax in enumerate(axes):
         limit, ticks = limits[panel]
@@ -221,7 +241,7 @@ def figure_three_loads():
 def figure_decode():
     """Figure 2. The decode test of sparkDash on the six configurations, with a logarithmic speed axis."""
     left = 0.80
-    height = 4.65 + NOTE_ROOM
+    height = 4.65 + NOTE_ROOM + legend_room(SERVERS)
     fig, axes = plt.subplots(2, 2, figsize=(WIDTH, height), sharey=True)
     panels = (("prose", "A  Prose"), ("code", "B  Code"), ("structured", "C  Count task"), ("json", "D  JSON"))
     for ax, (kind, title) in zip(axes.flat, panels):
@@ -237,8 +257,8 @@ def figure_decode():
     fig.supylabel("Total decode, tokens/s (log scale)", fontsize=SMALL, color=MUTED, x=0.014)
     fig.supxlabel("Concurrent requests (log scale)", fontsize=SMALL, color=MUTED, y=(0.08 + NOTE_ROOM) / height)
     legend(fig, SERVERS, left)
-    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=0.84, bottom=0.54 + NOTE_ROOM), hspace=0.46,
-                        wspace=0.07)
+    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=0.84 + legend_room(SERVERS),
+                                  bottom=0.54 + NOTE_ROOM), hspace=0.46, wspace=0.07)
     fork_note(fig)
     save(fig, "figure2-decode-by-output-type")
 
@@ -246,7 +266,7 @@ def figure_decode():
 def figure_prefill():
     """Figure 3. Prefill of one cold prompt on the six configurations. The speed axis starts at 5,000."""
     left = 0.86
-    height = 3.3 + NOTE_ROOM
+    height = 3.3 + NOTE_ROOM + legend_room(SERVERS)
     fig, ax = plt.subplots(figsize=(WIDTH, height))
     for run in SERVERS:
         series(ax, run, sparkdash("prefill_sparkdash.csv", run, "prompt_tokens", "prefill_tok_s"))
@@ -256,7 +276,8 @@ def figure_prefill():
     ax.yaxis.set_major_formatter(thousands)
     ax.set_title("The speed axis starts at 5,000", loc="left", fontsize=SMALL, fontweight="normal", color=MUTED)
     legend(fig, SERVERS, left)
-    fig.subplots_adjust(**margins(height, left=left, right=0.14, top=0.86, bottom=0.56 + NOTE_ROOM))
+    fig.subplots_adjust(**margins(height, left=left, right=0.14, top=0.86 + legend_room(SERVERS),
+                                  bottom=0.56 + NOTE_ROOM))
     fork_note(fig)
     save(fig, "figure3-cold-prompt-prefill")
 
@@ -268,7 +289,7 @@ def figure_long_context():
               ("off", "total_tok_s", "B  Decode: top_p 0.95, no top_k"),
               ("p1", "total_tok_s", "C  Decode: top_p 1.0, no top_k"),
               ("off", "median_ttft_s", "D  First token, context in the cache\ntop_p 0.95, no top_k")]
-    height = 4.85 + NOTE_ROOM
+    height = 4.85 + NOTE_ROOM + legend_room(LONG_SERVERS)
     fig, axes = plt.subplots(2, 2, figsize=(WIDTH, height))
     for ax, (setting, field, title) in zip(axes.flat, panels):
         decode = field == "total_tok_s"
@@ -300,8 +321,8 @@ def figure_long_context():
     for ax in axes[1]:
         ax.set_xlabel("Concurrent requests (log scale)")
     legend(fig, LONG_SERVERS, left)
-    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=0.86, bottom=0.55 + NOTE_ROOM), hspace=0.56,
-                        wspace=0.27)
+    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=0.86 + legend_room(LONG_SERVERS),
+                                  bottom=0.55 + NOTE_ROOM), hspace=0.56, wspace=0.27)
     fork_note(fig)
     save(fig, "figure4-long-context-thinking-on")
 
@@ -365,6 +386,7 @@ def figure_quality():
              ("vllm_links_on_8", "Jovian Judgement\nr24 (NVFP4)", "vllm_links_on_16"),
              ("vllm_links_on_8_run2", "Jovian Judgement\nr24, second run", "vllm_links_on_16"),
              ("jovian_r281_8", "Jovian Judgement\nr28.1 (NVFP4)", "jovian_r281_16"),
+             ("jovian_r38_8", "Jovian Judgement\nr38 (NVFP4)", "jovian_r38_16"),
              ("official_default_16", "Official vLLM,\ndefault (NVFP4)", "official_default_16_pass2")]
     order = [(run, label, style) for run, label, style in order if any(r["run"] == run for r in rows)]
     left = 1.58

@@ -48,6 +48,19 @@ This directory contains the output of the tools and the probes, as the test host
 - `checkpoint-policy.log` contains the lines of the server log of one start that name the rule for the recurrent
   state. `first-start-prefix-cache-hit-rate.log` contains the status lines of the server log during the three
   long-context tests of the first start of release r28.1.
+- `session6/` is from the sixth session. It has release r38 with 16 slots, with 16 slots and
+  `--recurrent-checkpoint-policy aligned`, and with 8 slots. It also has release r24 with 16 slots (the control run)
+  and with 8 slots.
+- In `session6/`, `shortctx.jsonl` is the output of `probes/short_context.py`, and `shortctx.log` contains its
+  summary. `allreduce-lines.log` contains the lines of the start log that give the arguments, the version, and the
+  all-reduce.
+- In `session6/`, a `longctx-sampled*.log` file with the word `skipped` shows that the test suite did not do that
+  step on that server.
+- In `session6/jovian-judgement-r38-8-slots/` and `session6/jovian-judgement-r24-8-slots/`, the files of the test
+  suite are from servers with 8 slots and the standard chat template. No table of the paper uses the speed values
+  of these files. The files with `pass2` in the name are a second run of the two sparkDash tests.
+- `session6/cold-requests/` contains the test with four cold requests on release r38, and on release r24 in the same
+  session.
 - `session5/cold-requests/` contains the test with four cold requests on the vLLM inference stacks, and the requests.
   `burst-jovian-r24-live.jsonl` is a first attempt, before the probe had the option `--no-token-ids`. The probe
   recorded an error for each request, and the paper does not use this file. After that attempt, the server had the

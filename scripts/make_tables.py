@@ -12,16 +12,22 @@ The body of the paper has short tables (the names that end in _body, and modifie
 full tables. The check ignores the padding of the cells, so an editor that aligns the columns does not fail it.
 """
 import csv
+import os
 import re
 import sys
 from collections import defaultdict
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
-DATA = Path(__file__).resolve().parent.parent / "data"
+# PAPER_DATA: a different directory with the CSV files (for a comparison with data/, as --out of build_data.py)
+DATA = Path(os.environ.get("PAPER_DATA") or Path(__file__).resolve().parent.parent / "data")
 TENSORFOLD, MODIFIED, VLLM = "TensorFold", "TensorFold modified", "Jovian Judgement r24"
 JOVIAN28, RUN2 = "Jovian Judgement r28.1", "Jovian Judgement r24, second run"
 JOVIAN28A = "Jovian Judgement r28.1, policy aligned"   # with --recurrent-checkpoint-policy aligned
+# Release r38 (session 6) with the settings of release r24. Its rows and columns are in a table only when data/ has
+# its values, so a table is the same as before until the test has run.
+JOVIAN38, JOVIAN38A = "Jovian Judgement r38", "Jovian Judgement r38, policy aligned"
+CONTROL = "Jovian Judgement r24, session 6"   # release r24 one more time, in the session of release r38
 OFFICIAL, OFFICIAL_PCIE = "Official vLLM, default", "Official vLLM, tuned"
 NONE = "no test"
 NO_VALUE = "no value"   # the test ran, but no time interval had the decode of all its requests (status no_overlap)
@@ -55,6 +61,12 @@ def mean(values):
     return sum(values) / len(values) if values else None
 
 
+def measured(pairs, name, key="run"):
+    """The (server, run) pairs that the file has rows for."""
+    there = {r[key] for r in read(name)}
+    return [(server, run) for server, run in pairs if run in there]
+
+
 def table(header, rows, align=None):
     align = align or ["---"] + ["---:"] * (len(header) - 1)
     lines = ["| " + " | ".join(header) + " |", "|" + "|".join(align) + "|"]
@@ -63,9 +75,10 @@ def table(header, rows, align=None):
 
 # --- the sources of each server ---------------------------------------------------------------------------------
 
-DECODE_RUNS = [(TENSORFOLD, "tensorfold"), (MODIFIED, "tensorfold_modified_best"), (VLLM, "vllm_links_on_16"),
-               (JOVIAN28, "jovian_r281_16"), (OFFICIAL, "official_default_16_pass2"),
-               (OFFICIAL_PCIE, "official_pcie_16_pass2")]
+DECODE_RUNS = measured([(TENSORFOLD, "tensorfold"), (MODIFIED, "tensorfold_modified_best"), (VLLM, "vllm_links_on_16"),
+                        (JOVIAN28, "jovian_r281_16"), (JOVIAN38, "jovian_r38_16"),
+                        (OFFICIAL, "official_default_16_pass2"), (OFFICIAL_PCIE, "official_pcie_16_pass2")],
+                       "decode_sparkdash.csv")
 
 
 def wave_cells(top_p, top_k, runs=(), arm=None, probe="long_context_sampled", field="total_tok_s"):
@@ -91,6 +104,12 @@ LONG = {
     JOVIAN28A: {"k20": dict(runs=("jovian_r281_16_aligned_topk",)),
                 "off": dict(runs=("jovian_r281_16_aligned", "jovian_r281_16_aligned_topk")),
                 "p1": dict(runs=("jovian_r281_16_aligned",))},
+    # Jovian Judgement r38 (session 6): the suite has the two passes with no top_k, the three passes have top_k 20.
+    JOVIAN38: {"k20": dict(runs=("jovian_r38_16_topk",)), "off": dict(runs=("jovian_r38_16", "jovian_r38_16_topk")),
+               "p1": dict(runs=("jovian_r38_16",))},
+    JOVIAN38A: {"k20": dict(runs=("jovian_r38_16_aligned_topk",)),
+                "off": dict(runs=("jovian_r38_16_aligned", "jovian_r38_16_aligned_topk")),
+                "p1": dict(runs=("jovian_r38_16_aligned",))},
     # The official vLLM: top_k 20 is from session 5 (two passes). No top_k is from session 2 and session 5.
     OFFICIAL: {"k20": dict(runs=("official_default_16_session5",)),
                "off": dict(runs=("official_default_16", "official_default_16_session5")),
@@ -100,10 +119,14 @@ LONG = {
                     "p1": dict(runs=("official_pcie_16",))},
 }
 SAMPLER = {"k20": (0.95, "20"), "off": (0.95, "off"), "p1": (1.0, "off")}
+# Release r38 is in the long-context tables when data/ has one of its waves.
+_WAVE_RUNS = {r["run"] for r in read("concurrent_waves.csv") if r["probe"] == "long_context_sampled"}
+LONG = {server: sources for server, sources in LONG.items() if server not in (JOVIAN38, JOVIAN38A)
+        or any(run in _WAVE_RUNS for source in sources.values() for run in source["runs"])}
 
 
 def long_cell(server, setting, concurrency, field="total_tok_s"):
-    if setting not in LONG[server]:
+    if setting not in LONG.get(server, {}):
         return None
     return wave_cells(*SAMPLER[setting], field=field, **LONG[server][setting]).get(concurrency)
 
@@ -111,7 +134,8 @@ def long_cell(server, setting, concurrency, field="total_tok_s"):
 def long_text(server, setting, concurrency):
     """The cell of the long-context tables: the speed, "no test", or "no value" for a test that gave no speed."""
     value = long_cell(server, setting, concurrency)
-    if value is None and setting in LONG[server] and long_cell(server, setting, concurrency, field="median_ttft_s"):
+    if (value is None and setting in LONG.get(server, {})
+            and long_cell(server, setting, concurrency, field="median_ttft_s")):
         return NO_VALUE
     return n0(value)
 
@@ -130,9 +154,10 @@ def seconds(value):
 
 
 KINDS = (("prose", "Prose"), ("code", "Code"), ("structured", "Count task"), ("json", "JSON"))
-REUSE_RUNS = [(TENSORFOLD, "tensorfold"), (MODIFIED, "tensorfold_modified_best"), (VLLM, "vllm_links_on_16"),
-              (JOVIAN28, "jovian_r281_16"), (JOVIAN28A, "jovian_r281_16_aligned"),
-              (OFFICIAL, "official_default_16"), (OFFICIAL_PCIE, "official_pcie_16")]
+REUSE_RUNS = measured([(TENSORFOLD, "tensorfold"), (MODIFIED, "tensorfold_modified_best"), (VLLM, "vllm_links_on_16"),
+                       (JOVIAN28, "jovian_r281_16"), (JOVIAN28A, "jovian_r281_16_aligned"),
+                       (JOVIAN38, "jovian_r38_16"), (JOVIAN38A, "jovian_r38_16_aligned"),
+                       (OFFICIAL, "official_default_16"), (OFFICIAL_PCIE, "official_pcie_16")], "chat_reuse_ttft.csv")
 REUSE_CASES = ("cold", "identical resend", "resend + new turn", "own reply + new turn")
 REUSE_HEADER = ["Cold", "Same prompt again", "Same prompt and a new turn", "Answer of the model and a new turn"]
 
@@ -145,7 +170,7 @@ def decode():
         for i, (server, run) in enumerate(DECODE_RUNS):
             cells = {int(r["concurrency"]): float(r["total_tok_s"]) for r in data
                      if r["run"] == run and r["output_type"] == kind}
-            rows.append([name if i == 0 else "", server, *[n0(cells[c]) for c in (1, 2, 4, 8, 16)]])
+            rows.append([name if i == 0 else "", server, *[n0(cells.get(c)) for c in (1, 2, 4, 8, 16)]])
             reference = {int(r["concurrency"]): float(r["total_tok_s"]) for r in published if r["output_type"] == kind}
             if run == "tensorfold" and reference:
                 rows.append(["", "TensorFold, published values", *[n0(reference[c]) for c in (1, 2, 4, 8, 16)]])
@@ -156,10 +181,12 @@ def greedy_1k():
     rows = []
     sources = [(TENSORFOLD, dict(runs=("tensorfold",))), (MODIFIED, dict(arm="modified-best")),
                (VLLM, dict(runs=("vllm_links_on_16",))), (JOVIAN28, dict(runs=("jovian_r281_16",))),
+               (JOVIAN38, dict(runs=("jovian_r38_16",))),
                (OFFICIAL, dict(runs=("official_default_16",))), (OFFICIAL_PCIE, dict(runs=("official_pcie_16",)))]
     for server, source in sources:
         cells = wave_cells(1.0, "off", probe="greedy_1k", **source)
-        rows.append([server, *[n0(cells[c]) for c in (1, 8, 12, 16)]])
+        if cells:   # a server with no test of this type has no row
+            rows.append([server, *[n0(cells.get(c)) for c in (1, 8, 12, 16)]])
     return table(["Inference stack", "1", "8", "12", "16"], rows)
 
 
@@ -170,11 +197,12 @@ def prefill():
     for server, run in ((TENSORFOLD, "tensorfold"), ("TensorFold, published values", None), (MODIFIED, "tensorfold_modified_best"),
                         ("Jovian Judgement r24, direct GPU links on", "vllm_links_on_16"),
                         ("Jovian Judgement r24, direct GPU links off (8 slots)", "vllm_links_off_8"),
-                        (JOVIAN28, "jovian_r281_16"),
+                        (JOVIAN28, "jovian_r281_16"), (JOVIAN38, "jovian_r38_16"),
                         (OFFICIAL, "official_default_16_pass2"), (OFFICIAL_PCIE, "official_pcie_16_pass2")):
         cells = [v for _, v in published] if run is None else \
             [v for _, v in sorted((int(r["target_tokens"]), float(r["prefill_tok_s"])) for r in data if r["run"] == run)]
-        rows.append([server, *[n0(v) for v in cells]])
+        if cells:   # a server with no test of this type has no row
+            rows.append([server, *[n0(v) for v in cells]])
     return table(["Inference stack", "8K", "16K", "32K", "64K", "128K", "256K"], rows)
 
 
@@ -184,7 +212,7 @@ def decode_body():
     rows = []
     for server, run in DECODE_RUNS:
         cells = {(r["output_type"], int(r["concurrency"])): float(r["total_tok_s"]) for r in data if r["run"] == run}
-        rows.append([server, *[n0(cells[(kind, c)]) for kind, _ in KINDS for c in (1, 16)]])
+        rows.append([server, *[n0(cells.get((kind, c))) for kind, _ in KINDS for c in (1, 16)]])
     return table(["Inference stack", *[f"{name}, {c}" for _, name in KINDS for c in (1, 16)]], rows)
 
 
@@ -194,14 +222,14 @@ def prefill_body():
     rows = []
     for server, run in DECODE_RUNS:
         cells = {r["target_tokens"]: float(r["prefill_tok_s"]) for r in data if r["run"] == run}
-        rows.append([server, *[n0(cells[size]) for size in ("8192", "65536", "262144")]])
+        rows.append([server, *[n0(cells.get(size)) for size in ("8192", "65536", "262144")]])
     return table(["Inference stack", "8K", "64K", "256K"], rows)
 
 
 def long_context():
     rows = []
     for concurrency in (4, 8, 16):
-        for i, server in enumerate(LONG):
+        for i, server in enumerate(LONG_TABLE):
             rows.append([concurrency if i == 0 else "", server,
                          *[long_text(server, setting, concurrency) for setting in ("k20", "off", "p1")],
                          n1(long_cell(server, "off", concurrency, field="median_ttft_s"))])
@@ -293,7 +321,8 @@ def gpu_links():
 
 
 ALL_QUALITY_RUNS = [(TENSORFOLD, "tensorfold"), (MODIFIED, "tensorfold_modified_best"), (VLLM, "vllm_links_on_8"),
-                    (RUN2, "vllm_links_on_8_run2"), (JOVIAN28, "jovian_r281_8"), (OFFICIAL, "official_default_16")]
+                    (RUN2, "vllm_links_on_8_run2"), (JOVIAN28, "jovian_r281_8"), (JOVIAN38, "jovian_r38_8"),
+                    (OFFICIAL, "official_default_16")]
 QUALITY_RUNS = [(server, run) for server, run in ALL_QUALITY_RUNS
                 if any(r["run"] == run for r in read("quality_pi_summary.csv"))]
 QUALITY_PAIRS = (("tensorfold", "tensorfold_modified_best", "TensorFold and TensorFold modified"),
@@ -303,6 +332,10 @@ QUALITY_PAIRS = (("tensorfold", "tensorfold_modified_best", "TensorFold and Tens
                  ("vllm_links_on_8", "jovian_r281_8", "Jovian Judgement r24 and Jovian Judgement r28.1"),
                  ("vllm_links_on_8_run2", "jovian_r281_8",
                   "Jovian Judgement r24, the second run, and Jovian Judgement r28.1"),
+                 ("vllm_links_on_8", "jovian_r38_8", "Jovian Judgement r24 and Jovian Judgement r38"),
+                 ("vllm_links_on_8_run2", "jovian_r38_8",
+                  "Jovian Judgement r24, the second run, and Jovian Judgement r38"),
+                 ("jovian_r281_8", "jovian_r38_8", "Jovian Judgement r28.1 and Jovian Judgement r38"),
                  ("vllm_links_on_8", "official_default_16", "Jovian Judgement r24 and the official vLLM, default"),
                  ("tensorfold", "official_default_16", "TensorFold and the official vLLM, default"))
 
@@ -351,7 +384,7 @@ def quality_paired(short=False):
 
 BODY_PAIRS = ("TensorFold and TensorFold modified", "TensorFold and Jovian Judgement r24",
               "Jovian Judgement r24, the first run and the second run", "Jovian Judgement r24 and Jovian Judgement r28.1",
-              "Jovian Judgement r24 and the official vLLM, default")
+              "Jovian Judgement r24 and Jovian Judgement r38", "Jovian Judgement r24 and the official vLLM, default")
 
 
 def quality_paired_body():
@@ -461,12 +494,15 @@ def span(values):
     return NONE if not values else f"{n1(min(values))} to {n1(max(values))}"
 
 
+BURST_R38 = "Jovian Judgement r38, 8 slots"
 BURST_VLLM_ALL = ("Jovian Judgement r24, 8 slots", "Jovian Judgement r28.1, 8 slots", "Jovian Judgement r28.1, 16 slots",
-                  "Jovian Judgement r28.1, 16 slots, checkpoint policy aligned", "Official vLLM, default",
-                  "Official vLLM, tuned")
+                  "Jovian Judgement r28.1, 16 slots, checkpoint policy aligned", BURST_R38,
+                  "Jovian Judgement r38, 16 slots", "Jovian Judgement r38, 16 slots, checkpoint policy aligned",
+                  "Official vLLM, default", "Official vLLM, tuned")
 BURST_BODY = ((TENSORFOLD, "TensorFold, recipe 1.0.1"), (MODIFIED, "TensorFold modified, GPU sampler and burst reuse on"),
               (VLLM, "Jovian Judgement r24, 8 slots"), (JOVIAN28, "Jovian Judgement r28.1, 8 slots"),
               (JOVIAN28A, "Jovian Judgement r28.1, 16 slots, checkpoint policy aligned"),
+              (JOVIAN38, BURST_R38), (JOVIAN38A, "Jovian Judgement r38, 16 slots, checkpoint policy aligned"),
               (OFFICIAL, "Official vLLM, default"), (OFFICIAL_PCIE, "Official vLLM, tuned"))
 
 
@@ -489,6 +525,8 @@ REUSE_CHECK = (  # (column, server, checkpoint setting) of prefix_reuse_check.cs
     ("Jovian Judgement r28.1", "Jovian Judgement r28.1", "release default"),
     ("Jovian Judgement r28.1, dense retention", "Jovian Judgement r28.1", "--prefix-cache-retention-interval None"),
     ("Jovian Judgement r28.1, policy aligned", "Jovian Judgement r28.1", "--recurrent-checkpoint-policy aligned"),
+    ("Jovian Judgement r38", "Jovian Judgement r38", "release default"),
+    ("Jovian Judgement r38, policy aligned", "Jovian Judgement r38", "--recurrent-checkpoint-policy aligned"),
     ("Official vLLM, default", "Official vLLM 0.31.0", "release default"),
     ("Official vLLM, tuned", "Official vLLM 0.31.0", "release default"),
 )
@@ -507,7 +545,7 @@ REUSE_STEPS = {
 
 
 REUSE_CHECK_BODY = ("Jovian Judgement r24", "Jovian Judgement r28.1", "Jovian Judgement r28.1, policy aligned",
-                    "Official vLLM, default")
+                    "Jovian Judgement r38", "Jovian Judgement r38, policy aligned", "Official vLLM, default")
 
 
 def reuse_check(place="user message", only=None):
@@ -536,7 +574,8 @@ def reuse_check_body():
 
 
 SYSTEM_FORM = ((VLLM + ", 8 slots", "vllm_links_on_8_session5"), (JOVIAN28 + ", 8 slots", "jovian_r281_8"),
-               (JOVIAN28A + ", 16 slots", "jovian_r281_16_aligned"))
+               (JOVIAN28A + ", 16 slots", "jovian_r281_16_aligned"), (JOVIAN38 + ", 8 slots", "jovian_r38_8"),
+               (JOVIAN38A + ", 16 slots", "jovian_r38_16_aligned"))
 
 
 def long_context_system():
@@ -567,10 +606,24 @@ POLICY_BURST = ("Jovian Judgement r24, 8 slots", "Jovian Judgement r28.1, 16 slo
                 "Jovian Judgement r28.1, 16 slots, checkpoint policy aligned")
 
 
-def r281_policies():
+# Release r38 beside release r24 of session 1 and beside release r24 of the same session (the control).
+# (column, run of the suite, server of the long-context tables, server of the cold requests)
+R38_RUNS = ((VLLM, "vllm_links_on_16", VLLM, "Jovian Judgement r24, 8 slots"),
+            (CONTROL, "vllm_links_on_16_session6", CONTROL, "Jovian Judgement r24, 16 slots, session 6"),
+            (JOVIAN38, "jovian_r38_16", JOVIAN38, "Jovian Judgement r38, 16 slots"),
+            (JOVIAN38A, "jovian_r38_16_aligned", JOVIAN38A, "Jovian Judgement r38, 16 slots, checkpoint policy aligned"))
+LONG[CONTROL] = {"k20": dict(runs=("vllm_links_on_16_session6_topk",)),
+                 "off": dict(runs=("vllm_links_on_16_session6", "vllm_links_on_16_session6_topk")),
+                 "p1": dict(runs=("vllm_links_on_16_session6",))}
+LONG_TABLE = [server for server in LONG if server != CONTROL]   # the control is in the table of release r38 only
+
+
+def r281_policies(columns=None):
     """Release r24 and release r28.1 with its two checkpoint policies, with 16 slots."""
     decode_rows, prefill_rows = read("decode_sparkdash.csv"), read("prefill_sparkdash.csv")
-    servers, runs = [s for s, _ in POLICY_RUNS], [r for _, r in POLICY_RUNS]
+    columns = columns or [(server, run, server, burst) for (server, run), burst in zip(POLICY_RUNS, POLICY_BURST)]
+    servers, runs = [c[0] for c in columns], [c[1] for c in columns]
+    long_servers, bursts = [c[2] for c in columns], [c[3] for c in columns]
 
     def decode(run, kind, concurrency):
         return next((float(r["total_tok_s"]) for r in decode_rows if r["run"] == run and r["output_type"] == kind
@@ -592,9 +645,9 @@ def r281_policies():
         ["Prefill of a cold prompt of 64K tokens, tokens/s", *[n0(fill(run, "65536")) for run in runs]],
         ["Prefill of a cold prompt of 256K tokens, tokens/s", *[n0(fill(run, "262144")) for run in runs]],
         ["56K context in a user message, top_p 0.95, top_k 20, 16 requests, tokens/s",
-         *[long_text(s, "k20", 16) for s in servers]],
+         *[long_text(s, "k20", 16) for s in long_servers]],
         ["The same test with no top_k: time to the first token, s",
-         *[n1(long_cell(s, "off", 16, field="median_ttft_s")) for s in servers]],
+         *[n1(long_cell(s, "off", 16, field="median_ttft_s")) for s in long_servers]],
         ["First token for the same prompt of 83.6K tokens a second time, s",
          *[seconds_cell(first(run, "identical resend")) for run in runs]],
         ["First token for the same prompt and a new turn, s",
@@ -602,9 +655,29 @@ def r281_policies():
         ["First token for the answer of the model and a new turn, s",
          *[seconds_cell(first(run, "own reply + new turn")) for run in runs]],
         ["First token for four cold requests with a shared prefix of 42K tokens, s",
-         *[span(burst_times(server)) for server in POLICY_BURST]],
+         *[span(burst_times(server) if server else []) for server in bursts]],
     ]
     return table(["Test", *servers], rows)
+
+
+def short_context():
+    """The short-context probe: the mean probability of the correct subsequent token for each group of lengths."""
+    data = read("short_context_probe.csv")
+    servers = [s for s in (VLLM, JOVIAN38) if any(r["server"] == s for r in data)]
+    cell = {(r["server"], r["first_length"], r["lengths_are_a_multiple_of_4"]):
+            f"{float(r['mean_probability_of_the_correct_token']):.3f}" for r in data}
+    groups = sorted({(int(r["first_length"]), int(r["last_length"])) for r in data})
+    rows = [[f"{first:,} to {last:,}", *[cell[(s, str(first), whole)] for s in servers for whole in ("True", "False")]]
+            for first, last in groups]
+    header = [f"{s.replace('Jovian Judgement', 'Release')}: {kind}" for s in servers
+              for kind in ("a multiple of 4", "the other lengths")]
+    return table(["Prompt lengths, tokens", *header], rows)
+
+
+def r38_releases():
+    """Release r38 with its two checkpoint policies, release r24, and release r24 in the session of release r38."""
+    there = {r["run"] for r in read("decode_sparkdash.csv")}
+    return r281_policies([column for column in R38_RUNS if column[1] in there])
 
 
 HIDDEN_STATE_BYTES = 4096 * 2   # one row of a message: the hidden state of one token, 4,096 values of 2 bytes (BF16)
@@ -696,18 +769,19 @@ def overview():
     summary = {r["run"]: r for r in read("quality_pi_summary.csv") if r["data_set"] == "both"}
     calls = {r["run"]: r for r in read("quality_pi_calls.csv")}
     d, reuse_runs = dict(DECODE_RUNS), dict(REUSE_RUNS)
-    servers = (TENSORFOLD, MODIFIED, VLLM, JOVIAN28)
+    servers = (TENSORFOLD, MODIFIED, VLLM, JOVIAN28) + ((JOVIAN38,) if JOVIAN38 in d else ())
 
     def prose(server, concurrency):
-        return next(float(r["total_tok_s"]) for r in decode_rows
-                    if r["run"] == d[server] and r["output_type"] == "prose" and int(r["concurrency"]) == concurrency)
+        return next((float(r["total_tok_s"]) for r in decode_rows
+                     if r["run"] == d[server] and r["output_type"] == "prose" and int(r["concurrency"]) == concurrency),
+                    None)
 
     def fill(server):
-        return next(float(r["prefill_tok_s"]) for r in prefill_rows
-                    if r["run"] == d[server] and r["target_tokens"] == "65536")
+        return next((float(r["prefill_tok_s"]) for r in prefill_rows
+                     if r["run"] == d[server] and r["target_tokens"] == "65536"), None)
 
     def first(server, case):
-        return mean(reuse_cells(reuse_runs[server], "56000")[case])
+        return mean(reuse_cells(reuse_runs.get(server), "56000")[case])
 
     def row(label, cell):   # one cell for each server; the two configurations of the official vLLM share a cell
         return [label, *[cell(s) for s in servers], f"{cell(OFFICIAL)} / {cell(OFFICIAL_PCIE)}"]
@@ -718,7 +792,8 @@ def overview():
             values = [form(source[run][field]) for run in runs if run in source]
             return " and ".join(str(v) for v in values) if values else NONE
         return [cell("tensorfold"), cell("tensorfold_modified_best"), cell("vllm_links_on_8", "vllm_links_on_8_run2"),
-                cell("jovian_r281_8"), f"{cell('official_default_16')} / {NONE}"]
+                cell("jovian_r281_8"), *([cell("jovian_r38_8")] if JOVIAN38 in d else []),
+                f"{cell('official_default_16')} / {NONE}"]
     release, modified = cold_burst()
     rows = [
         row("Short greedy answers (prose), 1 request, tokens/s", lambda s: n0(prose(s, 1))),
@@ -732,7 +807,8 @@ def overview():
             lambda s: n1(first(s, "identical resend"))),
         ["First token for four cold requests with a shared prefix of 42K tokens, s",
          f"{n0(min(release))} to {n0(max(release))}", n1(mean(modified)), span(burst_times(BURST_VLLM[0])),
-         span(burst_times(BURST_VLLM[1])), f"{span(burst_times(BURST_VLLM[2]))} / {span(burst_times(BURST_VLLM[3]))}"],
+         span(burst_times(BURST_VLLM[1])), *([span(burst_times(BURST_R38))] if JOVIAN38 in d else []),
+         f"{span(burst_times(BURST_VLLM[2]))} / {span(burst_times(BURST_VLLM[3]))}"],
         ["Python tasks that pass all tests through the pi agent, of 542", *quality(summary, "all_tests_pass", str)],
         ["Median time for a model call in the agent run, s", *quality(calls, "median_call_s", n2)],
     ]
@@ -747,6 +823,10 @@ TABLES = {f.__name__: f for f in (decode_body, prefill_body, long_context, reuse
                                   r281_policies, b12x_allreduce, b12x_measured,
                                   quality_pass,
                                   quality_paired, quality_work, modified_settings, modified_prefill_chunks, round_profile)}
+if JOVIAN38 in dict(DECODE_RUNS):   # the table of release r38 is there when data/ has the release
+    TABLES["r38_releases"] = r38_releases
+if (DATA / "short_context_probe.csv").is_file() and read("short_context_probe.csv"):
+    TABLES["short_context"] = short_context
 
 
 def cells(line):

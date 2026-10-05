@@ -27,6 +27,11 @@ Layout on the test host (the folder names are the run labels used on the host):
   followup-20261004/jovian-r24-16/                 Jovian Judgement r24, 16 slots, in the same session
   followup-20261004/stock-auto-16/, stock-pcie-16/ official vLLM 0.31.0: the long-context test with top_k 20
   followup-20261004/burst/                         four cold requests with a shared prefix on the vLLM servers
+  jovian-r38-test/jovian-r38-16/                   Jovian Judgement r38, 16 slots: the suite, then the three passes
+  jovian-r38-test/jovian-r38-16-policy-aligned/    the same with --recurrent-checkpoint-policy aligned
+  jovian-r38-test/jovian-r38-8/                    Jovian Judgement r38, 8 slots: the context as a system message
+  jovian-r38-test/jovian-r24-16/                   Jovian Judgement r24, 16 slots, in the same session as release r38
+  jovian-r38-test/burst/                           four cold requests with a shared prefix on release r38
 """
 import argparse
 import csv
@@ -78,6 +83,15 @@ RUNS["jovian_r281_16"] = ("Jovian Judgement r28.1", "16 slots, GPU links on, thi
 # The same with one more server argument, --recurrent-checkpoint-policy aligned (the checkpoint policy of r24).
 RUNS["jovian_r281_16_aligned"] = ("Jovian Judgement r28.1", "16 slots, GPU links on, thinking-switch template, "
                                   "checkpoint policy aligned, session 5", f"{FOLLOWUP}/jovian-r281-16-policy-aligned")
+# Session 6 of the paper: release r38 of the fork with the settings of release r24, and release r24 one more time in
+# the same session (the control). A run that has no result folder gives no rows.
+R38 = "jovian-r38-test"
+RUNS["jovian_r38_16"] = ("Jovian Judgement r38", "16 slots, GPU links on, thinking-switch template, session 6",
+                         f"{R38}/jovian-r38-16")
+RUNS["jovian_r38_16_aligned"] = ("Jovian Judgement r38", "16 slots, GPU links on, thinking-switch template, "
+                                 "checkpoint policy aligned, session 6", f"{R38}/jovian-r38-16-policy-aligned")
+RUNS["vllm_links_on_16_session6"] = ("Jovian Judgement r24", "16 slots, GPU links on, thinking-switch template, "
+                                     "session 6", f"{R38}/jovian-r24-16")
 # Session 3 of the paper (about four hours after session 1): the long-context test with top_k 20, then with no
 # top_k, then with top_k 20 again, on TensorFold and on Jovian Judgement with 16 slots.
 TOPK_RUNS = {
@@ -98,6 +112,15 @@ TOPK_RUNS.update({
     "official_pcie_16_session5": ("Official vLLM 0.31.0", "16 slots, PCIe all-reduce on, sampled drafts, 22 capture "
                                   "sizes, session 5", f"{FOLLOWUP}/stock-pcie-16"),
 })
+# Session 6: the same three passes on release r38 and on the control.
+TOPK_RUNS.update({
+    "jovian_r38_16_topk": ("Jovian Judgement r38", "16 slots, GPU links on, thinking-switch template, session 6",
+                           f"{R38}/jovian-r38-16"),
+    "jovian_r38_16_aligned_topk": ("Jovian Judgement r38", "16 slots, GPU links on, thinking-switch template, "
+                                   "checkpoint policy aligned, session 6", f"{R38}/jovian-r38-16-policy-aligned"),
+    "vllm_links_on_16_session6_topk": ("Jovian Judgement r24", "16 slots, GPU links on, thinking-switch template, "
+                                       "session 6", f"{R38}/jovian-r24-16"),
+})
 TOPK_PASSES = (("longctx-p95-topk20.log", "20", 1), ("longctx-p95-topk-off.log", "off", 1),
                ("longctx-p95-topk20-pass2.log", "20", 2))
 # Session 5: the long-context test with the shared context as a system message and the question as the user
@@ -110,6 +133,12 @@ SYSTEM_RUNS = {
     "jovian_r281_16_aligned": ("Jovian Judgement r28.1", "16 slots, GPU links on, thinking-switch template, "
                                "checkpoint policy aligned, session 5", f"{FOLLOWUP}/jovian-r281-16-policy-aligned"),
 }
+SYSTEM_RUNS.update({
+    "jovian_r38_8": ("Jovian Judgement r38", "8 slots, GPU links on, stock template, session 6",
+                     f"{R38}/jovian-r38-8"),
+    "jovian_r38_16_aligned": ("Jovian Judgement r38", "16 slots, GPU links on, thinking-switch template, "
+                              "checkpoint policy aligned, session 6", f"{R38}/jovian-r38-16-policy-aligned"),
+})
 SYSTEM_PASSES = (("longctx-system-p95-topk20.log", 0.95, "20", 1), ("longctx-system-p95-topk-off.log", 0.95, "off", 1),
                  ("longctx-system-p1.log", 1.0, "off", 1), ("longctx-system-p95-topk20-pass2.log", 0.95, "20", 2))
 # Session 4 of the paper: TensorFold modified. Each folder is one start of the server with one group of settings.
@@ -158,6 +187,14 @@ BURST_VLLM = {  # log name under followup-20261004/burst: server. These servers 
     "burst-official-default": "Official vLLM, default",
     "burst-official-tuned": "Official vLLM, tuned",
 }
+BURST_R38 = {  # log name under jovian-r38-test/burst: server
+    "burst-jovian-r38-8slot": "Jovian Judgement r38, 8 slots",
+    "burst-jovian-r38-16slot-default-policy": "Jovian Judgement r38, 16 slots",
+    "burst-jovian-r38-16slot-policy-aligned": "Jovian Judgement r38, 16 slots, checkpoint policy aligned",
+    # release r24 in the same session: the control with 16 slots, and the usual configuration before release r38
+    "burst-jovian-r24-16slot-session6": "Jovian Judgement r24, 16 slots, session 6",
+    "burst-jovian-r24-8slot-session6": "Jovian Judgement r24, 8 slots, session 6",
+}
 # Session 5: one prompt of 56K tokens sent again, and the same context with a different question
 # (probes/prefix_reuse_check.py). folder under followup-20261004: (server, configuration, checkpoint setting)
 REUSE_CHECK = {
@@ -172,6 +209,23 @@ REUSE_CHECK = {
     "stock-pcie-16": ("Official vLLM 0.31.0", "16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes",
                       "release default"),
 }
+# Session 6, release r38. As for release r28.1, the check with a user message is from the server with 16 slots and
+# the check with a system message is from the server with 8 slots; the policy "aligned" has the two forms.
+# folder under jovian-r38-test: (server, configuration, checkpoint setting, the forms that the tables use)
+REUSE_CHECK_R38 = {
+    "jovian-r38-16": ("Jovian Judgement r38", "16 slots, GPU links on, thinking-switch template", "release default",
+                      ("user message",)),
+    "jovian-r38-8": ("Jovian Judgement r38", "8 slots, GPU links on, stock template", "release default",
+                     ("system message",)),
+    "jovian-r38-16-policy-aligned": ("Jovian Judgement r38", "16 slots, GPU links on, thinking-switch template",
+                                     "--recurrent-checkpoint-policy aligned", ("user message", "system message")),
+}
+# Session 6: the short-context probe (probes/short_context.py) on the two releases with 8 slots.
+# folder under jovian-r38-test: (server, configuration)
+SHORT_CONTEXT = {
+    "jovian-r24-live": ("Jovian Judgement r24", "8 slots, GPU links on, stock template"),
+    "jovian-r38-8": ("Jovian Judgement r38", "8 slots, GPU links on, stock template"),
+}
 SEGMENTS = ("experts", "shared", "dsa", "kda", "dense", "head", "exchange", "glue")
 QUALITY = {  # run folder under quality-pi-20261004: (run id, engine, configuration)
     "tensorfold-release-full-c8": ("tensorfold", "TensorFold", "recipe 1.0.1"),
@@ -183,13 +237,17 @@ QUALITY = {  # run folder under quality-pi-20261004: (run id, engine, configurat
     "jovian-r281-full-c8": ("jovian_r281_8", "Jovian Judgement r28.1", "8 slots, GPU links on, stock template"),
     "official-default-full-c8": ("official_default_16", "Official vLLM 0.31.0",
                                  "16 slots, default kernels and all-reduce"),
+    "jovian-r38-full-c8": ("jovian_r38_8", "Jovian Judgement r38", "8 slots, GPU links on, stock template"),
 }
 QUALITY_PAIRS = (("tensorfold", "vllm_links_on_8"), ("tensorfold", "tensorfold_modified_best"),
                  ("tensorfold_modified_best", "vllm_links_on_8"),
                  # session 5: two runs of one configuration, the newer release, and the official vLLM
                  ("vllm_links_on_8", "vllm_links_on_8_run2"), ("vllm_links_on_8", "jovian_r281_8"),
                  ("vllm_links_on_8_run2", "jovian_r281_8"),
-                 ("vllm_links_on_8", "official_default_16"), ("tensorfold", "official_default_16"))
+                 ("vllm_links_on_8", "official_default_16"), ("tensorfold", "official_default_16"),
+                 # session 6: release r38 against the two runs of release r24 and against release r28.1
+                 ("vllm_links_on_8", "jovian_r38_8"), ("vllm_links_on_8_run2", "jovian_r38_8"),
+                 ("jovian_r281_8", "jovian_r38_8"))
 TYPES = ("prose", "code", "structured", "json")
 # The eight sampling-sensitivity probes on TensorFold, in the order they were run (four streams, about 1K context).
 SENSITIVITY = [
@@ -253,16 +311,17 @@ def modified_rows(root):
                 usage = r["usage"]
                 burst.append([server, r["name"], usage["prompt_tokens"], usage["prompt_tokens_details"]["cached_tokens"],
                               usage["completion_tokens"], round(r["ttft_s"], 3), r["token_sha256"][:16], note])
-    for name, server in BURST_VLLM.items():
-        path = src(root, f"{FOLLOWUP}/burst") / f"{name}.jsonl"
-        if path.is_file():
-            for line in path.read_text().splitlines():
-                r = json.loads(line)
-                usage = r["usage"]
-                burst.append([server, r["name"], usage["prompt_tokens"],
-                              (usage.get("prompt_tokens_details") or {}).get("cached_tokens"),
-                              usage["completion_tokens"], round(r["ttft_s"], 3), "",
-                              "the same requests with a different first line and no priority field"])
+    for folder, names in ((f"{FOLLOWUP}/burst", BURST_VLLM), (f"{R38}/burst", BURST_R38)):
+        for name, server in names.items():
+            path = src(root, folder) / f"{name}.jsonl"
+            if path.is_file():
+                for line in path.read_text().splitlines():
+                    r = json.loads(line)
+                    usage = r["usage"]
+                    burst.append([server, r["name"], usage["prompt_tokens"],
+                                  (usage.get("prompt_tokens_details") or {}).get("cached_tokens"),
+                                  usage["completion_tokens"], round(r["ttft_s"], 3), "",
+                                  "the same requests with a different first line and no priority field"])
     log = src(root, f"{MODIFIED}/fork-s+prof") / "rank0.log"
     if log.is_file():
         # A report line covers the 160 rounds before it. Its context is the prompt size of the last request that
@@ -329,22 +388,50 @@ def b12x_limit_rows(root):
 def reuse_check_rows(root):
     """The prompt-reuse check: the seconds to the full reply (16 or 300 tokens) of each step, for each server."""
     rows = []
-    for folder, (server, config, setting) in REUSE_CHECK.items():
-        for name, place in (("cache-check.jsonl", "user message"), ("cache-check-system.jsonl", "system message")):
-            # On the 8-slot server of release r28.1, the first check with a system message is early-look-system.jsonl.
-            # A second check (cache-check-system.jsonl) ran after other tests had put that system message in the cache.
-            if folder == "jovian-r281-8" and place == "system message":
-                name = "early-look-system.jsonl"
-            path = src(root, f"{FOLLOWUP}/{folder}") / name
-            if not path.is_file():
-                continue
-            for number, line in enumerate(path.read_text().splitlines(), 1):
-                r = json.loads(line)
-                rows.append([server, config, setting, r.get("context_in", place), number, r["step"],
-                             r["shared_context_tokens"], r["prompt_tokens"], r["completion_tokens"], r["seconds"]])
+    for session, checks in ((FOLLOWUP, REUSE_CHECK), (R38, REUSE_CHECK_R38)):
+        for folder, (server, config, setting, *forms) in checks.items():
+            for name, place in (("cache-check.jsonl", "user message"), ("cache-check-system.jsonl", "system message")):
+                if forms and place not in forms[0]:
+                    continue
+                # On the 8-slot server of release r28.1, the first check with a system message is
+                # early-look-system.jsonl. A second check (cache-check-system.jsonl) ran after other tests had put
+                # that system message in the cache.
+                if folder == "jovian-r281-8" and place == "system message":
+                    name = "early-look-system.jsonl"
+                path = src(root, f"{session}/{folder}") / name
+                if not path.is_file():
+                    continue
+                for number, line in enumerate(path.read_text().splitlines(), 1):
+                    r = json.loads(line)
+                    rows.append([server, config, setting, r.get("context_in", place), number, r["step"],
+                                 r["shared_context_tokens"], r["prompt_tokens"], r["completion_tokens"],
+                                 r["seconds"]])
     write("prefix_reuse_check.csv", ["server", "configuration", "checkpoint_setting", "shared_context_in",
                                      "step_number", "step", "shared_context_tokens", "prompt_tokens", "output_tokens",
                                      "seconds_to_the_full_reply"], rows)
+
+
+def short_context_rows(root):
+    """The short-context probe: for each group of 8 prompt lengths, the mean probability of the correct subsequent
+    token, for the lengths that are a multiple of 4 and for the other lengths."""
+    rows = []
+    for folder, (server, config) in SHORT_CONTEXT.items():
+        path = src(root, f"{R38}/{folder}") / "shortctx.jsonl"
+        if not path.is_file():
+            continue
+        groups = {}
+        for line in path.read_text().splitlines():
+            r = json.loads(line)
+            logprob = r["expected_logprob"]
+            groups.setdefault((r["run"], r["length"] % 4 == 0), []).append(
+                (math.exp(logprob) if logprob is not None else 0.0, r["generated"] == r["expected"]))
+        for (first, whole), values in sorted(groups.items(), key=lambda item: (item[0][0], not item[0][1])):
+            rows.append([server, config, first, first + 7, whole, len(values),
+                         round(sum(p for p, _ in values) / len(values), 4),
+                         round(100 * sum(hit for _, hit in values) / len(values), 1)])
+    write("short_context_probe.csv", ["server", "configuration", "first_length", "last_length",
+                                      "lengths_are_a_multiple_of_4", "prompts", "mean_probability_of_the_correct_token",
+                                      "correct_first_choice_percent"], rows)
 
 
 DONE = re.compile(r"done req-\w+ prompt=(\d+) cached=(\d+) thinking=\w+ tokens=(\d+) sha=\w+ finish=\w+ "
@@ -630,6 +717,7 @@ def main():
     modified_rows(root)
     b12x_limit_rows(root)
     reuse_check_rows(root)
+    short_context_rows(root)
     round_time_rows(root)
     quality_rows(root)
 

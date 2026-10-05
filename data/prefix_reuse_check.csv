@@ -55,3 +55,23 @@ Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture s
 Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes",release default,system message,2,the same request again,56348,56385,16,0.63
 Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes",release default,system message,3,"same context, other question",56348,56386,16,0.66
 Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes",release default,system message,4,"same context, third question",56348,56385,16,0.67
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",release default,user message,1,"first request, 16 tokens",56348,56386,16,7.67
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",release default,user message,2,the same request again,56348,56386,16,0.28
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",release default,user message,3,"same context, other question",56348,56387,16,4.89
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",release default,user message,4,"the same request, 300 tokens",56348,56386,300,1.25
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",release default,user message,5,"the same request again, after 300 tokens",56348,56386,16,0.19
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",release default,user message,6,"same context, third question",56348,56386,16,4.93
+Jovian Judgement r38,"8 slots, GPU links on, stock template",release default,system message,1,"first request, 16 tokens",56348,56386,16,5.1
+Jovian Judgement r38,"8 slots, GPU links on, stock template",release default,system message,2,the same request again,56348,56386,16,0.43
+Jovian Judgement r38,"8 slots, GPU links on, stock template",release default,system message,3,"same context, other question",56348,56387,16,0.42
+Jovian Judgement r38,"8 slots, GPU links on, stock template",release default,system message,4,"same context, third question",56348,56386,16,0.28
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",--recurrent-checkpoint-policy aligned,user message,1,"first request, 16 tokens",56348,56387,16,5.03
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",--recurrent-checkpoint-policy aligned,user message,2,the same request again,56348,56387,16,0.58
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",--recurrent-checkpoint-policy aligned,user message,3,"same context, other question",56348,56388,16,0.55
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",--recurrent-checkpoint-policy aligned,user message,4,"the same request, 300 tokens",56348,56387,300,1.54
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",--recurrent-checkpoint-policy aligned,user message,5,"the same request again, after 300 tokens",56348,56387,16,0.44
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",--recurrent-checkpoint-policy aligned,user message,6,"same context, third question",56348,56387,16,0.44
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",--recurrent-checkpoint-policy aligned,system message,1,"first request, 16 tokens",56348,56388,16,4.82
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",--recurrent-checkpoint-policy aligned,system message,2,the same request again,56348,56388,16,0.44
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",--recurrent-checkpoint-policy aligned,system message,3,"same context, other question",56348,56389,16,0.52
+Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template",--recurrent-checkpoint-policy aligned,system message,4,"same context, third question",56348,56388,16,0.44

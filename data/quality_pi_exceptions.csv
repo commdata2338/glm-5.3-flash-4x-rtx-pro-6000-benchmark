@@ -25,3 +25,13 @@ official_default_16,Official vLLM 0.31.0,HumanEval/160,timeout,True,True,True,Tr
 official_default_16,Official vLLM 0.31.0,Mbpp/160,failed,False,False,False,False,2,32768,32764,length,1,1,read
 official_default_16,Official vLLM 0.31.0,Mbpp/286,failed,False,False,False,False,2,32768,32768,length,1,1,read
 official_default_16,Official vLLM 0.31.0,Mbpp/430,failed,False,False,False,False,2,32768,32765,length,1,1,read
+jovian_r38_8,Jovian Judgement r38,HumanEval/160,timeout,True,True,True,True,4,571,130,tool_calls,4,3,bash
+jovian_r38_8,Jovian Judgement r38,Mbpp/109,failed,False,False,False,False,2,32768,32762,length,1,1,read
+jovian_r38_8,Jovian Judgement r38,Mbpp/160,failed,False,False,False,False,2,32768,32764,length,1,1,read
+jovian_r38_8,Jovian Judgement r38,Mbpp/235,failed,False,False,False,False,2,32768,32755,length,1,1,read
+jovian_r38_8,Jovian Judgement r38,Mbpp/260,failed,False,False,False,False,2,32768,32765,length,1,1,read
+jovian_r38_8,Jovian Judgement r38,Mbpp/430,failed,False,False,False,False,2,32768,32757,length,1,1,read
+jovian_r38_8,Jovian Judgement r38,Mbpp/440,failed,False,False,False,False,5,32768,32768,length,5,5,bash
+jovian_r38_8,Jovian Judgement r38,Mbpp/558,failed,False,False,False,False,2,32768,32768,length,1,1,read
+jovian_r38_8,Jovian Judgement r38,Mbpp/590,failed,False,False,False,False,2,32768,32763,length,1,1,read
+jovian_r38_8,Jovian Judgement r38,Mbpp/603,failed,False,False,False,False,2,32768,32767,length,1,1,read

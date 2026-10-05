@@ -13,6 +13,7 @@ tables. The two types come from the same files.
 | `prefill_sparkdash.csv` | Prefill test of sparkDash: each inference stack and prompt size |
 | `concurrent_waves.csv` | `longctx.py`: the 1K greedy test and the long-context test, one row for each wave. The probe `long_context_sampled_system_message` is the long-context test with the context in a system message. A row with the status `no_overlap` has no speed: no time interval of more than one second contained the output of all its requests. |
 | `prefix_reuse_check.csv` | `prefix_reuse_check.py`: the seconds to the full reply of each step, for each inference stack and for the two forms of the check |
+| `short_context_probe.csv` | `short_context.py`: the mean probability of the correct subsequent token for each group of prompt lengths, on releases r24 and r38 of Jovian Judgement (Appendix C.9) |
 | `chat_reuse_ttft.csv` | `warm_chat.py`: the time to the first token for each case and round |
 | `integrity.csv`, `integrity_recheck.csv` | `integrity.py`: the passphrase test, and the test with a limit of 300 tokens |
 | `thinking_off_forms.csv` | `thinkoff_probe.py`: the chat form and the raw form on each inference stack |
@@ -60,6 +61,11 @@ The column `run` of the CSV files has these values.
 | `jovian_r281_8` | Jovian Judgement r28.1, 8 slots, standard template: the quality run, and the long-context test with the context in a system message | 5 |
 | `vllm_links_on_8_run2` | Jovian Judgement r24, 8 slots: the second quality run | 5 |
 | `vllm_links_on_8_session5` | Jovian Judgement r24, 8 slots: the long-context test with the context in a system message | 5 |
+| `jovian_r38_16` | Jovian Judgement r38, 16 slots, the settings of release r24: the test suite without its two long-context steps | 6 |
+| `jovian_r38_16_topk` | The same configuration: the long-context test with top_k 20, one run. These rows have the status `no_overlap`. | 6 |
+| `jovian_r38_16_aligned`, `jovian_r38_16_aligned_topk` | Jovian Judgement r38, 16 slots, with `--recurrent-checkpoint-policy aligned`: the test suite, and the long-context test with top_k 20 and with no top_k | 6 |
+| `jovian_r38_8` | Jovian Judgement r38, 8 slots, standard template: the quality run, and the long-context test with the context in a system message | 6 |
+| `vllm_links_on_16_session6`, `vllm_links_on_16_session6_topk` | Jovian Judgement r24, 16 slots: the control run of Appendix C.9. It has the test suite, and the long-context test with top_k 20 and with no top_k. | 6 |
 
 In the quality files, the run of the official vLLM has the name `official_default_16`.
 

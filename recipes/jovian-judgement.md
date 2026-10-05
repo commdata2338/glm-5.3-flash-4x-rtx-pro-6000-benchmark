@@ -2,8 +2,8 @@
 
 The image is [`voipmonitor/vllm:jovian-judgement-community-20260904-r24`](https://hub.docker.com/r/voipmonitor/vllm/tags?name=jovian-judgement-community-20260904-r24)
 on Docker Hub (release r24). It is the community release
-of local-inference-lab for GLM-5.3-Flash on Blackwell GPUs. The section "Release r28.1" gives the later release that
-we also measured. The image contains the vLLM fork by local-inference-lab and the
+of local-inference-lab for GLM-5.3-Flash on Blackwell GPUs. The sections "Release r28.1" and "Release r38" give the
+later releases that we also measured. The image contains the vLLM fork by local-inference-lab and the
 [B12X](https://github.com/local-inference-lab/b12x) kernel package of the same lab. The lab uses the name
 Jovian Judgement for the development branch of the fork (`dev/jovian-judgement`) and for its release images. For
 the official vLLM, refer
@@ -133,6 +133,46 @@ did not change the reuse of a prompt.
 **The scheduler setting.** The start log of release r28.1 shows `prefill_compute_share=0.4` and no
 `fairness_engine` argument. The launcher of release r28.1 reads `FAIRNESS_ENGINE` for compatibility only.
 
+## Release r38
+
+The image [`localinferencelab/vllm:jovian-judgement-community-20260914-r38`](https://hub.docker.com/r/localinferencelab/vllm/tags?name=jovian-judgement-community-20260914-r38)
+is a later release of the same fork. It is in a different repository on Docker Hub. It started with the weights of
+release r24 and with the command of release r24, plus one argument (see below). The first start used 476 s. The start
+with the policy `aligned` used 384 s, and the first start with 8 slots used 580 s.
+
+| | Release r38 |
+|---|---|
+| Image digest | `sha256:f41ca8bb10bb3a125a50340d70d39ad4b7f5605f3fcb661bc992ed0bc4701a00` |
+| Source of Jovian Judgement | [`local-inference-lab/vllm@66c293578412`](https://github.com/local-inference-lab/vllm/tree/66c293578412417476f842c1da5805d3a3d959a8) |
+| b12x kernels | [`local-inference-lab/b12x@ce419b52681b`](https://github.com/local-inference-lab/b12x/tree/ce419b52681b7922bb0972d4b58b590a3fd005b2) |
+| KV cache with 16 slots | 2,694,956 tokens. With the policy `aligned`: 2,509,092 tokens |
+| KV cache with 8 slots | 3,375,950 tokens |
+
+The source code of release r38 has 262 commits that release r24 does not have. Release r24 has 84 commits that
+release r38 does not have. Release r38 has
+[398 commits](https://github.com/local-inference-lab/vllm/compare/299ebd094a9c...66c293578412417476f842c1da5805d3a3d959a8) more than
+the official `299ebd094a`. On 5 October 2026, the commit of release r38 was on the branch `dev/jovian-judgement`.
+
+**The default sampler settings.** The launcher of release r38 adds this argument if the command does not give it:
+
+    --override-generation-config '{"temperature":1.0,"top_p":0.95}'
+
+Thus a request that gives no top_p gets top_p 0.95. Release r24 uses top_p 1.0 for such a request. To keep the
+default of release r24, we added this argument at the end of the command:
+
+    --override-generation-config '{"temperature": 1.0, "top_p": 1.0}'
+
+**The checkpoint policy.** Release r38 has the argument `--recurrent-checkpoint-policy` with the default and the
+effect of release r28.1. To get block-aligned states as in release r24, add `--recurrent-checkpoint-policy aligned`
+at the end of the command.
+
+**The scheduler setting.** As for release r28.1, the start log shows `prefill_compute_share=0.4` and no
+`fairness_engine` argument.
+
+To get the image of release r38 that we used, pull it with its digest:
+
+    docker pull localinferencelab/vllm@sha256:f41ca8bb10bb3a125a50340d70d39ad4b7f5605f3fcb661bc992ed0bc4701a00
+
 ## Versions in the image
 
 | Component | Version |
@@ -145,8 +185,8 @@ did not change the reuse of a prompt.
 | PyTorch, CUDA | 2.13.0, 13.3 |
 
 **Where the versions come from.** The image has labels that give the repository and the commit of each component.
-Use `docker image inspect` to read them. A tag on Docker Hub can change, and thus the table of the section
-"Release r28.1" gives the digest of each image that we used. To get the image of release r24 that we used, pull it
+Use `docker image inspect` to read them. A tag on Docker Hub can change. Thus the tables of the sections
+"Release r28.1" and "Release r38" give the digest of each image that we used. To get the image of release r24 that we used, pull it
 with its digest:
 
     docker pull voipmonitor/vllm@sha256:ab4ff9d6fef85c49d372714e89f014fcb66c6b247c0e3f341eb56dc798fdd0cd
@@ -157,6 +197,6 @@ of release r24 also gives a build commit, `10901bcc31e7`. On 4 October 2026, we 
 repository.
 
 The development branch of the fork is [`dev/jovian-judgement`](https://github.com/local-inference-lab/vllm/tree/dev/jovian-judgement).
-On 4 October 2026, the commits of the two releases were not on this branch. The branch had 306 commits that release
+On 4 October 2026, the commits of releases r24 and r28.1 were not on this branch. The branch had 306 commits that release
 r24 does not have, and release r24 had 84 commits that the branch does not have. To read the source code of a
 release, use the commit of the table and not the branch.

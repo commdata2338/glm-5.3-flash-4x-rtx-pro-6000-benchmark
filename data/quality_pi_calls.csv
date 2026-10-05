@@ -5,3 +5,4 @@ vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",236
 vllm_links_on_8_run2,Jovian Judgement r24,"8 slots, GPU links on, stock template, second run (session 5)",2343,1.61,4.87,6.34,11419,25.3
 jovian_r281_8,Jovian Judgement r28.1,"8 slots, GPU links on, stock template",2394,0.87,3.33,3.95,7971,37.3
 official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce",2492,1.63,5.39,6.71,13434,42.0
+jovian_r38_8,Jovian Judgement r38,"8 slots, GPU links on, stock template",2357,0.84,3.32,3.48,7834,28.1

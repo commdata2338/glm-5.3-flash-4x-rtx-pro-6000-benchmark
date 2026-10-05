@@ -71,6 +71,42 @@ jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",2,code,raw-off,60,400,315.6
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",2,structured,chat-flags,27,400,349.8
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",2,structured,raw-off,27,400,347.1
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",1,prose,chat-flags,33,400,238.1
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",1,prose,raw-off,33,400,252.0
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",1,code,chat-flags,60,400,303.4
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",1,code,raw-off,60,400,300.9
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",1,structured,chat-flags,27,400,342.9
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",1,structured,raw-off,27,400,349.3
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",2,prose,chat-flags,33,400,250.3
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",2,prose,raw-off,33,400,246.6
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",2,code,chat-flags,60,400,311.2
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",2,code,raw-off,60,400,304.5
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",2,structured,chat-flags,27,400,350.6
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",2,structured,raw-off,27,400,349.9
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",1,prose,chat-flags,33,400,253.1
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",1,prose,raw-off,33,400,247.5
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",1,code,chat-flags,60,400,315.7
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",1,code,raw-off,60,400,312.3
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",1,structured,chat-flags,27,400,350.8
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",1,structured,raw-off,27,400,341.9
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",2,prose,chat-flags,33,400,245.1
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",2,prose,raw-off,33,400,236.5
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",2,code,chat-flags,60,400,311.5
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",2,code,raw-off,60,400,317.0
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",2,structured,chat-flags,27,400,329.4
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",2,structured,raw-off,27,400,340.9
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",1,prose,chat-flags,33,400,234.0
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",1,prose,raw-off,33,400,245.1
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",1,code,chat-flags,60,400,309.1
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",1,code,raw-off,60,400,313.0
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",1,structured,chat-flags,27,400,342.1
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",1,structured,raw-off,27,400,340.3
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",2,prose,chat-flags,33,400,237.8
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",2,prose,raw-off,33,400,228.2
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",2,code,chat-flags,60,400,310.2
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",2,code,raw-off,60,400,296.4
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",2,structured,chat-flags,27,400,342.3
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",2,structured,raw-off,27,400,344.8
 vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",1,prose,chat-flags,39,400,164.3
 vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",1,prose,raw-off,33,400,200.2
 vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",1,code,chat-flags,66,400,185.5

@@ -65,6 +65,24 @@ jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",65536,65562,11019.49,5.95
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",131072,131099,10703.81,12.248
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",262144,262168,10077.95,26.014
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",8192,8216,11455.16,0.717
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",16384,16408,11678.51,1.405
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",32768,32792,11704.37,2.802
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",65536,65560,11558.52,5.672
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",131072,131094,10216.36,12.832
+jovian_r38_16,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, session 6",262144,262169,10257.6,25.559
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",8192,8214,11149.21,0.737
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",16384,16408,11593.88,1.415
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",32768,32793,11653.21,2.814
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",65536,65558,11437.28,5.732
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",131072,131099,11097.28,11.814
+jovian_r38_16_aligned,Jovian Judgement r38,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 6",262144,262171,10375.24,25.269
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",8192,8216,10642.08,0.772
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",16384,16409,11033.96,1.487
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",32768,32792,11114.61,2.95
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",65536,65559,11106.56,5.903
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",131072,131093,10772.82,12.169
+vllm_links_on_16_session6,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template, session 6",262144,262168,10072.79,26.027
 tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",8192,8219,7273.65,1.13
 tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",16384,16408,8868.06,1.85
 tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",32768,32795,9220.4,3.557

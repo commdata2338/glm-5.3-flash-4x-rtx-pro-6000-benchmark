@@ -57,6 +57,14 @@ RUNS = {  # folder in raw/: folder under --results
     "quality-pi/jovian-judgement-r24-run2": "quality-pi-20261004/jovian-r24-full-c8-run2",
     "quality-pi/jovian-judgement-r28.1": "quality-pi-20261004/jovian-r281-full-c8",
     "quality-pi/vllm-official-default": "quality-pi-20261004/official-default-full-c8",
+    # session 6: Jovian Judgement r38, and release r24 one more time in the same session
+    "session6/jovian-judgement-r38-16-slots": "jovian-r38-test/jovian-r38-16",
+    "session6/jovian-judgement-r38-16-slots-policy-aligned": "jovian-r38-test/jovian-r38-16-policy-aligned",
+    "session6/jovian-judgement-r38-8-slots": "jovian-r38-test/jovian-r38-8",
+    "session6/jovian-judgement-r24-16-slots": "jovian-r38-test/jovian-r24-16",
+    "session6/jovian-judgement-r24-8-slots": "jovian-r38-test/jovian-r24-live",
+    "session6/cold-requests": "jovian-r38-test/burst",
+    "quality-pi/jovian-judgement-r38": "quality-pi-20261004/jovian-r38-full-c8",
 }
 SINGLE = {  # file in raw/: file under --results
     "gpu-to-gpu-copy-matrix.json": "tensorfold-vs-vllm-20261003-r2/p2p-matrix.json",
