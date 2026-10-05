@@ -1,0 +1,73 @@
+run,engine,configuration,target_tokens,prompt_tokens,prefill_tok_s,ttft_s
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",8192,8217,8299.76,0.99
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",16384,16408,8728.56,1.88
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",32768,32793,9093.49,3.606
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",65536,65560,9262.94,7.078
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",131072,131096,9100.48,14.405
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",262144,262170,8679.03,30.207
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",8192,8215,10786.62,0.762
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",16384,16412,11160.38,1.471
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",32768,32793,11234.74,2.919
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",65536,65559,11140.95,5.885
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",131072,131097,10160.27,12.903
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",262144,262170,10029.87,26.139
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",8192,8223,6584.22,1.249
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",16384,16414,6657.13,2.466
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",32768,32801,6772.86,4.843
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",65536,65566,6799.05,9.643
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",131072,131101,6745.39,19.436
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",262144,262175,6624.82,39.575
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",8192,8221,6801.57,1.209
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",16384,16414,7011.59,2.341
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",32768,32797,7089.55,4.626
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",65536,65565,7069.7,9.274
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",131072,131102,6949.69,18.864
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",262144,262171,6718.2,39.024
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",8192,8221,10683.61,0.769
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",16384,16410,11073.43,1.482
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",32768,32800,11298.57,2.903
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",65536,65568,11234.98,5.836
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",131072,131102,10873.58,12.057
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",262144,262176,10173.42,25.771
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",8192,8216,6595.92,1.246
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",16384,16410,4489.81,3.655
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",32768,32794,6803.59,4.82
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",65536,65562,6912.9,9.484
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",131072,131095,6846.24,19.148
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",262144,262169,6590.61,39.779
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",8192,8214,6861.86,1.197
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",16384,16406,6994.5,2.346
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",32768,32791,7077.96,4.633
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",65536,65560,7078.58,9.262
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",131072,131095,6987.38,18.762
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",262144,262171,6686.3,39.21
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",8192,8216,6643.4,1.237
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",16384,16407,6182.94,2.654
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",32768,32794,6925.7,4.735
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",65536,65560,6897.66,9.505
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",131072,131098,6762.58,19.386
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",262144,262172,6451.04,40.64
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",8192,8215,6499.52,1.264
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",16384,16406,6655.27,2.465
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",32768,32794,6700.96,4.894
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",65536,65560,6741.23,9.725
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",131072,131100,6655.27,19.699
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",262144,262170,6496.14,40.358
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",8192,8218,10353.13,0.794
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",16384,16408,10751.51,1.526
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",32768,32790,10988.63,2.984
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",65536,65561,10928.97,5.999
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",131072,131099,9906.79,13.233
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",262144,262170,9849.82,26.617
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",8192,8216,10439.94,0.787
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",16384,16408,10959.57,1.497
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",32768,32795,11061.31,2.965
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",65536,65562,11019.49,5.95
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",131072,131099,10703.81,12.248
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",262144,262168,10077.95,26.014
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",8192,8219,7273.65,1.13
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",16384,16408,8868.06,1.85
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",32768,32795,9220.4,3.557
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",65536,65562,9369.82,6.997
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",131072,131096,9199.98,14.25
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",262144,262170,8765.89,29.908

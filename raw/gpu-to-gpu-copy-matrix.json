@@ -1,0 +1,99 @@
+{
+ "torch": "2.13.0a0+9186a08b2c.nv26.07",
+ "buffer_mib": 1024,
+ "devices": [
+  "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+  "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+  "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+  "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition"
+ ],
+ "pairs": [
+  {
+   "src": 0,
+   "dst": 1,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.71
+  },
+  {
+   "src": 0,
+   "dst": 2,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.56
+  },
+  {
+   "src": 0,
+   "dst": 3,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.65
+  },
+  {
+   "src": 1,
+   "dst": 0,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.79
+  },
+  {
+   "src": 1,
+   "dst": 2,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.56
+  },
+  {
+   "src": 1,
+   "dst": 3,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.57
+  },
+  {
+   "src": 2,
+   "dst": 0,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.89
+  },
+  {
+   "src": 2,
+   "dst": 1,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.79
+  },
+  {
+   "src": 2,
+   "dst": 3,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.78
+  },
+  {
+   "src": 3,
+   "dst": 0,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.67
+  },
+  {
+   "src": 3,
+   "dst": 1,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.62
+  },
+  {
+   "src": 3,
+   "dst": 2,
+   "peer_access": true,
+   "match": true,
+   "gib_per_s": 49.91
+  }
+ ],
+ "all_match": true,
+ "min_gib_per_s": 49.56,
+ "max_gib_per_s": 49.91
+}

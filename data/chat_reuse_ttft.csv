@@ -1,0 +1,161 @@
+run,engine,configuration,nominal_size,round,case,prompt_tokens,cached_tokens_reported,ttft_s
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",9000,1,cold,13526,0,1.984
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",9000,1,identical resend,13526,13504,0.056
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",9000,1,resend + new turn,14424,13504,0.289
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",9000,1,own reply + new turn,14471,13504,0.273
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",9000,2,cold,13505,0,2.536
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",9000,2,identical resend,13505,13504,0.039
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",9000,2,resend + new turn,14385,0,1.941
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",9000,2,own reply + new turn,14434,13504,0.25
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",56000,1,cold,83571,0,10.295
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",56000,1,identical resend,83571,83520,0.16
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",56000,1,resend + new turn,84469,83520,0.372
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",56000,1,own reply + new turn,84595,83520,0.317
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",56000,2,cold,83584,0,10.277
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",56000,2,identical resend,83584,83584,0.02
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",56000,2,resend + new turn,84464,0,10.441
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",56000,2,own reply + new turn,84574,83584,0.287
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",9000,1,cold,13526,,1.228
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",9000,1,identical resend,13526,,1.284
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",9000,1,resend + new turn,14424,,0.41
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",9000,1,own reply + new turn,14470,,0.425
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",9000,2,cold,13505,,1.226
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",9000,2,identical resend,13505,,1.295
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",9000,2,resend + new turn,14385,,0.41
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",9000,2,own reply + new turn,14422,,0.419
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",56000,1,cold,83571,,8.035
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",56000,1,identical resend,83571,,7.919
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",56000,1,resend + new turn,84469,,0.556
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",56000,1,own reply + new turn,84576,,0.574
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",56000,2,cold,83584,,7.965
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",56000,2,identical resend,83584,,7.924
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",56000,2,resend + new turn,84464,,0.562
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",56000,2,own reply + new turn,84513,,0.561
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",9000,1,cold,13532,,1.96
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",9000,1,identical resend,13532,,1.998
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",9000,1,resend + new turn,14430,,0.636
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",9000,1,own reply + new turn,14752,,0.693
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",9000,2,cold,13511,,1.967
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",9000,2,identical resend,13511,,2.01
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",9000,2,resend + new turn,14391,,0.636
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",9000,2,own reply + new turn,14753,,0.69
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",56000,1,cold,83577,,12.408
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",56000,1,identical resend,83577,,12.36
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",56000,1,resend + new turn,84475,,0.806
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",56000,1,own reply + new turn,84686,,0.868
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",56000,2,cold,83590,,12.578
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",56000,2,identical resend,83590,,12.546
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",56000,2,resend + new turn,84470,,0.832
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",56000,2,own reply + new turn,84819,,0.888
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",9000,1,cold,13532,,1.951
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",9000,1,identical resend,13532,,1.988
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",9000,1,resend + new turn,14430,,0.638
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",9000,1,own reply + new turn,14796,,0.69
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",9000,2,cold,13511,,1.938
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",9000,2,identical resend,13511,,1.988
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",9000,2,resend + new turn,14391,,0.63
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",9000,2,own reply + new turn,14794,,0.697
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",56000,1,cold,83577,,12.305
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",56000,1,identical resend,83577,,12.303
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",56000,1,resend + new turn,84475,,0.819
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",56000,1,own reply + new turn,84729,,0.855
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",56000,2,cold,83590,,12.303
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",56000,2,identical resend,83590,,12.331
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",56000,2,resend + new turn,84470,,0.808
+vllm_links_off_8,Jovian Judgement r24,"8 slots, GPU links off, stock template",56000,2,own reply + new turn,84812,,0.851
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",9000,1,cold,13532,,1.252
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",9000,1,identical resend,13532,,1.352
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",9000,1,resend + new turn,14430,,0.415
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",9000,1,own reply + new turn,14833,,0.455
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",9000,2,cold,13511,,1.236
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",9000,2,identical resend,13511,,1.29
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",9000,2,resend + new turn,14391,,0.415
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",9000,2,own reply + new turn,14764,,0.453
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",56000,1,cold,83577,,8.125
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",56000,1,identical resend,83577,,8.028
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",56000,1,resend + new turn,84475,,0.573
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",56000,1,own reply + new turn,84772,,0.597
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",56000,2,cold,83590,,8.086
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",56000,2,identical resend,83590,,8.054
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",56000,2,resend + new turn,84470,,0.562
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",56000,2,own reply + new turn,84803,,0.598
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",9000,1,cold,13526,,1.989
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",9000,1,identical resend,13526,,0.612
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",9000,1,resend + new turn,14424,,0.769
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",9000,1,own reply + new turn,14514,,0.782
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",9000,2,cold,13505,,1.955
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",9000,2,identical resend,13505,,0.612
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",9000,2,resend + new turn,14385,,0.769
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",9000,2,own reply + new turn,14424,,0.777
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",56000,1,cold,83571,,12.253
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",56000,1,identical resend,83571,,0.537
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",56000,1,resend + new turn,84469,,0.657
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",56000,1,own reply + new turn,84586,,0.696
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",56000,2,cold,83584,,12.243
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",56000,2,identical resend,83584,,0.557
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",56000,2,resend + new turn,84464,,0.69
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",56000,2,own reply + new turn,84577,,0.693
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",9000,1,cold,13526,,2.013
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",9000,1,identical resend,13526,,0.619
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",9000,1,resend + new turn,14424,,0.779
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",9000,1,own reply + new turn,14470,,0.796
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",9000,2,cold,13505,,1.997
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",9000,2,identical resend,13505,,0.621
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",9000,2,resend + new turn,14385,,0.776
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",9000,2,own reply + new turn,14503,,0.788
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",56000,1,cold,83571,,12.142
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",56000,1,identical resend,83571,,0.544
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",56000,1,resend + new turn,84469,,0.69
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",56000,1,own reply + new turn,84582,,0.687
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",56000,2,cold,83584,,12.328
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",56000,2,identical resend,83584,,0.555
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",56000,2,resend + new turn,84464,,0.679
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",56000,2,own reply + new turn,84513,,0.7
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",9000,1,cold,13526,,1.273
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",9000,1,identical resend,13526,,0.042
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",9000,1,resend + new turn,14424,,1.347
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",9000,1,own reply + new turn,14469,,0.336
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",9000,2,cold,13505,,1.262
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",9000,2,identical resend,13505,,0.038
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",9000,2,resend + new turn,14385,,1.341
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",9000,2,own reply + new turn,14430,,0.334
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",56000,1,cold,83571,,8.294
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",56000,1,identical resend,83571,,0.135
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",56000,1,resend + new turn,84469,,8.189
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",56000,1,own reply + new turn,84512,,0.423
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",56000,2,cold,83584,,8.127
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",56000,2,identical resend,83584,,0.125
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",56000,2,resend + new turn,84464,,8.174
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",56000,2,own reply + new turn,84502,,0.423
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",9000,1,cold,13526,,1.237
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",9000,1,identical resend,13526,,0.336
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",9000,1,resend + new turn,14424,,0.411
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",9000,1,own reply + new turn,14596,,0.433
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",9000,2,cold,13505,,1.23
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",9000,2,identical resend,13505,,0.329
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",9000,2,resend + new turn,14385,,0.413
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",9000,2,own reply + new turn,14431,,0.417
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,1,cold,83571,,8.106
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,1,identical resend,83571,,0.487
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,1,resend + new turn,84469,,0.576
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,1,own reply + new turn,84534,,0.583
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,2,cold,83584,,8.052
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,2,identical resend,83584,,0.474
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,2,resend + new turn,84464,,0.571
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",56000,2,own reply + new turn,84515,,0.573
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,1,cold,13526,0,1.923
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,1,identical resend,13526,13504,0.053
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,1,resend + new turn,14424,13504,0.277
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,1,own reply + new turn,14471,13504,0.274
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,2,cold,13505,0,2.474
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,2,identical resend,13505,13504,0.041
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,2,resend + new turn,14385,0,1.945
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",9000,2,own reply + new turn,14434,13504,0.281
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",56000,1,cold,83571,0,10.201
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",56000,1,identical resend,83571,83520,0.179
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",56000,1,resend + new turn,84469,83520,0.387
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",56000,1,own reply + new turn,84595,83520,0.336
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",56000,2,cold,83584,0,10.172
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",56000,2,identical resend,83584,83584,0.02
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",56000,2,resend + new turn,84464,0,10.363
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",56000,2,own reply + new turn,84574,83584,0.275

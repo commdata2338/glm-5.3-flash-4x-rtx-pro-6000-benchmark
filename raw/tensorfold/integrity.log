@@ -1,0 +1,3 @@
+{"target_tokens": 2000, "prompt_tokens": 2057, "passphrase": "prism-93510-harbor", "answer": "prism-93510-harbor", "ok": true, "seconds": 22.49}
+{"target_tokens": 30000, "prompt_tokens": 30031, "passphrase": "anchor-48835-meadow", "answer": "anchor-48835-meadow", "ok": true, "seconds": 7.3}
+{"target_tokens": 200000, "prompt_tokens": 199192, "passphrase": "quartz-83547-prism", "answer": "The passphrase is quartz-83547-prism.</think>quartz-83547-prism", "ok": true, "seconds": 24.0}

@@ -1,0 +1,13 @@
+arm,settings,target_tokens,prompt_tokens,prefill_tok_s,ttft_s
+fork-s+burst,"GPU sampler, burst reuse",8192,8165,7035.2,1.161
+fork-s+burst,"GPU sampler, burst reuse",16384,16338,8522.1,1.917
+fork-s+burst,"GPU sampler, burst reuse",32768,32693,8657.7,3.776
+fork-s+burst,"GPU sampler, burst reuse",65536,65214,8615.1,7.57
+fork-s+burst,"GPU sampler, burst reuse",131072,130332,8419.4,15.48
+fork-s+burst,"GPU sampler, burst reuse",262144,261272,7954.8,32.845
+fork-s+prefill8192,"GPU sampler, prompt chunks of 8,192 rows",8192,8175,7825.5,1.045
+fork-s+prefill8192,"GPU sampler, prompt chunks of 8,192 rows",16384,16460,7667.4,2.147
+fork-s+prefill8192,"GPU sampler, prompt chunks of 8,192 rows",32768,32654,8836.2,3.695
+fork-s+prefill8192,"GPU sampler, prompt chunks of 8,192 rows",65536,65299,8934.8,7.308
+fork-s+prefill8192,"GPU sampler, prompt chunks of 8,192 rows",131072,130578,8809.8,14.822
+fork-s+prefill8192,"GPU sampler, prompt chunks of 8,192 rows",262144,260941,8402.5,31.055

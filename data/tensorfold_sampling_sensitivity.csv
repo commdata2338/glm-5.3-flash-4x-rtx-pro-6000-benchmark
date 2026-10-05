@@ -1,0 +1,9 @@
+setting,temperature,top_p,top_k,thinking,concurrency,context_tokens,output_tokens,total_tok_s,median_stream_tok_s
+greedy,0.0,1.0,off,off,4,1035,400,543.6,130.0
+"temperature 1, top_p 1.0, no top_k",1.0,1.0,off,off,4,1036,400,39.8,10.1
+greedy,0.0,1.0,off,"on, effort max",4,1042,400,873.9,222.4
+"temperature 1, top_p 1.0, no top_k",1.0,1.0,off,"on, effort max",4,1042,400,46.4,10.5
+"temperature 1, top_p 0.95, no top_k",1.0,0.95,off,"on, effort max",4,1042,400,390.4,90.4
+"temperature 1, top_p 0.99, no top_k",1.0,0.99,off,"on, effort max",4,1042,400,406.1,103.5
+"temperature 1, top_p 1.0, top_k 50",1.0,1.0,50,"on, effort max",4,1042,400,549.3,127.5
+"temperature 1, server defaults (top_p 0.95, top_k 20)",1.0,0.95,20 (server default),"on, effort max",4,1042,400,791.7,157.7

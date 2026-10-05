@@ -1,0 +1,201 @@
+run,engine,configuration,output_type,concurrency,streams_ok,streams_failed,total_tok_s,median_stream_tok_s,min_stream_tok_s,max_stream_tok_s,median_ttft_ms
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",prose,1,1,0,247.46,247.46,247.46,247.46,43.67
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",prose,2,2,0,418.86,213.92,209.44,218.39,788.36
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",prose,4,4,0,594.1,150.14,148.52,166.31,80.37
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",prose,8,8,0,843.89,110.01,105.49,115.22,121.57
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",prose,16,16,0,1090.57,70.38,68.16,74.37,397.2
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",code,1,1,0,425.73,425.73,425.73,425.73,49.47
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",code,2,2,0,626.06,318.89,313.03,324.75,71.26
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",code,4,4,0,772.95,219.14,193.24,223.69,421.79
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",code,8,8,0,1039.79,146.01,130,153.03,4861.81
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",code,16,16,0,1319.04,88.34,82.44,103.09,350.68
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",structured,1,1,0,497.78,497.78,497.78,497.78,44.31
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",structured,2,2,0,815.77,419.24,407.88,430.59,61.53
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",structured,4,4,0,1019.86,306.93,255.06,341,74.83
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",structured,8,8,0,1426.72,214.73,178.35,216.08,117.12
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",structured,16,16,0,1929.96,129.18,120.63,130.92,294.15
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",json,1,1,0,349.38,349.38,349.38,349.38,47.98
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",json,2,2,0,561.32,285.12,280.66,289.58,69.71
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",json,4,4,0,853,236.7,213.26,245.59,109.87
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",json,8,8,0,1260.14,163.66,157.54,178.62,170.68
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",json,16,16,0,1474.79,95.41,92.18,103.63,299.65
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",prose,1,1,0,225.13,225.13,225.13,225.13,53.08
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",prose,2,2,0,377.64,196.92,188.82,205.02,90.53
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",prose,4,4,0,604.11,154.96,151.03,159.74,70.09
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",prose,8,8,0,799.07,112.1,107.43,119.25,370.35
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",prose,16,16,0,1105.14,79.35,73.87,84.4,656.08
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",code,1,1,0,314.69,314.69,314.69,314.69,56.56
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",code,2,2,0,509.85,262.16,254.93,269.4,59.03
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",code,4,4,0,720.68,181.59,180.19,187.82,71.49
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",code,8,8,0,933.68,130.66,121.04,133.14,357.13
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",code,16,16,0,1265.49,87.79,85.44,95.23,493.66
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",structured,1,1,0,341.93,341.93,341.93,341.93,52.91
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",structured,2,2,0,585.93,295.63,292.96,298.29,59.39
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",structured,4,4,0,889.87,234.43,228.21,234.44,140.47
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",structured,8,8,0,1432.96,188.4,180.63,188.43,176.86
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",structured,16,16,0,1738.59,128.94,119.77,130.8,396.27
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",json,1,1,0,325.15,325.15,325.15,325.15,53.46
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",json,2,2,0,515.61,265.45,259.95,270.95,70.58
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",json,4,4,0,732.25,192.96,190.89,197.05,145.29
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",json,8,8,0,1044.45,148.34,143.42,156.9,384.77
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",json,16,16,0,1516.09,108.99,98.18,112.56,506.77
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",prose,1,1,0,202.21,202.21,202.21,202.21,55.07
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",prose,2,2,0,352.63,182.69,181.45,183.92,101.14
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",prose,4,4,0,501.83,130.82,125.46,132.31,87.02
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",prose,8,8,0,651.33,90.57,87.66,99.26,405.3
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",prose,16,16,0,905.84,62.61,57.9,67.1,444.69
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",code,1,1,0,216.07,216.07,216.07,216.07,59.6
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",code,2,2,0,431.23,223.54,215.62,231.45,94.07
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",code,4,4,0,580.9,152.95,145.23,158.05,267.27
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",code,8,8,0,700.85,101.98,94,103.16,375.08
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",code,16,16,0,891.13,64.02,59.04,74.94,477.56
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",structured,1,1,0,314.8,314.8,314.8,314.8,46.97
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",structured,2,2,0,501.97,260.88,259.51,262.25,86.51
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",structured,4,4,0,680.62,192.24,170.16,194.11,89.72
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",structured,8,8,0,1013.34,141.74,131.24,144.23,357.19
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",structured,16,16,0,1310.95,94.02,88.09,95.61,453.59
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",json,1,1,0,252.29,252.29,252.29,252.29,54.99
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",json,2,2,0,359.52,188.08,179.76,196.41,88.29
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",json,4,4,0,533.73,141.09,133.43,160.2,250.75
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",json,8,8,0,783.51,109.53,105.46,114.76,369.04
+vllm_links_off_16_before,Jovian Judgement r24,"16 slots, GPU links off, stock template, before the IOMMU change",json,16,16,0,1047.49,71.96,69.53,78.04,422.96
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",prose,1,1,0,185.45,185.45,185.45,185.45,198.05
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",prose,2,2,0,276.87,142.16,138.43,145.88,62.74
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",prose,4,4,0,424.59,110.85,106.15,117.5,1631.62
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",prose,8,8,0,469.3,80.38,59.38,84.16,1720.39
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",prose,16,16,0,710.3,57.02,47.28,61.79,1827.3
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",code,1,1,0,210.3,210.3,210.3,210.3,57.67
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",code,2,2,0,344.98,181.15,177.57,184.72,86.79
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",code,4,4,0,509.45,130.4,127.37,136.63,1680.04
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",code,8,8,0,525.9,92.86,65.75,95.41,1715.24
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",code,16,16,0,769.05,64.73,49.72,66.73,1871.88
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",structured,1,1,0,245.35,245.35,245.35,245.35,52.4
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",structured,2,2,0,428.45,215.37,214.23,216.5,62.47
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",structured,4,4,0,646.98,163.4,161.75,166.59,118.17
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",structured,8,8,0,1007.98,126.99,126,128.38,121.72
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",structured,16,16,0,1079.84,95.79,67.5,96.87,1774.13
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",json,1,1,0,219.25,219.25,219.25,219.25,62.51
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",json,2,2,0,361.32,186.37,186.36,186.37,87.18
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",json,4,4,0,544.68,137.9,137.2,146.81,140.86
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",json,8,8,0,765.94,102.03,95.74,108.02,222.23
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",json,16,16,0,884.27,75.31,56.42,79.29,1892.81
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",prose,1,1,0,185.15,185.15,185.15,185.15,51.35
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",prose,2,2,0,276.7,141.93,138.35,145.51,62.24
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",prose,4,4,0,426.57,109.86,106.64,117.98,114.91
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",prose,8,8,0,592.58,77.31,74.08,82.24,110.51
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",prose,16,16,0,865.92,56.76,55.3,59.94,212.91
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",code,1,1,0,209.82,209.82,209.82,209.82,51.84
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",code,2,2,0,351.9,179.41,177.82,181,87.17
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",code,4,4,0,484.7,128.88,125.02,130.32,157.23
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",code,8,8,0,688.66,89.76,86.09,93.32,113.69
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",code,16,16,0,955.06,63.81,61.42,67.83,293.87
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",structured,1,1,0,245.03,245.03,245.03,245.03,51.11
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",structured,2,2,0,428.42,215.27,214.21,216.33,64.61
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",structured,4,4,0,649.1,163.86,162.31,167.18,108.91
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",structured,8,8,0,981.86,127.66,126.13,128.91,152.1
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",structured,16,16,0,1460.52,95.67,92.6,96.71,193.58
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",json,1,1,0,217.66,217.66,217.66,217.66,58.34
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",json,2,2,0,347.27,178.94,173.64,184.24,95.98
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",json,4,4,0,492.07,134.69,123.04,135.31,117.79
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",json,8,8,0,793.9,103.58,100.99,110.16,213.82
+official_default_16_pass2,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, second pass",json,16,16,0,1010.6,74.56,65.84,79.28,273.89
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",prose,1,1,0,192.27,192.27,192.27,192.27,190.65
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",prose,2,2,0,306.21,157.82,153.11,162.53,52.25
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",prose,4,4,0,455.67,118.31,113.92,121.89,70.53
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",prose,8,8,0,612.2,88.99,78.13,92.68,430.15
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",prose,16,16,0,955.5,66.34,62.4,69.4,491.01
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",code,1,1,0,249.52,249.52,249.52,249.52,53.78
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",code,2,2,0,388.65,195.95,194.33,197.56,61.22
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",code,4,4,0,522.45,138.11,130.62,143.33,84.38
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",code,8,8,0,674.91,93.87,87.5,97.73,462.69
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",code,16,16,0,1000.62,70.07,67.13,73.72,538.37
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",structured,1,1,0,261.79,261.79,261.79,261.79,36.73
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",structured,2,2,0,443.3,222.67,221.65,223.69,59.35
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",structured,4,4,0,667.77,183.34,170.15,185.48,52.05
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",structured,8,8,0,1003.92,138.17,129.4,140.06,121.89
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",structured,16,16,0,1658.23,118.46,104.75,119.9,466.11
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",json,1,1,0,240.88,240.88,240.88,240.88,51.32
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",json,2,2,0,385.82,197.08,192.91,201.25,60.03
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",json,4,4,0,559.43,152.78,144.97,154.95,129.01
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",json,8,8,0,848.54,111.06,110.05,115.88,207.95
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",json,16,16,0,1227.19,88.03,83.64,92.03,541.18
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",prose,1,1,0,190.86,190.86,190.86,190.86,45.51
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",prose,2,2,0,301.13,155.01,150.57,159.45,54.45
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",prose,4,4,0,434.75,112.9,108.69,116.31,72.12
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",prose,8,8,0,637.17,84.92,81.45,87.56,159.75
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",prose,16,16,0,957.51,63.47,61.31,71.35,211.77
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",code,1,1,0,247.47,247.47,247.47,247.47,56.14
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",code,2,2,0,378.53,190.97,189.26,192.68,61.04
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",code,4,4,0,505.87,133.67,126.47,138.7,90.82
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",code,8,8,0,709.67,92.15,90.28,95.33,223.42
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",code,16,16,0,825.98,68.02,53.66,70.89,1838.9
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",structured,1,1,0,259.42,259.42,259.42,259.42,33.17
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",structured,2,2,0,436.93,219.51,218.47,220.55,56.18
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",structured,4,4,0,641.09,168.13,166.06,170.62,107.5
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",structured,8,8,0,1097.08,142.41,140.95,143.88,132.27
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",structured,16,16,0,1784.61,118.12,115.65,119.29,192.55
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",json,1,1,0,238.84,238.84,238.84,238.84,51.78
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",json,2,2,0,382.57,195.19,191.29,199.09,56.47
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",json,4,4,0,589.85,151.98,148.65,155.21,84.36
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",json,8,8,0,846.85,110.38,107.7,117.18,142.39
+official_pcie_16_pass2,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, second pass",json,16,16,0,1176.59,86.47,77.2,88.42,297.26
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",prose,1,1,0,238.71,238.71,238.71,238.71,29.33
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",prose,2,2,0,366.55,198.1,191.05,205.15,107.36
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",prose,4,4,0,575.39,149.88,144.51,151.89,160.94
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",prose,8,8,0,775.16,108.7,104.49,114.3,365.54
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",prose,16,16,0,1078.8,75.24,71.76,80.29,428.53
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",code,1,1,0,316.25,316.25,316.25,316.25,60.16
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",code,2,2,0,503.28,256.2,256.08,256.31,76.82
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",code,4,4,0,566.05,163.52,151.93,180.87,312.82
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",code,8,8,0,851.81,117.91,107.7,128.73,361.86
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",code,16,16,0,1123.16,79.8,72.78,87.47,560.48
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",structured,1,1,0,340.18,340.18,340.18,340.18,22.51
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",structured,2,2,0,557.32,290.83,285.51,296.14,102.82
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",structured,4,4,0,904.44,240.17,230.27,240.19,166.3
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",structured,8,8,0,1338.73,179.3,174.27,179.32,191.67
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",structured,16,16,0,1599.53,122.04,110.06,123.23,436.16
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",json,1,1,0,306.75,306.75,306.75,306.75,34.78
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",json,2,2,0,510.26,267.54,265.52,269.56,103.49
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",json,4,4,0,748.79,198.77,197.06,203.43,173.89
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",json,8,8,0,1026.3,148.46,134.13,150.86,401.62
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",json,16,16,0,1485.58,108.09,100.36,112.38,574.69
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",prose,1,1,0,239.47,239.47,239.47,239.47,54.4
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",prose,2,2,0,376.4,198.44,194.14,202.73,79.85
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",prose,4,4,0,543.86,145.66,139.75,151.91,135.66
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",prose,8,8,0,768.78,105.09,98.33,109.89,330.97
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",prose,16,16,0,1068.2,74.35,69.31,77.4,398.28
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",code,1,1,0,325.05,325.05,325.05,325.05,48.35
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",code,2,2,0,519.29,260.58,259.65,261.51,57.75
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",code,4,4,0,715.83,182.47,178.96,187.75,75.52
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",code,8,8,0,902.45,126.07,119.4,128.33,338.79
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",code,16,16,0,1221.27,84.64,79.92,88.7,474.83
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",structured,1,1,0,348.18,348.18,348.18,348.18,46.52
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",structured,2,2,0,626.95,313.5,313.48,313.51,59.31
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",structured,4,4,0,965.24,243.47,241.32,243.5,73.2
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",structured,8,8,0,1419.72,187.44,184.02,189.34,156.25
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",structured,16,16,0,1637.68,123.67,112.21,125.52,398.12
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",json,1,1,0,303.92,303.92,303.92,303.92,63.31
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",json,2,2,0,519.2,266.77,259.6,273.95,63.55
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",json,4,4,0,748.53,193.36,188.4,203.28,80.09
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",json,8,8,0,1017.69,140.58,131.65,150.03,335.63
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",json,16,16,0,1461.29,105.41,92.74,110.21,494.54
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,1,1,0,261.2,261.2,261.2,261.2,42.19
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,2,2,0,426.6,218.08,213.3,222.86,55.88
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,4,4,0,587.7,148.64,146.93,163.68,79.32
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,8,8,0,870.78,114.12,108.85,119.32,133.53
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,16,16,0,1134.29,73.06,70.89,77.38,316.16
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,1,1,0,422.16,422.16,422.16,422.16,49.77
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,2,2,0,589.89,304.8,304.24,305.36,73.04
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,4,4,0,806.98,229.62,201.75,234.13,105.31
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,8,8,0,1076.95,151.01,134.62,158.13,1355.59
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,16,16,0,1350.11,90.75,84.39,106.1,310.79
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,1,1,0,499.55,499.55,499.55,499.55,34.66
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,2,2,0,805.65,405.5,402.82,408.18,53.01
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,4,4,0,1053.85,320.04,263.47,356.42,73.45
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,8,8,0,1501.31,224.91,187.71,227.64,112.89
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,16,16,0,2015.23,135.26,125.97,137.34,330.75
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,1,1,0,352.42,352.42,352.42,352.42,47.32
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,2,2,0,554.61,281.32,277.3,285.33,66.65
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,4,4,0,885.06,246.15,221.29,255.92,94.74
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,8,8,0,1302.55,169.51,162.82,185.2,154.37
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,16,16,0,1457.05,100.28,93.4,109.34,355.88

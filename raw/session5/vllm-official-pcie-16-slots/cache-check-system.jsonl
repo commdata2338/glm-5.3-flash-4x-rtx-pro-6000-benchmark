@@ -1,0 +1,4 @@
+{"label": "stock-pcie-16", "context_in": "system message", "step": "first request, 16 tokens", "shared_context_tokens": 56348, "seconds": 8.06, "prompt_tokens": 56385, "completion_tokens": 16, "cached_tokens": null}
+{"label": "stock-pcie-16", "context_in": "system message", "step": "the same request again", "shared_context_tokens": 56348, "seconds": 0.63, "prompt_tokens": 56385, "completion_tokens": 16, "cached_tokens": null}
+{"label": "stock-pcie-16", "context_in": "system message", "step": "same context, other question", "shared_context_tokens": 56348, "seconds": 0.66, "prompt_tokens": 56386, "completion_tokens": 16, "cached_tokens": null}
+{"label": "stock-pcie-16", "context_in": "system message", "step": "same context, third question", "shared_context_tokens": 56348, "seconds": 0.67, "prompt_tokens": 56385, "completion_tokens": 16, "cached_tokens": null}

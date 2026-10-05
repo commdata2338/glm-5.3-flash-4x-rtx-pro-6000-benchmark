@@ -1,0 +1,3 @@
+{"target_tokens": 2000, "prompt_tokens": 2008, "passphrase": "saddle-94588-saddle", "answer": "saddle-94588-saddle", "ok": true, "seconds": 1.14}
+{"target_tokens": 30000, "prompt_tokens": 29902, "passphrase": "quartz-87327-anchor", "answer": "quartz-87327-anchor", "ok": true, "seconds": 5.62}
+{"target_tokens": 200000, "prompt_tokens": 199195, "passphrase": "river-63252-summit", "answer": "river-63252-summit", "ok": true, "seconds": 19.51}

@@ -1,0 +1,18 @@
+--- chat_template.jinja
++++ chat_template.thinking-switch.jinja
+@@ -1,6 +1,7 @@
+ [gMASK]<sop>
+ {%- set effective_reasoning_effort = reasoning_effort if reasoning_effort is defined and reasoning_effort in ['low', 'high'] else 'max' -%}
+-{%- if effective_reasoning_effort is not none -%}<|system|>Reasoning Effort: {{ effective_reasoning_effort | capitalize }}{%- endif -%}
++{%- set thinking_enabled = not (enable_thinking is defined and enable_thinking is false) -%}
++{%- if effective_reasoning_effort is not none and thinking_enabled -%}<|system|>Reasoning Effort: {{ effective_reasoning_effort | capitalize }}{%- endif -%}
+ {%- set clear_thinking = clear_thinking if clear_thinking is defined else false -%}
+ {%- if tools -%}
+ {%- macro tool_to_json(tool) -%}
+@@ -257,5 +258,5 @@
+ {%- endif -%}
+ {%- endfor -%}
+ {%- if add_generation_prompt -%}
+-    <|assistant|>{{- '<think>' -}}
++    <|assistant|>{{- '<think>' if thinking_enabled else '<think></think>' -}}
+ {%- endif -%}

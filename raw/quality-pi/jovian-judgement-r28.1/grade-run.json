@@ -1,0 +1,8 @@
+{
+  "image_id": "sha256:bc1c72bd17468b420fdab7c88e4e5849da7df0fb91fe589cb3cf5b80bbdc020a",
+  "samples_sha256": "3103a5e33401a338ce194deeef82e21aef033f6f737865654e4eb27b9ad5dc45",
+  "network": "none",
+  "wall_seconds": 128.43977438501315,
+  "limit_hit": false,
+  "exit_status": 0
+}

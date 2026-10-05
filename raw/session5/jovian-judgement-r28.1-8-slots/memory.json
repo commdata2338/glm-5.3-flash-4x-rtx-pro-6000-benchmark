@@ -1,0 +1,37 @@
+{
+ "margins": {
+  "Worker_TP3": {
+   "consumed": 54.94,
+   "peak": 2.89,
+   "graph": 4.23,
+   "full": 29.19,
+   "kv": 22.47,
+   "margin": 6.72
+  },
+  "Worker_TP0": {
+   "consumed": 55.03,
+   "peak": 2.89,
+   "graph": 4.23,
+   "full": 30.64,
+   "kv": 22.38,
+   "margin": 8.26
+  },
+  "Worker_TP2": {
+   "consumed": 55.06,
+   "peak": 2.89,
+   "graph": 4.23,
+   "full": 30.52,
+   "kv": 22.35,
+   "margin": 8.17
+  },
+  "Worker_TP1": {
+   "consumed": 55.06,
+   "peak": 2.89,
+   "graph": 4.23,
+   "full": 29.34,
+   "kv": 22.34,
+   "margin": 7.0
+  }
+ },
+ "kv_tokens": "3,366,277"
+}

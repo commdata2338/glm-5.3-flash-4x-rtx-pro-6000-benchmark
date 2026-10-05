@@ -1,0 +1,9 @@
+# Python caches from running the scripts
+__pycache__/
+*.pyc
+
+# Local editor state
+.obsidian/
+
+# Working notes for the tools that helped to write the paper: not a part of the publication
+AGENTS.md

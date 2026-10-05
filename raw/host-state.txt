@@ -1,0 +1,13 @@
+kernel: 7.0.0-34-generic
+cmdline: BOOT_IMAGE=/vmlinuz-7.0.0-34-generic root=/dev/mapper/ubuntu--vg-ubuntu--lv ro quiet splash pci=realloc iommu=pt vt.handoff=7
+0000:01:00.0 iommu group 40 type identity
+0000:02:00.0 iommu group 41 type identity
+0000:e1:00.0 iommu group 10 type identity
+0000:e2:00.0 iommu group 11 type identity
+iommu: Default domain type: Passthrough (set via kernel command line)
+0, 00000000:01:00.0, NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition, 595.84, 250.00 W
+1, 00000000:02:00.0, NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition, 595.84, 250.00 W
+2, 00000000:E1:00.0, NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition, 595.84, 250.00 W
+3, 00000000:E2:00.0, NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition, 595.84, 250.00 W
+recipe: 6c13d82 Local: the idle-GPU check reads GPU_MAX_USED_MIB (default 1000);bdf4f18 Install TensorFold's C/CUDA headers in the image (1.0.1);
+image label: 2ac85f7a683e18bb

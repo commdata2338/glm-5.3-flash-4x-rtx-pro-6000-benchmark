@@ -1,0 +1,6 @@
+{"target_tokens": 8192, "prompt_tokens": 8165, "ttft_s": 1.161, "prefill_tok_s": 7035.2}
+{"target_tokens": 16384, "prompt_tokens": 16338, "ttft_s": 1.917, "prefill_tok_s": 8522.1}
+{"target_tokens": 32768, "prompt_tokens": 32693, "ttft_s": 3.776, "prefill_tok_s": 8657.7}
+{"target_tokens": 65536, "prompt_tokens": 65214, "ttft_s": 7.57, "prefill_tok_s": 8615.1}
+{"target_tokens": 131072, "prompt_tokens": 130332, "ttft_s": 15.48, "prefill_tok_s": 8419.4}
+{"target_tokens": 262144, "prompt_tokens": 261272, "ttft_s": 32.845, "prefill_tok_s": 7954.8}

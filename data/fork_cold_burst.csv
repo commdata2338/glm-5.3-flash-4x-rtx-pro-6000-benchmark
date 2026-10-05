@@ -1,0 +1,37 @@
+server,request,prompt_tokens,cached_tokens_reported,completion_tokens,ttft_s,reply_tokens_sha256_first16,note
+"TensorFold, recipe 1.0.1",sibling-0,42250,0,128,8.979,ee3cf5652602cf89,
+"TensorFold, recipe 1.0.1",sibling-1,42250,0,128,21.834,735d6e558f6f6533,
+"TensorFold, recipe 1.0.1",sibling-2,42250,0,128,18.553,2dd64f2903dd3661,
+"TensorFold, recipe 1.0.1",sibling-3,42250,0,128,14.428,49c4c60f5302ac29,
+"TensorFold fork, all switches off",sibling-0,42250,0,128,41.834,ee3cf5652602cf89,first long prompt after the server start: the prompt kernels were not yet used
+"TensorFold fork, all switches off",sibling-1,42250,0,128,50.74,735d6e558f6f6533,first long prompt after the server start: the prompt kernels were not yet used
+"TensorFold fork, all switches off",sibling-2,42250,0,128,47.48,2dd64f2903dd3661,first long prompt after the server start: the prompt kernels were not yet used
+"TensorFold fork, all switches off",sibling-3,42250,0,128,53.443,49c4c60f5302ac29,first long prompt after the server start: the prompt kernels were not yet used
+"TensorFold fork, GPU sampler and burst reuse on",sibling-0,42250,0,128,5.453,ee3cf5652602cf89,
+"TensorFold fork, GPU sampler and burst reuse on",sibling-1,42250,42240,128,5.452,735d6e558f6f6533,
+"TensorFold fork, GPU sampler and burst reuse on",sibling-2,42250,42240,128,5.451,2dd64f2903dd3661,
+"TensorFold fork, GPU sampler and burst reuse on",sibling-3,42250,42240,128,5.45,49c4c60f5302ac29,
+"Jovian Judgement r24, 8 slots",sibling-0,42251,,128,4.36,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 8 slots",sibling-1,42251,,128,8.448,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 8 slots",sibling-2,42251,,128,8.787,,the same requests with a different first line and no priority field
+"Jovian Judgement r24, 8 slots",sibling-3,42251,,128,8.447,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 8 slots",sibling-0,42251,,128,4.503,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 8 slots",sibling-1,42251,,128,12.675,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 8 slots",sibling-2,42251,,128,9.312,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 8 slots",sibling-3,42251,,128,16.548,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 16 slots",sibling-0,42251,,128,8.487,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 16 slots",sibling-1,42251,,128,4.406,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 16 slots",sibling-2,42251,,128,16.445,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 16 slots",sibling-3,42251,,128,12.52,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 16 slots, checkpoint policy aligned",sibling-0,42251,,128,4.791,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 16 slots, checkpoint policy aligned",sibling-1,42251,,128,4.795,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 16 slots, checkpoint policy aligned",sibling-2,42251,,128,4.792,,the same requests with a different first line and no priority field
+"Jovian Judgement r28.1, 16 slots, checkpoint policy aligned",sibling-3,42251,,128,5.116,,the same requests with a different first line and no priority field
+"Official vLLM, default",sibling-0,42251,,128,8.797,,the same requests with a different first line and no priority field
+"Official vLLM, default",sibling-1,42251,,128,14.669,,the same requests with a different first line and no priority field
+"Official vLLM, default",sibling-2,42251,,128,14.217,,the same requests with a different first line and no priority field
+"Official vLLM, default",sibling-3,42251,,128,13.74,,the same requests with a different first line and no priority field
+"Official vLLM, tuned",sibling-0,42251,,128,9.08,,the same requests with a different first line and no priority field
+"Official vLLM, tuned",sibling-1,42251,,128,15.137,,the same requests with a different first line and no priority field
+"Official vLLM, tuned",sibling-2,42251,,128,14.184,,the same requests with a different first line and no priority field
+"Official vLLM, tuned",sibling-3,42251,,128,14.675,,the same requests with a different first line and no priority field

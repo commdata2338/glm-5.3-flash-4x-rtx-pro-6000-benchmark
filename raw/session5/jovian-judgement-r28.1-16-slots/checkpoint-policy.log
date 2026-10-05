@@ -1,0 +1,9 @@
+Lines of the server log of this start that name the rule for the recurrent state.
+
+(EngineCore pid=623) INFO 10-04 20:48:25 [kv_cache_manager.py:211] Request-boundary recurrent checkpoint caching is enabled. Supported chat requests retain leading instructions, the complete prompt, and the response endpoint.
+
+From the 'non-default args' line of this start:
+recurrent_checkpoint_policy: not in the list of non-default arguments (the default applies)
+prefix_cache_retention_interval: not in the list of non-default arguments (the default applies)
+mamba_cache_mode: 'align'
+enable_prefix_caching: True

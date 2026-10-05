@@ -1,0 +1,22 @@
+run,engine,configuration,target_tokens,prompt_tokens,passphrase_recalled,seconds
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",2000,2057,True,22.49
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",30000,30031,True,7.3
+tensorfold,TensorFold,"recipe 1.0.1, 40 slots",200000,199192,True,24.0
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",2000,2004,True,1.13
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",30000,29918,True,5.3
+vllm_links_on_16,Jovian Judgement r24,"16 slots, GPU links on, thinking-switch template",200000,199096,True,19.21
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",2000,2031,True,2.03
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",30000,29844,True,6.77
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",200000,198884,False,31.78
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",2000,2018,True,0.68
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",30000,29857,True,4.52
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",200000,199154,False,29.68
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",2000,2008,True,1.14
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",30000,29902,True,5.62
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",200000,199195,True,19.51
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",2000,2039,True,0.36
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",30000,29911,True,2.77
+jovian_r281_16,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, session 5",200000,199232,True,19.62
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",2000,2039,True,0.34
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",30000,29827,True,2.81
+jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",200000,198911,True,20.21

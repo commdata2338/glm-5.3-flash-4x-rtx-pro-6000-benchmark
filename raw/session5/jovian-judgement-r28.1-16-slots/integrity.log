@@ -1,0 +1,3 @@
+{"target_tokens": 2000, "prompt_tokens": 2039, "passphrase": "glacier-81979-anchor", "answer": "glacier-81979-anchor", "ok": true, "seconds": 0.36}
+{"target_tokens": 30000, "prompt_tokens": 29911, "passphrase": "thistle-69231-cobalt", "answer": "thistle-69231-cobalt", "ok": true, "seconds": 2.77}
+{"target_tokens": 200000, "prompt_tokens": 199232, "passphrase": "canvas-65448-canvas", "answer": "canvas-65448-canvas", "ok": true, "seconds": 19.62}

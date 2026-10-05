@@ -1,0 +1,189 @@
+
+Aevonix Research TensorFold start
+Mia-AiLab/GLM-5.3-Flash-EXL3-4bpw-TensorFold | 40 concurrent | 1048576-token context | fp8 dense | fp8 KV | port 8021
+
+
+[1/6] Check Linux, Docker, NVIDIA runtime, GPUs, disk space and optional download token
+[I_PLATFORM] Linux x86_64, Docker access and NVIDIA runtime are ready.
+[I_GPU] Four GPUs have enough free memory and no compute workloads.
+[I_DISK] Enough disk space for missing weights, image and kernel cache.
+[I_HF_TOKEN] Optional Hugging Face token is set; its value will not be printed.
+
+[2/6] Verify the prebuilt fork overlay image
+Fork image is ready: tensorfold-glm53:fast-57446055a6a1 (57446055a6a1846d90f85466063bd698416d37a9)
+
+[3/6] Verify the existing read-only checkpoint and drafter
+Existing release weights verified; no download or revision-marker writes.
+
+[4/6] Check CUDA peer access, compile kernels and autotune the launch table (skip when ready)
+[I_GPU] Four GPUs have enough free memory and no compute workloads.
+[I_P2P] CUDA peer access is available between all four GPUs.
+Compile CUDA kernels and run one-time launch-table autotune on the first selected GPU (GPUs must be idle).
+[autotune 07:05:48] glm_autotune 1 on NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition (188 SMs, sm_120, L2 128 MiB), torch 2.13.0a0+9186a08b2c.nv26.07
+[autotune 07:05:48] shapes (derived): q4 [(160, 4096), (1024, 4096), (2048, 128), (2048, 4096), (4096, 512), (4096, 1536), (4096, 2048), (4096, 3072), (4096, 4096), (6144, 4096), (6416, 4096)], f8 [(38720, 4096)], b16 [], exl3 {'D': 4096, 'NI': 512, 'E': 288, 'top_k': 8, 'limit': 10.0}, kda heads [16]
+[autotune 07:05:48] engine settings seen (the baselines follow them): {'TF_GLM_EXL3_LOADS': 'nc', 'TF_GLM_DENSE': 'fp8'}
+[autotune 07:05:48] --- exl3_dec
+[autotune 07:05:48] exl3_dec: D 4096, width 512, 288 experts, top 8; baseline (environment) gu {'ld': 1, 'wn': 1, 'fuse': 0, 'xrow': 1}, dn {'ld': 1, 'wn': 1, 'fuse': 1}
+[tensorfold] building CUDA extension tensorfold_experts_v8 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_glm_exl3_v20a2 (first start after an install or update; later starts reuse it)
+[autotune 07:07:08] exl3_dec: the reference equals the grouped kernel path bit for bit
+[autotune 07:07:09] exl3_dec gate/up 4096x512 rows 1-1: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 40.9 us -> {"fuse": 0, "ld": 2, "wn": 1, "xrow": 1} 39.0 us (+4.6%)
+[autotune 07:07:09] exl3_dec gate/up 4096x512 rows 2-2: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 55.2 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 55.2 us (+0.0%)
+[autotune 07:07:10] exl3_dec gate/up 4096x512 rows 3-4: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 98.3 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 98.3 us (+0.0%)
+[autotune 07:07:11] exl3_dec gate/up 4096x512 rows 5-8: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 161.8 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 161.8 us (+0.0%)
+[autotune 07:07:11] exl3_dec gate/up 4096x512 rows 9-16: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 278.6 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 278.6 us (+0.0%)
+[autotune 07:07:13] exl3_dec gate/up 4096x512 rows 17-32: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 481.3 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 481.3 us (+0.0%)
+[autotune 07:07:14] exl3_dec gate/up 4096x512 rows 33-63: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 724.4 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 724.4 us (+0.0%)
+[autotune 07:07:15] exl3_dec down 512x4096 rows 1-1: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 41.0 us -> {"fuse": 1, "ld": 1, "wn": 1} 41.0 us (+0.0%)
+[autotune 07:07:15] exl3_dec down 512x4096 rows 2-2: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 57.2 us -> {"fuse": 1, "ld": 1, "wn": 1} 57.2 us (+0.0%)
+[autotune 07:07:15] exl3_dec down 512x4096 rows 3-4: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 98.4 us -> {"fuse": 1, "ld": 1, "wn": 1} 98.4 us (+0.0%)
+[autotune 07:07:16] exl3_dec down 512x4096 rows 5-8: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 163.8 us -> {"fuse": 1, "ld": 1, "wn": 1} 163.8 us (+0.0%)
+[autotune 07:07:16] exl3_dec down 512x4096 rows 9-16: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 281.0 us -> {"fuse": 1, "ld": 1, "wn": 1} 281.0 us (+0.0%)
+[autotune 07:07:17] exl3_dec down 512x4096 rows 17-32: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 465.4 us -> {"fuse": 1, "ld": 1, "wn": 1} 465.4 us (+0.0%)
+[autotune 07:07:17] exl3_dec down 512x4096 rows 33-63: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 716.9 us -> {"fuse": 1, "ld": 1, "wn": 1} 716.9 us (+0.0%)
+[autotune 07:07:17] exl3_dec rows 1-1: whole routed experts 41.0 -> 38.9 us (+5.0%)
+[autotune 07:07:17] exl3_dec rows 2-2: whole routed experts 55.3 -> 55.3 us (+0.0%)
+[autotune 07:07:17] exl3_dec rows 3-4: whole routed experts 100.3 -> 98.4 us (+1.9%)
+[autotune 07:07:17] exl3_dec rows 5-8: whole routed experts 162.8 -> 163.7 us (-0.5%)
+[autotune 07:07:18] exl3_dec rows 9-16: whole routed experts 282.6 -> 281.1 us (+0.5%)
+[autotune 07:07:18] exl3_dec rows 17-32: whole routed experts 465.4 -> 465.8 us (-0.1%)
+[autotune 07:07:18] exl3_dec rows 33-63: whole routed experts 642.0 -> 640.9 us (+0.2%)
+[autotune 07:07:18] exl3_dec: 90 s
+[autotune 07:07:18] --- kda_step
+[tensorfold] building CUDA extension tensorfold_glm_kda_v2a3 (first start after an install or update; later starts reuse it)
+[autotune 07:07:37] kda_step: 16 heads; the reference equals the fused chain bit for bit
+[autotune 07:07:38] kda_step 16 rows 1-1: 8/8 exact, baseline {"tr": 16, "warps": 4} 10.2 us -> {"tr": 16, "warps": 4} 10.2 us (+0.0%)
+[autotune 07:07:38] kda_step 16 rows 2-2: 8/8 exact, baseline {"tr": 16, "warps": 4} 10.2 us -> {"tr": 16, "warps": 4} 10.2 us (+0.0%)
+[autotune 07:07:38] kda_step 16 rows 3-4: 8/8 exact, baseline {"tr": 16, "warps": 4} 10.2 us -> {"tr": 16, "warps": 4} 10.2 us (+0.0%)
+[autotune 07:07:38] kda_step 16 rows 5-8: 8/8 exact, baseline {"tr": 16, "warps": 4} 12.3 us -> {"tr": 16, "warps": 4} 12.3 us (+0.0%)
+[autotune 07:07:38] kda_step 16 rows 9-16: 8/8 exact, baseline {"tr": 16, "warps": 4} 16.3 us -> {"tr": 16, "warps": 4} 16.3 us (+0.0%)
+[autotune 07:07:38] kda_step 16 rows 17-32: 8/8 exact, baseline {"tr": 16, "warps": 4} 24.6 us -> {"tr": 16, "warps": 4} 24.6 us (+0.0%)
+[autotune 07:07:38] kda_step 16 rows 33-63: 8/8 exact, baseline {"tr": 16, "warps": 4} 41.0 us -> {"tr": 16, "warps": 4} 41.0 us (+0.0%)
+[autotune 07:07:38] kda_step: 20 s
+[autotune 07:07:38] --- q4_prefill
+[tensorfold] building CUDA extension tensorfold_qmm_v5m2 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qmm_prefill2_v2 (first start after an install or update; later starts reuse it)
+[autotune 07:08:41] q4_prefill 160x4096 rows 1-256: 36/36 exact, baseline 0 104.4 us -> 50 22.5 us (+78.4%)
+[autotune 07:08:42] q4_prefill 160x4096 rows 257-512: 36/36 exact, baseline 0 104.4 us -> 50 22.8 us (+78.2%)
+[autotune 07:08:42] q4_prefill 160x4096 rows 513-2048: 36/36 exact, baseline 0 104.5 us -> 50 36.9 us (+64.7%)
+[autotune 07:08:43] q4_prefill 160x4096 rows 2049-4096: 36/36 exact, baseline 0 104.5 us -> 48 55.3 us (+47.0%)
+[autotune 07:08:43] q4_prefill 1024x4096 rows 1-256: 36/36 exact, baseline 0 104.4 us -> 48 32.7 us (+68.7%)
+[autotune 07:08:44] q4_prefill 1024x4096 rows 257-512: 36/36 exact, baseline 0 104.4 us -> 50 36.8 us (+64.7%)
+[autotune 07:08:45] q4_prefill 1024x4096 rows 513-2048: 36/36 exact, baseline 0 114.7 us -> 0 114.7 us (+0.0%)
+[autotune 07:08:45] q4_prefill 1024x4096 rows 2049-4096: 36/36 exact, baseline 0 223.6 us -> 39 186.4 us (+16.6%)
+[autotune 07:08:46] q4_prefill 2048x128 rows 1-256: 36/36 exact, baseline 0 10.2 us -> 48 6.1 us (+40.0%)
+[autotune 07:08:46] q4_prefill 2048x128 rows 257-512: 36/36 exact, baseline 0 10.3 us -> 48 8.1 us (+20.9%)
+[autotune 07:08:47] q4_prefill 2048x128 rows 513-2048: 36/36 exact, baseline 0 18.4 us -> 3 16.4 us (+11.1%)
+[autotune 07:08:47] q4_prefill 2048x128 rows 2049-4096: 36/36 exact, baseline 0 26.6 us -> 3 24.5 us (+7.7%)
+[autotune 07:08:48] q4_prefill 2048x4096 rows 1-256: 36/36 exact, baseline 0 104.4 us -> 50 36.9 us (+64.7%)
+[autotune 07:08:48] q4_prefill 2048x4096 rows 257-512: 36/36 exact, baseline 0 106.4 us -> 3 63.5 us (+40.3%)
+[autotune 07:08:49] q4_prefill 2048x4096 rows 513-2048: 36/36 exact, baseline 0 225.2 us -> 39 190.5 us (+15.4%)
+[autotune 07:08:50] q4_prefill 2048x4096 rows 2049-4096: 36/36 exact, baseline 0 346.0 us -> 9 312.0 us (+9.8%)
+[autotune 07:08:51] q4_prefill 4096x512 rows 1-256: 36/36 exact, baseline 0 20.5 us -> 3 12.3 us (+40.0%)
+[autotune 07:08:51] q4_prefill 4096x512 rows 257-512: 36/36 exact, baseline 0 20.5 us -> 48 18.4 us (+10.3%)
+[autotune 07:08:52] q4_prefill 4096x512 rows 513-2048: 36/36 exact, baseline 0 59.3 us -> 33 49.2 us (+17.1%)
+[autotune 07:08:52] q4_prefill 4096x512 rows 2049-4096: 36/36 exact, baseline 0 110.6 us -> 34 94.2 us (+14.8%)
+[autotune 07:08:53] q4_prefill 4096x1536 rows 1-256: 36/36 exact, baseline 0 44.6 us -> 48 22.5 us (+49.5%)
+[autotune 07:08:53] q4_prefill 4096x1536 rows 257-512: 36/36 exact, baseline 0 47.1 us -> 48 43.3 us (+8.1%)
+[autotune 07:08:54] q4_prefill 4096x1536 rows 513-2048: 36/36 exact, baseline 0 143.4 us -> 9 129.0 us (+10.0%)
+[autotune 07:08:55] q4_prefill 4096x1536 rows 2049-4096: 36/36 exact, baseline 0 276.4 us -> 34 231.3 us (+16.3%)
+[autotune 07:08:55] q4_prefill 4096x2048 rows 1-256: 36/36 exact, baseline 0 57.3 us -> 48 28.6 us (+50.1%)
+[autotune 07:08:56] q4_prefill 4096x2048 rows 257-512: 36/36 exact, baseline 0 61.5 us -> 34 59.4 us (+3.3%)
+[autotune 07:08:57] q4_prefill 4096x2048 rows 513-2048: 36/36 exact, baseline 0 184.4 us -> 33 168.0 us (+8.9%)
+[autotune 07:08:58] q4_prefill 4096x2048 rows 2049-4096: 36/36 exact, baseline 0 358.4 us -> 34 301.1 us (+16.0%)
+[autotune 07:08:58] q4_prefill 4096x3072 rows 1-256: 36/36 exact, baseline 0 82.5 us -> 48 45.1 us (+45.4%)
+[autotune 07:08:59] q4_prefill 4096x3072 rows 257-512: 36/36 exact, baseline 0 88.4 us -> 0 88.4 us (+0.0%)
+[autotune 07:09:00] q4_prefill 4096x3072 rows 513-2048: 36/36 exact, baseline 0 266.2 us -> 33 239.6 us (+10.0%)
+[autotune 07:09:01] q4_prefill 4096x3072 rows 2049-4096: 36/36 exact, baseline 0 521.3 us -> 34 442.6 us (+15.1%)
+[autotune 07:09:02] q4_prefill 4096x4096 rows 1-256: 36/36 exact, baseline 0 106.6 us -> 3 65.6 us (+38.5%)
+[autotune 07:09:03] q4_prefill 4096x4096 rows 257-512: 36/36 exact, baseline 0 115.0 us -> 0 115.0 us (+0.0%)
+[autotune 07:09:04] q4_prefill 4096x4096 rows 513-2048: 36/36 exact, baseline 0 349.0 us -> 33 315.3 us (+9.7%)
+[autotune 07:09:05] q4_prefill 4096x4096 rows 2049-4096: 36/36 exact, baseline 0 697.6 us -> 42 615.4 us (+11.8%)
+[autotune 07:09:07] q4_prefill 6144x4096 rows 1-256: 36/36 exact, baseline 0 113.6 us -> 34 110.6 us (+2.6%)
+[autotune 07:09:07] q4_prefill 6144x4096 rows 257-512: 36/36 exact, baseline 0 227.2 us -> 55 165.8 us (+27.0%)
+[autotune 07:09:09] q4_prefill 6144x4096 rows 513-2048: 36/36 exact, baseline 0 569.3 us -> 47 434.2 us (+23.7%)
+[autotune 07:09:11] q4_prefill 6144x4096 rows 2049-4096: 36/36 exact, baseline 0 1067.0 us -> 33 909.3 us (+14.8%)
+[autotune 07:09:12] q4_prefill 6416x4096 rows 1-256: 36/36 exact, baseline 0 114.7 us -> 0 114.7 us (+0.0%)
+[autotune 07:09:13] q4_prefill 6416x4096 rows 257-512: 36/36 exact, baseline 0 227.3 us -> 55 174.3 us (+23.3%)
+[autotune 07:09:14] q4_prefill 6416x4096 rows 513-2048: 36/36 exact, baseline 0 570.8 us -> 34 465.0 us (+18.5%)
+[autotune 07:09:16] q4_prefill 6416x4096 rows 2049-4096: 36/36 exact, baseline 0 1087.5 us -> 47 986.1 us (+9.3%)
+[autotune 07:09:16] q4_prefill: 98 s
+[autotune 07:09:16] --- exl3_prompt
+[autotune 07:09:18] exl3_prompt all rows 1000-4096: 6/6 exact, baseline {"passm": 64, "stages": 3} 4035.2 us -> {"passm": 128, "stages": 4} 3801.2 us (+5.8%)
+[autotune 07:09:18] exl3_prompt: 1 s
+[autotune 07:09:18] wrote /cache/launch-table.json: 15 entries over 5 kernels in 210 s; start the engine with TF_GLM_TUNE=<that path inside the container>
+
+[5/6] Start one container with four local TensorFold ranks
+The wrapper launches ranks 0-3 on GPUs 0-3 inside the container, rotating visible devices for each rank.
+e7806164011633b86958236cbf2d97da4b596e287c8737fe2dd81fe642247c0c
+
+[6/6] Wait for the API and run a greedy smoke test
+[tensorfold] EXL3 support is experimental: replies are exact, but the MLX checkpoint (Vontra/GLM-5.3-Flash-MLX-4bit-MTP) is tested more and runs faster (docs/recipes/glm-5.3-flash.md)
+[tensorfold] GLM-5.3-Flash runs on two NVIDIA GPUs with 128 GB each (two DGX Sparks): pull it on both and serve with --tp 2 on both (docs/recipes/glm-5.3-flash.md)
+[tensorfold] loading glm-5.3-flash: GLM-5.3-Flash (glm5_next) on CUDA, rank 0 of 4
+[tensorfold] paired sends and receives over a second NCCL communicator with NCCL_P2P_DISABLE=1 (TF_NCCL_EXCHANGE_ENV); all-gathers on the first
+[tensorfold] EXL3 routed experts (mcg, 4 bits): GLM's own kernels (TF_GLM_EXL3_PATH=auto)
+[tensorfold] CUDA rank 0 startup estimate 58.82 GiB within 86.40 GiB; native 1048576, allocated prompt/reply window 1048576, cache slots 1048592
+[tensorfold] launch table /cache/launch-table.json: 15 entries over 5 kernels for NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition (188 SMs, sm_120) (crc 4515275d)
+[tensorfold] building CUDA extension tensorfold_gpu_sample_v2 (first start after an install or update; later starts reuse it)
+[tensorfold] GPU sampling: on (checked against the host rule)
+Waiting for the API: 30 seconds elapsed (kernel compilation and graph capture can take several minutes).
+Waiting for the API: 61 seconds elapsed (kernel compilation and graph capture can take several minutes).
+Waiting for the API: 92 seconds elapsed (kernel compilation and graph capture can take several minutes).
+Waiting for the API: 122 seconds elapsed (kernel compilation and graph capture can take several minutes).
+[tensorfold] the checkpoint's MTP head is not loaded (TF_GLM_MTP=auto): DFlash2 drafts every request
+[tensorfold] CUDA extension tensorfold_glm_l2pf_v2 waits on the build lock /cache/torch_extensions/tensorfold_glm_l2pf_v2/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+Waiting for the API: 153 seconds elapsed (kernel compilation and graph capture can take several minutes).
+[tensorfold] L2 prefetch in decode windows (bulk, up to 8 MiB a site): a 45 sites 8.0 MiB, f 45 sites 8.0 MiB, o 45 sites 8.0 MiB
+[tensorfold] decode partials of windows of 8+ rows: two shots (each rank sums its rows' partials rank 0 first, then a bf16 all-gather; scatter on the send/receive communicator, gather by the engine), the same bits (TF_GLM_TWOSHOT_ROWS); checked bit for bit at start against the all-gather
+[tensorfold] TF_GLM_EXPERT_PROMPT_KERNEL=k12-p80: K12 prompt expert kernels (exact: the prompt kernels' bits)
+[tensorfold] CUDA extension tensorfold_glm_hc_v2a2 waits on the build lock /cache/torch_extensions/tensorfold_glm_hc_v2a2/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] decode fusion gates: on (checked bit for bit)
+[tensorfold] CUDA extension tensorfold_glm_kda_v2a3 waits on the build lock /cache/torch_extensions/tensorfold_glm_kda_v2a3/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] decode fusion kdaout: on (checked bit for bit)
+[tensorfold] decode fusion hc: on (checked bit for bit)
+[tensorfold] DSA fusion norms: on (checked bit for bit)
+[tensorfold] DSA fusion writes: on (checked bit for bit)
+Waiting for the API: 183 seconds elapsed (kernel compilation and graph capture can take several minutes).
+[tensorfold] decode fusion router: on (checked bit for bit)
+[tensorfold] CUDA extension tensorfold_experts_v8 waits on the build lock /cache/torch_extensions/tensorfold_experts_v8/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] CUDA extension tensorfold_glm_exl3_v20a2 waits on the build lock /cache/torch_extensions/tensorfold_glm_exl3_v20a2/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] CUDA extension tensorfold_glm_moe_glue_v1 waits on the build lock /cache/torch_extensions/tensorfold_glm_moe_glue_v1/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] MoE glue combine: on (checked bit for bit)
+Waiting for the API: 214 seconds elapsed (kernel compilation and graph capture can take several minutes).
+Waiting for the API: 244 seconds elapsed (kernel compilation and graph capture can take several minutes).
+Waiting for the API: 275 seconds elapsed (kernel compilation and graph capture can take several minutes).
+[tensorfold] prompt chunks' hyper-connections: rows split between the ranks, exchanges by copy engines (CUDA IPC) on a second stream in 4 pieces, the next block's front on own rows meanwhile (chunks of 512+ rows)
+[tensorfold] prompt chunks' DSA token selection split between the ranks from position 16384
+[tensorfold] building CUDA extension tensorfold_ipc_v3 (first start after an install or update; later starts reuse it)
+[tensorfold] the index split's pools over CUDA IPC (copy engines, up to 2048 KiB a rank)
+[tensorfold] prompt chunks skip the DFlash2 context rows no later draft reads (outside every read point's sliding window), context updates queue without a host sync each
+[tensorfold] MoE glue (TF_GLM_MOE_GLUE): the shared expert on a second stream (prompt lanes: from the lane's glue on); prompt lanes' combine on that stream; a CUDA combine; the shared expert's gate/up with SwiGLU in one prompt kernel (tile 1); prompt lanes' routes split between the ranks (own rows on the exchange stream, the picks swapped with the rows) (kernels checked bit for bit at first use)
+[tensorfold] prompt lanes' swapped rows written straight into the peers' row buffers (TF_GLM_LANE_DIRECT)
+[tensorfold] TF_GLM_DRAFT_FAST=all: the fused DFlash2 block pass (attention in auto window pieces, block rows by stream count), auto16 rank sums, next round's pass launched at a round's end, one top-k and one GPU selector chain for every stream's draft, every rank on rank 0's drafts (drafts only propose: replies unchanged)
+[tensorfold] prompt chunks in two lanes interleaved block by block (each lane's exchange and glue beside the other lane's compute; lanes of 512+ rows); KDA recurrences on a stream of their own beside the projections and the other lane's MLP / MoE block (TF_GLM_KDA_OVERLAP)
+[tensorfold] verify windows up to 16 rows, CUDA graphs for 1, 2, 3, 4, 5, 6, 7, 8, 16 rows (TF_GLM_MAX_ROWS, TF_GLM_WIDE_GRAPHS); copies from the reply match 16 tokens (TF_GLM_COPY_REPLY_MATCH)
+[tensorfold] TF_GLM_KV=fp8: the DSA latent cache and the indexer's pooled keys as e4m3 rows with a power-of-two scale each (lossy; drafted replies still equal serial ones)
+[tensorfold] prompt chunks and kept prompt states on a 64-token grid (TF_GLM_PROMPT_GRID)
+[tensorfold] TF_GLM_KDA_CHUNKED=1: KDA prompt chunks in chunked (WY) form, 32-row sub-chunks (close to the serial kernel, not its bits; decode keeps the serial kernel)
+[tensorfold] building CUDA extension tensorfold_glm_kda_split (first start after an install or update; later starts reuse it)
+Waiting for the API: 306 seconds elapsed (kernel compilation and graph capture can take several minutes).
+[tensorfold] TF_GLM_KDA_SPLIT: the KDA prompt recurrence on the whole GPU (pieces of 32 value columns, 512 threads a state block; prep one wave; passes of 2048 rows), kda_chunk.cu's bits
+[tensorfold] shared-prefix prompt states: kept where a prompt stops sharing another and at the end of its system block, when they add 256+ tokens (TF_GLM_SHARED_PREFIX)
+[tensorfold] TF_GLM_EXPERT_PROMPT_KERNEL=k12-p80: exl3.cu's prompt kernels (plans of 128 members, TF_GLM_EXL3_PASS; K12 takes 64)
+[tensorfold] drafter timings (ms, fastest of 7): {'v1': 7.53, 'v2': 8.22, 'v3': 9.34, 'v4': 10.3, 'v5': 11.02, 'v6': 11.52, 'v7': 12.02, 'v8': 12.13, 'block': 2.46, 'taps8': 0.81}
+[tensorfold] drafter costs (ms): verify 7.5 8.8 9.4 10.1 10.7 11.4 12.0 12.7; DFlash2 block 2.46 (+0.102 a tap row)
+[tensorfold] vision: image and video input, a 1.05 GiB tower with 0.75 GiB of workspace; at most 2048 tokens a picture, 16384 a clip (128 frames at 2 a second)
+Waiting for the API: 336 seconds elapsed (kernel compilation and graph capture can take several minutes).
+Waiting for the API: 367 seconds elapsed (kernel compilation and graph capture can take several minutes).
+[tensorfold] segment profile (TF_GLM_SEGPROF=4, kinds): the profiled windows' logits equal the plain ones bit for bit at widths [1, 2, 4, 8, 16, 32, 64, 128]; replay cost (fastest of 3) by width: 1: +1.24 ms (+17.0%, 744 events), 2: +1.26 ms (+15.0%, 744 events), 4: +1.27 ms (+12.0%, 744 events), 8: +1.24 ms (+9.5%, 744 events), 16: +1.15 ms (+7.1%, 744 events), 32: +1.24 ms (+5.7%, 744 events), 64: +1.20 ms (+3.3%, 744 events), 128: +0.97 ms (+1.7%, 744 events)
+[tensorfold] --parallel 40: up to 40 requests decode together, their caches in one pool of 5097472 tokens (each up to 1048576); DFlash2 drafts, prompt chunks of 2048 rows while others decode (TF_GLM_FILL_ROWS, TF_GLM_FILL_SHARE 0.5); waiting prompts share prompt chunks (TF_GLM_MULTI_PREFILL); sampler packed, depth policy, async messages on, lone stream on the one-stream graphs off
+[tensorfold] --parallel 40: priority lanes realtime > interactive > normal > background (default normal): of 40 slots 1 kept for realtime and 1 more for interactive, starve 2000 ms, round gap 1000 ms, short chunk 256 rows, shares up 1 / down 0.25, admission age 10 s, at most 2 yields a request, tiers hold 900 s, realtime head 32 tokens, chunks of later classes at most 2048 rows while realtime requests arrive
+[tensorfold] serving glm-5.3-flash at http://127.0.0.1:8021/v1 on CUDA, rank 0 of 4 (sampling: temperature 1.0, top_p 0.95; drafts: on; prompts: bf16 activations; context: 1048576; loaded in 377.9s)
+[tensorfold] 127.0.0.1 "GET /v1/models HTTP/1.1" 200 -
+Smoke test passed: ready
+
+Health: http://127.0.0.1:8021/health
+Logs: <data-dir>
+GLM-5.3-Flash-EXL3 is now LIVE! on port 8021
+Endpoint: http://127.0.0.1:8021/v1

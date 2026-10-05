@@ -1,0 +1,18 @@
+[tensorfold] GPU sample full: on (checked against host rule)[tensorfold] GPU sample full: on (checked against host rule)
+
+[tensorfold] GPU sample full: on (checked against host rule)
+[tensorfold] GPU sample full: on (checked against host rule)
+full: 256 rows equal to device-generated release host draws on 4 ranks
+[tensorfold] GPU sample nucleus: on (checked against host rule)[tensorfold] GPU sample nucleus: on (checked against host rule)[tensorfold] GPU sample nucleus: on (checked against host rule)
+
+
+[tensorfold] GPU sample nucleus: on (checked against host rule)
+nucleus: 256 rows equal to device-generated release host draws on 4 ranks
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)

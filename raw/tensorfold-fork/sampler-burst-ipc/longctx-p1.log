@@ -1,0 +1,5 @@
+{"shared_context_tokens": 56348}
+{"concurrency": 4, "context_tokens": 56398, "output_tokens": 2000, "median_ttft_s": 0.595, "status": "measured", "shared_decode_s": 17.92, "aggregate_decode_tps": 390.7, "median_decode_tps": 95.1}
+{"concurrency": 8, "context_tokens": 56398, "output_tokens": 2000, "median_ttft_s": 1.278, "status": "measured", "shared_decode_s": 20.79, "aggregate_decode_tps": 640.1, "median_decode_tps": 77.9}
+{"concurrency": 12, "context_tokens": 56398, "output_tokens": 2000, "median_ttft_s": 1.954, "status": "measured", "shared_decode_s": 27.92, "aggregate_decode_tps": 691.0, "median_decode_tps": 58.3}
+{"concurrency": 16, "context_tokens": 56398, "output_tokens": 2000, "median_ttft_s": 2.682, "status": "measured", "shared_decode_s": 24.88, "aggregate_decode_tps": 786.8, "median_decode_tps": 46.7}

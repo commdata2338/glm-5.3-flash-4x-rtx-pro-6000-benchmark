@@ -1,0 +1,6 @@
+{"target_tokens": 2000, "prompt_tokens": 2008, "passphrase": "saddle-94588-saddle", "answer": "saddle-94588-saddle", "ok": true, "seconds": 1.14}
+{"target_tokens": 30000, "prompt_tokens": 29902, "passphrase": "quartz-87327-anchor", "answer": "quartz-87327-anchor", "ok": true, "seconds": 5.62}
+{"target_tokens": 200000, "prompt_tokens": 199195, "passphrase": "river-63252-summit", "answer": "river-63252-summit", "ok": true, "seconds": 19.51}
+{"target_tokens": 2000, "prompt_tokens": 2039, "passphrase": "glacier-81979-anchor", "answer": "glacier-81979-anchor", "ok": true, "seconds": 0.36}
+{"target_tokens": 30000, "prompt_tokens": 29911, "passphrase": "thistle-69231-cobalt", "answer": "thistle-69231-cobalt", "ok": true, "seconds": 2.77}
+{"target_tokens": 200000, "prompt_tokens": 199232, "passphrase": "canvas-65448-canvas", "answer": "canvas-65448-canvas", "ok": true, "seconds": 19.62}

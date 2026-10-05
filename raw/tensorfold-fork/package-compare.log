@@ -1,0 +1,4 @@
+image: tensorfold-glm53:fast-57446055a6a1 (child image of the release image; engine commit 5744605)
+installed package: /usr/local/lib/python3.12/dist-packages/tensorfold
+files in the patched source tree: 503
+files that differ between the tree and the installed package: 0

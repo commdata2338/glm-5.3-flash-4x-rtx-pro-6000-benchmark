@@ -1,0 +1,80 @@
+
+Aevonix Research TensorFold start
+Mia-AiLab/GLM-5.3-Flash-EXL3-4bpw-TensorFold | 40 concurrent | 1048576-token context | fp8 dense | fp8 KV | port 8021
+
+
+[1/6] Check Linux, Docker, NVIDIA runtime, GPUs, disk space and optional download token
+[I_PLATFORM] Linux x86_64, Docker access and NVIDIA runtime are ready.
+[I_GPU] Four GPUs have enough free memory and no compute workloads.
+[I_DISK] Enough disk space for missing weights, image and kernel cache.
+[I_HF_TOKEN] Optional Hugging Face token is set; its value will not be printed.
+
+[2/6] Verify the prebuilt fork overlay image
+Fork image is ready: tensorfold-glm53:fast-0b1eefa900fa (0b1eefa900fa5345965dcaa33bab21a53cc250d0)
+
+[3/6] Verify the existing read-only checkpoint and drafter
+Existing release weights verified; no download or revision-marker writes.
+
+[4/6] Check CUDA peer access, compile kernels and autotune the launch table (skip when ready)
+[I_GPU] Four GPUs have enough free memory and no compute workloads.
+[I_P2P] CUDA peer access is available between all four GPUs.
+Compiled kernel cache and launch table are ready.
+
+[5/6] Start one container with four local TensorFold ranks
+The wrapper launches ranks 0-3 on GPUs 0-3 inside the container, rotating visible devices for each rank.
+f65dd7e1567b403335c2673cbfac5e7a3ace47406872b56f063e63f3491805f5
+
+[6/6] Wait for the API and run a greedy smoke test
+[tensorfold] EXL3 support is experimental: replies are exact, but the MLX checkpoint (Vontra/GLM-5.3-Flash-MLX-4bit-MTP) is tested more and runs faster (docs/recipes/glm-5.3-flash.md)
+[tensorfold] GLM-5.3-Flash runs on two NVIDIA GPUs with 128 GB each (two DGX Sparks): pull it on both and serve with --tp 2 on both (docs/recipes/glm-5.3-flash.md)
+[tensorfold] loading glm-5.3-flash: GLM-5.3-Flash (glm5_next) on CUDA, rank 0 of 4
+[tensorfold] paired sends and receives over a second NCCL communicator with NCCL_P2P_DISABLE=1 (TF_NCCL_EXCHANGE_ENV); all-gathers on the first
+[tensorfold] EXL3 routed experts (mcg, 4 bits): GLM's own kernels (TF_GLM_EXL3_PATH=auto)
+[tensorfold] CUDA rank 0 startup estimate 58.82 GiB within 86.40 GiB; native 1048576, allocated prompt/reply window 1048576, cache slots 1048592
+[tensorfold] launch table /cache/launch-table.json: 15 entries over 5 kernels for NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition (188 SMs, sm_120) (crc 6ead26bd)
+[tensorfold] GPU sampling: on (checked against the host rule)
+Waiting for the API: 31 seconds elapsed (kernel compilation and graph capture can take several minutes).
+Waiting for the API: 61 seconds elapsed (kernel compilation and graph capture can take several minutes).
+Waiting for the API: 92 seconds elapsed (kernel compilation and graph capture can take several minutes).
+[tensorfold] the checkpoint's MTP head is not loaded (TF_GLM_MTP=auto): DFlash2 drafts every request
+[tensorfold] L2 prefetch in decode windows (bulk, up to 8 MiB a site): a 45 sites 8.0 MiB, f 45 sites 8.0 MiB, o 45 sites 8.0 MiB
+Waiting for the API: 123 seconds elapsed (kernel compilation and graph capture can take several minutes).
+[tensorfold] decode partials of windows of 8+ rows: two shots (each rank sums its rows' partials rank 0 first, then a bf16 all-gather; scatter on the send/receive communicator, gather by the engine), the same bits (TF_GLM_TWOSHOT_ROWS); checked bit for bit at start against the all-gather
+[tensorfold] TF_GLM_EXPERT_PROMPT_KERNEL=k12-p80: K12 prompt expert kernels (exact: the prompt kernels' bits)
+[tensorfold] CUDA extension tensorfold_glm_hc_v2a2 waits on the build lock /cache/torch_extensions/tensorfold_glm_hc_v2a2/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] decode fusion gates: on (checked bit for bit)
+[tensorfold] decode fusion kdaout: on (checked bit for bit)
+[tensorfold] decode fusion hc: on (checked bit for bit)
+[tensorfold] DSA fusion norms: on (checked bit for bit)
+[tensorfold] DSA fusion writes: on (checked bit for bit)
+[tensorfold] decode fusion router: on (checked bit for bit)
+[tensorfold] MoE glue combine: on (checked bit for bit)
+Waiting for the API: 153 seconds elapsed (kernel compilation and graph capture can take several minutes).
+[tensorfold] prompt chunks' hyper-connections: rows split between the ranks, exchanges by copy engines (CUDA IPC) on a second stream in 4 pieces, the next block's front on own rows meanwhile (chunks of 512+ rows)
+[tensorfold] prompt chunks' DSA token selection split between the ranks from position 16384
+[tensorfold] the index split's pools over CUDA IPC (copy engines, up to 2048 KiB a rank)
+[tensorfold] prompt chunks skip the DFlash2 context rows no later draft reads (outside every read point's sliding window), context updates queue without a host sync each
+[tensorfold] MoE glue (TF_GLM_MOE_GLUE): the shared expert on a second stream (prompt lanes: from the lane's glue on); prompt lanes' combine on that stream; a CUDA combine; the shared expert's gate/up with SwiGLU in one prompt kernel (tile 1); prompt lanes' routes split between the ranks (own rows on the exchange stream, the picks swapped with the rows) (kernels checked bit for bit at first use)
+[tensorfold] prompt lanes' swapped rows written straight into the peers' row buffers (TF_GLM_LANE_DIRECT)
+[tensorfold] TF_GLM_DRAFT_FAST=all: the fused DFlash2 block pass (attention in auto window pieces, block rows by stream count), auto16 rank sums, next round's pass launched at a round's end, one top-k and one GPU selector chain for every stream's draft, every rank on rank 0's drafts (drafts only propose: replies unchanged)
+[tensorfold] prompt chunks in two lanes interleaved block by block (each lane's exchange and glue beside the other lane's compute; lanes of 512+ rows); KDA recurrences on a stream of their own beside the projections and the other lane's MLP / MoE block (TF_GLM_KDA_OVERLAP)
+[tensorfold] verify windows up to 16 rows, CUDA graphs for 1, 2, 3, 4, 5, 6, 7, 8, 16 rows (TF_GLM_MAX_ROWS, TF_GLM_WIDE_GRAPHS); copies from the reply match 16 tokens (TF_GLM_COPY_REPLY_MATCH)
+[tensorfold] TF_GLM_KV=fp8: the DSA latent cache and the indexer's pooled keys as e4m3 rows with a power-of-two scale each (lossy; drafted replies still equal serial ones)
+[tensorfold] prompt chunks and kept prompt states on a 64-token grid (TF_GLM_PROMPT_GRID)
+[tensorfold] TF_GLM_KDA_CHUNKED=1: KDA prompt chunks in chunked (WY) form, 32-row sub-chunks (close to the serial kernel, not its bits; decode keeps the serial kernel)
+[tensorfold] TF_GLM_KDA_SPLIT: the KDA prompt recurrence on the whole GPU (pieces of 32 value columns, 512 threads a state block; prep one wave; passes of 2048 rows), kda_chunk.cu's bits
+[tensorfold] shared-prefix prompt states: kept where a prompt stops sharing another and at the end of its system block, when they add 256+ tokens (TF_GLM_SHARED_PREFIX)
+[tensorfold] TF_GLM_EXPERT_PROMPT_KERNEL=k12-p80: exl3.cu's prompt kernels (plans of 128 members, TF_GLM_EXL3_PASS; K12 takes 64)
+[tensorfold] drafter timings (ms, fastest of 7): {'v1': 8.28, 'v2': 8.22, 'v3': 9.26, 'v4': 10.27, 'v5': 11.07, 'v6': 11.46, 'v7': 11.99, 'v8': 12.11, 'block': 1.99, 'taps8': 0.59}
+[tensorfold] drafter costs (ms): verify 8.3 8.7 9.4 10.0 10.7 11.3 12.0 12.6; DFlash2 block 1.99 (+0.074 a tap row)
+[tensorfold] vision: image and video input, a 1.05 GiB tower with 0.75 GiB of workspace; at most 2048 tokens a picture, 16384 a clip (128 frames at 2 a second)
+[tensorfold] --parallel 40: up to 40 requests decode together, their caches in one pool of 5097472 tokens (each up to 1048576); DFlash2 drafts, prompt chunks of 2048 rows while others decode (TF_GLM_FILL_ROWS, TF_GLM_FILL_SHARE 0.5); waiting prompts share prompt chunks (TF_GLM_MULTI_PREFILL); sampler packed, depth policy, async messages on, lone stream on the one-stream graphs off
+[tensorfold] --parallel 40: priority lanes realtime > interactive > normal > background (default normal): of 40 slots 1 kept for realtime and 1 more for interactive, starve 2000 ms, round gap 1000 ms, short chunk 256 rows, shares up 1 / down 0.25, admission age 10 s, at most 2 yields a request, tiers hold 900 s, realtime head 32 tokens, chunks of later classes at most 2048 rows while realtime requests arrive
+[tensorfold] serving glm-5.3-flash at http://127.0.0.1:8021/v1 on CUDA, rank 0 of 4 (sampling: temperature 1.0, top_p 0.95; drafts: on; prompts: bf16 activations; context: 1048576; loaded in 182.7s)
+[tensorfold] 127.0.0.1 "GET /v1/models HTTP/1.1" 200 -
+Smoke test passed: ready
+
+Health: http://127.0.0.1:8021/health
+Logs: <data-dir>
+GLM-5.3-Flash-EXL3 is now LIVE! on port 8021
+Endpoint: http://127.0.0.1:8021/v1

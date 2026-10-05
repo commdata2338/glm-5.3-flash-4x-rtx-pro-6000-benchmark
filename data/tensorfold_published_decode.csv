@@ -1,0 +1,16 @@
+output_type,concurrency,total_tok_s,median_stream_tok_s,median_ttft_ms
+prose,1,264.2,264.2,36
+prose,2,434.3,221.8,48
+prose,4,585.7,147.9,71
+prose,8,821.3,107.2,112
+prose,16,1060.7,69.4,220
+structured,1,539.5,539.5,35
+structured,2,877.9,442.3,44
+structured,4,1018.0,304.9,67
+structured,8,1487.0,221.4,103
+structured,16,2041.4,136.9,274
+code,1,430.3,430.3,39
+code,2,613.3,311.8,59
+code,4,760.3,214.4,92
+code,8,1013.6,141.9,140
+code,16,1267.8,85.1,278

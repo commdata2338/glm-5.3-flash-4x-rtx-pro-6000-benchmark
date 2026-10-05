@@ -1,0 +1,2025 @@
+diff --git a/src/tensorfold/cuda/gpu_sample_unbounded.py b/src/tensorfold/cuda/gpu_sample_unbounded.py
+new file mode 100644
+index 0000000..cfc22c2
+--- /dev/null
++++ b/src/tensorfold/cuda/gpu_sample_unbounded.py
+@@ -0,0 +1,356 @@
++"""Opt-in, certified top-k-off draws using tensor operations on CPU or CUDA.
++
++The score margin follows gpu_sample (patch 0065). Float64 division and integer
++keying are exact; the two logarithms can differ from NumPy by a few ulps. Only
++a finite winner separated by more than 2^-39 * max(1, abs(scores)) is accepted.
++Uncertain rows use cuda.sampling._draw, including its ordering and error cases.
++
++No CUDA extension or compiler is needed. Each collective transports fp32 words,
++including the bit patterns of int64/float64 metadata, as in cuda.sampling.
++
++Licensed under the Apache License, Version 2.0. Builds on TensorFold.
++"""
++
++from __future__ import annotations
++
++import math
++import os
++
++import numpy as np
++import torch
++
++from tensorfold.cuda import sampling as host
++
++SCORE_BOUND = 2.0 ** -39
++CUT_BOUND = 2.0 ** -34  # patch 0065's probability margin; also bounds integer -> double rounding
++_state = {"full": None, "nucleus": None}
++
++
++def wanted(kind: str) -> bool:
++    name = "TENSORFOLD_GPU_SAMPLE_" + kind.upper()
++    value = os.environ.get(name, "0").strip().lower() or "0"
++    if value not in ("0", "1", "off", "on"):
++        raise ValueError(f"{name}: expected 0 or 1, got {value!r}")
++    return value in ("1", "on")
++
++
++def settings_code():
++    """Startup agreement: these switches change the sequence of collectives."""
++    return (int(os.environ.get("TENSORFOLD_SAMPLE_SKIP_FUTILE", "0") == "1")
++            | (int(wanted("full")) << 1) | (int(wanted("nucleus")) << 2))
++
++
++def enabled(kind, device, gather):
++    """One first-use check and a unanimous rank vote; failures disable both new paths."""
++    if not wanted(kind):
++        return False
++    if _state[kind] is None:
++        try:
++            ok, why = check(kind, device)
++        except Exception as exc:  # no certified implementation here: keep serving through the reference
++            ok, why = False, f"{type(exc).__name__}: {str(exc).splitlines()[0][:160] if str(exc) else ''}"
++        # No rank may take a different collective path because its check failed.
++        vote = torch.tensor([int(ok)], dtype=torch.int32, device=device)
++        agreed = bool(host._stacked(gather, vote).bool().all().item())
++        if agreed:
++            _state[kind] = True
++        else:
++            _state.update(full=False, nucleus=False)
++        reason = why if not ok else "another rank failed its self-check"
++        print(f"[tensorfold] GPU sample {kind}: " + ("on (checked against host rule)" if agreed else "off: " + reason),
++              flush=True)
++    return bool(_state[kind])
++
++
++def reset():
++    """Forget process decisions (tests only)."""
++    _state.update(full=None, nucleus=None)
++
++
++def kind_for(s):
++    if s is None or s.top_k or not (s.temperature > 0 and math.isfinite(s.temperature)):
++        return None
++    if s.top_p >= 1.0 and s.min_p == 0.0:
++        return "full"
++    if 0.0 < s.top_p < 1.0 and math.isfinite(s.min_p) and s.min_p <= 1.0:
++        return "nucleus"
++    return None
++
++
++def _signed(x):
++    x = int(x) & ((1 << 64) - 1)
++    return x - (1 << 64) if x >= (1 << 63) else x
++
++
++def _rshift(x, n):
++    return (x >> n) & ((1 << (64 - n)) - 1)
++
++
++def _mix(x):
++    x = (x ^ _rshift(x, 30)) * _signed(0xBF58476D1CE4E5B9)
++    x = (x ^ _rshift(x, 27)) * _signed(0x94D049BB133111EB)
++    return x ^ _rshift(x, 31)
++
++
++def uniforms(seeds, positions, ids):
++    """Bit-identical splitmix64, with signed int64 wraparound and logical shifts."""
++    x = _mix(seeds + _signed(0x9E3779B97F4A7C15))
++    x = _mix(x ^ (positions * _signed(0xD1B54A32D192ED03)))
++    x = _mix(x[:, None] ^ ids)
++    return _rshift(x, 11).double() * 2.0 ** -53 + 2.0 ** -54
++
++
++def _scores(scaled, ids, positions, samplings):
++    seeds = torch.tensor([_signed(s.seed) for s in samplings], dtype=torch.int64, device=scaled.device)
++    pos = torch.tensor([_signed(p) for p in positions], dtype=torch.int64, device=scaled.device)
++    return scaled - torch.log(-torch.log(uniforms(seeds, pos, ids)))
++
++
++def separated(best, second):
++    scale = torch.maximum(best.abs(), second.abs()).clamp_min(1.0)
++    return torch.isfinite(best) & (torch.isneginf(second) | ((best - second) > SCORE_BOUND * scale))
++
++
++def full_local(scaled, ids, positions, samplings):
++    """Six int64 words/row: score, runner-up score, winner ID, valid, width, max logit."""
++    score = _scores(scaled, ids, positions, samplings)
++    valid = ~(torch.isnan(score) | torch.isposinf(score) | torch.isnan(scaled)).any(dim=1)
++    score = score.nan_to_num(nan=-math.inf, posinf=-math.inf, neginf=-math.inf)
++    if score.shape[1] < 2:
++        score = torch.cat([score, score.new_full((len(score), 2 - score.shape[1]), -math.inf)], dim=1)
++    best, cols = torch.topk(score, 2, dim=1)
++    token = ids.gather(1, cols[:, :1].clamp_max(ids.shape[1] - 1))
++    width = torch.full_like(token, ids.shape[1])
++    top = scaled.max(dim=1, keepdim=True).values
++    return torch.cat([best.view(torch.int64), token, valid[:, None].long(), width, top.view(torch.int64)], dim=1)
++
++
++def full_merge(got):
++    """Global best/runner-up of local best pairs, and the global numeric certificate."""
++    world, rows, _ = got.shape
++    scores = got[:, :, :2].contiguous().view(torch.float64).permute(1, 0, 2).reshape(rows, 2 * world)
++    best = torch.topk(scores, 2, dim=1).values
++    rank = got[:, :, 0].contiguous().view(torch.float64).argmax(dim=0)
++    tokens = got[:, :, 2].gather(0, rank[None]).squeeze(0)
++    certain = got[:, :, 3].bool().all(dim=0) & separated(best[:, 0], best[:, 1])
++    return tokens, certain
++
++
++def _fallback(scaled, mass, ids, positions, samplings, gather, width):
++    """ONE full-shard gather for all unresolved rows across streams, then the original host rule."""
++    rows, local_width = scaled.shape
++    pad = width - local_width
++    if pad:
++        scaled = torch.cat([scaled, scaled.new_full((rows, pad), -math.inf)], dim=1)
++        ids = torch.cat([ids, ids.new_full((rows, pad), -1)], dim=1)
++        kept = torch.cat([mass, mass.new_zeros((rows, pad))], dim=1)
++    else:
++        kept = mass
++    widths = torch.full((rows, 1), local_width, dtype=torch.int64, device=scaled.device)
++    pack = torch.cat([scaled.view(torch.int64), ids, kept, mass.sum(dim=1, keepdim=True), widths], dim=1)
++    both = host._stacked(gather, pack).cpu().numpy()
++    result = []
++    for r, (pos, s) in enumerate(zip(positions, samplings)):
++        b = both[:, r:r + 1]
++        got = (np.ascontiguousarray(b[:, :, :width]).view(np.float64), b[:, :, width:2 * width],
++               b[:, :, 2 * width:3 * width], b[:, :, 3 * width], b[:, :, 3 * width + 1])
++        result.append(host._draw(got, [pos], s)[0][0])
++    return result
++
++
++def full_rows(scaled, ids, positions, samplings, gather):
++    got = host._stacked(gather, full_local(scaled, ids, positions, samplings))
++    tokens, certain = full_merge(got)
++    widths = got[:, :, 4].max(dim=0).values
++    # Only tokens, flags and shard widths reach the host on a certified call.
++    result = torch.stack([tokens, certain.long(), widths], dim=1).cpu().tolist()
++    missing = [r for r, (_, ok, _) in enumerate(result) if not ok]
++    if missing:
++        x = scaled[missing]
++        top = got[:, :, 5].contiguous().view(torch.float64).max(dim=0).values[missing]
++        mass = torch.floor(torch.exp(x - top[:, None]) * host.MASS).long()
++        redo = _fallback(x, mass, ids[missing], [positions[r] for r in missing], [samplings[r] for r in missing],
++                         gather, max(result[r][2] for r in missing))
++        for r, token in zip(missing, redo):
++            result[r][0] = token
++    return [row[0] for row in result]
++
++
++def nucleus_pack(scaled, mass, ids, count):
++    """The release's (value bits, ID, integer mass, shard sum, width) pack, kept on device."""
++    rows, width = scaled.shape
++    vals, cols = torch.topk(scaled, min(width, count), dim=1)
++    tokens, kept = ids.gather(1, cols), mass.gather(1, cols)
++    pad = count - vals.shape[1]
++    if pad:
++        vals = torch.cat([vals, vals.new_full((rows, pad), -math.inf)], dim=1)
++        tokens = torch.cat([tokens, tokens.new_full((rows, pad), -1)], dim=1)
++        kept = torch.cat([kept, kept.new_zeros((rows, pad))], dim=1)
++    widths = torch.full((rows, 1), width, dtype=torch.int64, device=scaled.device)
++    return torch.cat([vals.view(torch.int64), tokens, kept, mass.sum(dim=1, keepdim=True), widths], dim=1)
++
++
++def nucleus_merge(got, positions, samplings):
++    """Certified integer-mass nucleus and keyed draw from a gathered device pack.
++
++    Masses are the SAME torch floor(exp(...)*2^40) int64 values as the release,
++    computed on the same device (no NumPy exp is substituted). Sort and cumsum
++    are exact. Fraction(top_p)*total is bounded by a double approximation: for
++    positive int64 totals its absolute error is < 2^-50 * total + 1. Requiring
++    every cumulative mass to be > 2^-34 * total + 4 away proves the comparisons
++    against the reference's exact rational cut, including ceil and equality.
++    Close cuts fall back, rather than replacing the reference with a float cut.
++    """
++    world, rows, size = got.shape
++    n = (size - 2) // 3
++    vals = got[:, :, :n].contiguous().view(torch.float64)
++    ids, mass = got[:, :, n:2 * n], got[:, :, 2 * n:3 * n]
++    widths = got[:, :, -1]
++    v = vals.permute(1, 0, 2).reshape(rows, -1)
++    i = ids.permute(1, 0, 2).reshape(rows, -1)
++    m = mass.permute(1, 0, 2).reshape(rows, -1)
++    # Stable value sort after ID sort is np.lexsort((ids, -values)).
++    by_id = torch.argsort(i, dim=1, stable=True)
++    by_value = torch.argsort(v.gather(1, by_id), dim=1, descending=True, stable=True)
++    order = by_id.gather(1, by_value)
++    v, i, m = v.gather(1, order), i.gather(1, order), m.gather(1, order)
++    total = got[:, :, -2].sum(dim=0)
++    cum = m.cumsum(dim=1)
++    p = torch.tensor([s.top_p for s in samplings], dtype=torch.float64, device=v.device)
++    target = total.double() * p
++    # The cut is certified below; no uncertain rounded comparison can select a token.
++    below = cum.double() < target[:, None]
++    keep = below.sum(dim=1) + 1
++    near_cut = ((cum.double() - target[:, None]).abs() <= (CUT_BOUND * total.double() + 4)[:, None]).any(dim=1)
++    cut_value = v.gather(1, (keep - 1).clamp_max(v.shape[1] - 1)[:, None]).squeeze(1)
++    complete = (ids >= 0).sum(dim=2) == widths
++    # Strictly above each partial shard's last value excludes every unsent token,
++    # even tied logits. This is _union_covers' proof, independent of its env switch.
++    last = vals.masked_fill(ids < 0, math.inf).min(dim=2).values
++    covered = (complete | (cut_value[None] > last)).all(dim=0) & (cum[:, -1].double() >= target)
++    min_log = torch.tensor([s.min_log for s in samplings], dtype=torch.float64, device=v.device)
++    floor = v[:, 0] + min_log
++    eligible = (torch.arange(v.shape[1], device=v.device)[None] < keep[:, None]) & (v >= floor[:, None]) & (i >= 0)
++    score = _scores(v, i, positions, samplings).masked_fill(~eligible, -math.inf)
++    values, cols = torch.topk(score, 2, dim=1)
++    tokens = i.gather(1, cols[:, :1]).squeeze(1)
++    valid = ((total > 0) & (m >= 0).all(dim=1) & ~(torch.isnan(v) | torch.isposinf(v)).any(dim=1)
++             & ~torch.isnan(score).any(dim=1))
++    certain = valid & covered & ~near_cut & separated(values[:, 0], values[:, 1])
++    return tokens, certain, covered
++
++
++def nucleus_rows(scaled, ids, positions, samplings, gather):
++    top = host._stacked(gather, scaled.max(dim=1).values).max(dim=0).values
++    mass = torch.floor(torch.exp(scaled - top[:, None]) * host.MASS).long()
++    result = [None] * len(positions)
++    pending = list(range(len(positions)))
++    fallback = []
++    width = 0
++    for count in (host.NUCLEUS, host.WIDER):
++        got = host._stacked(gather, nucleus_pack(scaled[pending], mass[pending], ids[pending], count))
++        tokens, certain, covered = nucleus_merge(got, [positions[r] for r in pending], [samplings[r] for r in pending])
++        widths = got[:, :, -1].max(dim=0).values
++        # Log implementations can differ across devices. Agree on tokens and the
++        # fallback mask BEFORE branching into more collectives (including retries).
++        votes = host._stacked(gather, torch.stack([tokens, certain.long(), covered.long(), widths], dim=1))
++        tokens = votes[0, :, 0]
++        certain = votes[:, :, 1].bool().all(dim=0) & (votes[:, :, 0] == tokens[None]).all(dim=0)
++        covered = votes[:, :, 2].bool().all(dim=0)
++        widths = votes[:, :, 3].max(dim=0).values
++        # One small readback for all streams, never a candidate read on certified rows.
++        status = torch.stack([tokens, certain.long(), covered.long(), widths], dim=1).cpu().tolist()
++        retry = []
++        for r, (token, ok, cover, w) in zip(pending, status):
++            width = max(width, w)
++            if ok:
++                result[r] = token
++            elif not cover and count == host.NUCLEUS and w > host.WIDER and host.union_cover():
++                retry.append(r)
++            else:
++                fallback.append(r)
++        pending = retry
++        if not pending:
++            break
++    if fallback:
++        redo = _fallback(scaled[fallback], mass[fallback], ids[fallback], [positions[r] for r in fallback],
++                         [samplings[r] for r in fallback], gather, width)
++        for r, token in zip(fallback, redo):
++            result[r] = token
++    return result
++
++
++def sample_parts(parts, *, offset=0, id_map=None, gather=host.one_rank):
++    """Return tokens for eligible parts and None for others; batch every stream of a kind."""
++    out = [None] * len(parts)
++    for kind, draw in (("full", full_rows), ("nucleus", nucleus_rows)):
++        members = [k for k, (x, _, s) in enumerate(parts) if kind_for(s) == kind and x.shape[0]]
++        if not members or not enabled(kind, parts[members[0]][0].device, gather):
++            continue
++        xs, positions, samplings = [], [], []
++        for k in members:
++            x, pos, s = parts[k]
++            if len(pos) != x.shape[0]:
++                raise ValueError("one position per real sampling row is required")
++            xs.append(x.float().double() / max(float(s.temperature), 1e-6))
++            positions.extend(pos)
++            samplings.extend([s] * len(pos))
++        scaled = torch.cat(xs)
++        ids = (torch.arange(scaled.shape[1], device=scaled.device) + offset if id_map is None else id_map.long())
++        ids = ids[None].expand(scaled.shape)
++        drawn = draw(scaled, ids, positions, samplings, gather)
++        at = 0
++        for k in members:
++            n = len(parts[k][1])
++            out[k], at = drawn[at:at + n], at + n
++    return out
++
++
++def check(kind, device, rows=96, seed=7361):
++    """Random four-rank candidate packs, compared with the release's host rule.
++
++    This runs the actual tensor arithmetic on the requested device, not a CPU
++    emulation of CUDA. It needs no distributed group; enabled() votes afterward.
++    """
++    from tensorfold.engine.exact_sampling import Sampling
++
++    rng = np.random.default_rng(seed)
++    world, n = 4, 32
++    values = rng.normal(0, 3, (world, rows, n)).astype(np.float32)
++    values[:, ::3] = np.round(values[:, ::3])
++    values[:, ::7, :n // 2] = -np.inf
++    # Each token ID occurs exactly once per row, with deliberately scrambled order.
++    ids = np.stack([rng.permutation(world * n) for _ in range(rows)], axis=0).reshape(rows, world, n).transpose(1, 0, 2)
++    positions = rng.integers(0, 1 << 32, rows).tolist()
++    settings = [Sampling(int(rng.integers(0, 2**63)) + (2**63 if r % 2 else 0),
++                         [1e-7, 0.3, 0.8, 1.0, 2.0][r % 5], 0,
++                         1.0 if kind == "full" else [0.5, 0.83, 0.95, 0.99][r % 4],
++                         0.0 if kind == "full" else [0.0, 0.05][r % 2]) for r in range(rows)]
++    temp = torch.tensor([max(s.temperature, 1e-6) for s in settings], dtype=torch.float64, device=device)
++    x = torch.from_numpy(values).to(device).double() / temp[None, :, None]
++    tok = torch.from_numpy(np.ascontiguousarray(ids)).to(device)
++    top = x.amax(dim=(0, 2))
++    mass = torch.floor(torch.exp(x - top[None, :, None]) * host.MASS).long()
++    packs = torch.stack([nucleus_pack(x[q], mass[q], tok[q], n) for q in range(world)])
++    if kind == "full":
++        summaries = torch.stack([full_local(x[q], tok[q], positions, settings) for q in range(world)])
++        tokens, certain = full_merge(summaries)
++    elif kind == "nucleus":
++        tokens, certain, _ = nucleus_merge(packs, positions, settings)
++    else:
++        raise ValueError(kind)
++    actual = tokens.cpu().tolist()
++    certified = certain.cpu().tolist()
++    both = packs.cpu().numpy()
++    bad = 0
++    for r, (pos, s) in enumerate(zip(positions, settings)):
++        b = both[:, r:r + 1]
++        got = (np.ascontiguousarray(b[:, :, :n]).view(np.float64), b[:, :, n:2*n], b[:, :, 2*n:3*n],
++               b[:, :, 3*n], b[:, :, 3*n + 1])
++        expected = host._draw(got, [pos], s)[0][0]
++        bad += bool(certified[r] and actual[r] != expected)
++    if bad:
++        return False, f"{bad} of {rows} certified tokens differ from host rule"
++    if sum(certified) < 0.9 * rows:
++        return False, f"only {sum(certified)} of {rows} rows certified"
++    return True, ""
+diff --git a/src/tensorfold/cuda/priority.py b/src/tensorfold/cuda/priority.py
+index ae54e75..797f3a1 100644
+--- a/src/tensorfold/cuda/priority.py
++++ b/src/tensorfold/cuda/priority.py
+@@ -264,11 +264,39 @@ def pick_fill(fills: Sequence[Fill], now: float, starve_s: float, starved_last:
+     return k, now - fills[k].since >= starve_s
+ 
+ 
++class TimeCredit:
++    """Serial completed-service credit, in seconds. Only contention earns credit; idle/class changes reset it.
++
++    Decode earns share*t; prefill spends (1-share)*t. A nonpositive balance chooses decode first, then repays with
++    whole chunks. Thus overshoot is bounded by a service quantum unless a priority/deadline rule forces service.
++    """
++
++    def __init__(self, share: float) -> None:
++        self.share, self.balance, self.key = float(share), 0.0, None
++        self.seconds = {"prefill": 0.0, "decode": 0.0}
++
++    def contend(self, key) -> None:
++        if key != self.key or key is None:
++            self.balance = 0.0
++        self.key = key
++
++    def choose(self) -> bool:
++        return self.share == 1.0 or self.balance > 0.0
++
++    def record(self, fill: bool, seconds: float) -> None:
++        if self.key is None or seconds <= 0:
++            return
++        self.seconds["prefill" if fill else "decode"] += seconds
++        self.balance += (-(1.0 - self.share) if fill else self.share) * seconds
++
++
+ class Arbiter:
+     """Rank 0's choice, each iteration while streams decode, between the next prompt chunk and a decode round."""
+ 
+-    def __init__(self, settings: Settings, share: float, clock: Callable[[], float] = time.monotonic) -> None:
++    def __init__(self, settings: Settings, share: float, clock: Callable[[], float] = time.monotonic,
++                 time_credit: TimeCredit | None = None) -> None:
+         self.s, self.share, self.clock = settings, float(share), clock
++        self.time_credit = time_credit
+         self.credit = 0.0
+         self.last_round: float | None = None
+         self.counts = {"chunks": 0, "rounds": 0, "starved": 0, "overdue": 0, "short": 0, "held": 0}
+@@ -279,6 +307,8 @@ class Arbiter:
+ 
+         s = self.s
+         now = self.clock()
++        if self.time_credit is not None:
++            self.time_credit.contend(fill_class if fill_class == round_class else None)
+         if self.last_round is not None and now - self.last_round >= s.round_gap_s:
+             self.counts["overdue"] += 1
+             return self._round()
+@@ -293,6 +323,8 @@ class Arbiter:
+             return self._chunk()
+         share = (s.up_share if fill_class < round_class else s.down_share if fill_class > round_class
+                  else self.share)
++        if self.time_credit is not None and self.time_credit.key is not None:
++            return self._chunk() if self.time_credit.choose() else self._round()
+         self.credit = min(self.credit + share, 1.0 + share)
+         if self.credit < 1.0:
+             return self._round()
+diff --git a/src/tensorfold/cuda/sampling.py b/src/tensorfold/cuda/sampling.py
+index 3def71f..6455ec1 100644
+--- a/src/tensorfold/cuda/sampling.py
++++ b/src/tensorfold/cuda/sampling.py
+@@ -115,12 +115,19 @@ def nucleus_rows(logits: torch.Tensor, positions: Sequence[int], sampling: Sampl
+                  probs: list[float] | None = None) -> list[int]:
+     """top_k off: the keyed draw over the top_p nucleus then min_p, cut by fixed-point mass, the same on each shape."""
+ 
++    if probs is None:
++        from tensorfold.cuda.gpu_sample_unbounded import sample_parts
++
++        fast = sample_parts([(logits, positions, sampling)], offset=offset, id_map=id_map, gather=gather)[0]
++        if fast is not None:
++            return fast
++
+     scaled = logits.float().double() / max(float(sampling.temperature), 1e-6)
+     top = _stacked(gather, scaled.max(dim=-1).values).max(dim=0).values           # every rank's maxima
+     mass = torch.floor(torch.exp(scaled - top[:, None]) * MASS).to(torch.int64)
+     got = _shares(gather, scaled, mass, NUCLEUS, offset, id_map)
+     drawn = _draw(got, positions, sampling)
+-    if drawn is None and union_cover() and int(got[4].max()) > WIDER:     # wider candidates first (the same draw)
++    if drawn is None and retry_wider(sampling) and int(got[4].max()) > WIDER:
+         drawn = _draw(_shares(gather, scaled, mass, WIDER, offset, id_map), positions, sampling)
+     if drawn is None:                           # some row's nucleus runs past the candidates: every whole shard
+         drawn = _draw(_shares(gather, scaled, mass, int(got[4].max()), offset, id_map), positions, sampling)
+@@ -155,6 +162,13 @@ def union_cover() -> bool:
+     return os.environ.get("TENSORFOLD_NUCLEUS_UNION", "0") == "1"
+ 
+ 
++def retry_wider(s: Sampling) -> bool:
++    """An unrestricted draw cannot cover a partial shard: optionally skip its futile wider retry."""
++
++    skip = os.environ.get("TENSORFOLD_SAMPLE_SKIP_FUTILE", "0") == "1"
++    return union_cover() and not (skip and s.top_p >= 1.0 and s.min_p == 0.0)
++
++
+ def _union_covers(vals, ids, mass, widths, r: int, need: int) -> bool:
+     """Whether row r's top_p nucleus lies inside the ranks' candidates taken together: walking them merged (value
+     down, then id) to the cumulative mass ``need`` stops at a value v* above the last candidate of every rank that
+diff --git a/src/tensorfold/cuda/server.py b/src/tensorfold/cuda/server.py
+index e93b609..9533fbe 100644
+--- a/src/tensorfold/cuda/server.py
++++ b/src/tensorfold/cuda/server.py
+@@ -726,10 +726,11 @@ def print_done(prompt: int, cached: int, thinking: bool, out: list[int], finish:
+     first, started = getattr(request, "first", None), getattr(request, "started", ended)
+     decode = ended - first if first is not None else 0.0
+     rate = (len(out) - 1) / decode if decode > 0 and len(out) > 1 else 0.0
++    cache_reason = f" cache_reason={stats['cache_reason']}" if "cache_reason" in stats else ""
+     print(f"[tensorfold] done req-{uuid.uuid4().hex[:12]} prompt={prompt} cached={cached} thinking={thinking} "
+           f"tokens={len(out)} sha={token_sha(out)} finish={finish} tok/s={rate:.1f} "
+           f"ttft={(first - started) if first is not None else -1:.2f}s prefill={stats.get('prefill_s', -1):.2f}s "
+-          f"rounds={stats.get('rounds', 0)} accepted={stats.get('accepted', 0)}/{stats.get('drafted', 0)}",
++          f"rounds={stats.get('rounds', 0)} accepted={stats.get('accepted', 0)}/{stats.get('drafted', 0)}{cache_reason}",
+           flush=True)
+ 
+ 
+diff --git a/src/tensorfold/families/glm5_next/cuda/engine.py b/src/tensorfold/families/glm5_next/cuda/engine.py
+index f211ac8..67339a1 100644
+--- a/src/tensorfold/families/glm5_next/cuda/engine.py
++++ b/src/tensorfold/families/glm5_next/cuda/engine.py
+@@ -706,6 +706,7 @@ class GlmEngine:
+         # TENSORFOLD_GPU_SAMPLE; -1: not valid on that rank) must be valid and the same on every rank. All of it is read
+         # without raising and compared in one gather, so every rank refuses the start together.
+         from tensorfold.cuda import gpu_sample as _gpu_sample
++        from tensorfold.cuda import gpu_sample_unbounded as _gpu_unbounded
+ 
+         from . import fuse as _fuse
+         from . import moe_glue as moe_glue_mod
+@@ -725,7 +726,7 @@ class GlmEngine:
+                 quiet(moe_glue_mod.shared_tile), quiet(lambda: moe_glue_mod.side_priority() + 1),
+                 quiet(_exl3_stream.code),
+                 quiet(_segprof.code), quiet(lane_inputs_mod.mask),
+-                quiet(_lane_partials.mask)]
++                quiet(_lane_partials.mask), quiet(_gpu_unbounded.settings_code)]
+         got = self._gather_ints([_tune.code()] + [v for v, _ in mine])
+         tables = [row[0] for row in got]
+         if any(t == -1 for t in tables) or any(t != tables[0] for t in tables):
+@@ -738,7 +739,8 @@ class GlmEngine:
+             raise RuntimeError("TF_GLM_FUSE (as a mask), TF_GLM_FUSE_HC_ROWS, TENSORFOLD_GPU_SAMPLE, TF_GLM_MOE_GLUE "
+                                "(as a mask), TF_GLM_MOE_SHARED_TILE, TF_GLM_MOE_SIDE_PRIORITY + 1, "
+                                "TF_GLM_EXL3_STREAM* / TF_GLM_L2PF_EXPERT_MB, TF_GLM_SEGPROF*, "
+-                               "TF_GLM_LANE_INPUTS and TF_GLM_LANE_DIRECT (as a mask), TF_GLM_LANE_PARTIALS by rank "
++                               "TF_GLM_LANE_INPUTS and TF_GLM_LANE_DIRECT (as a mask), TF_GLM_LANE_PARTIALS, "
++                               "TENSORFOLD_SAMPLE_SKIP_FUTILE / TENSORFOLD_GPU_SAMPLE_FULL / _NUCLEUS by rank "
+                                f"{settings} (-1: not valid)" + (f"; this rank: {why}" if why else "")
+                                + ": give every rank the same valid values")
+         if mine[2][0] == 1 and torch.cuda.is_available():  # the GPU sampler built and checked before the first request
+diff --git a/src/tensorfold/families/glm5_next/cuda/multi.py b/src/tensorfold/families/glm5_next/cuda/multi.py
+index d36a657..f994e5e 100644
+--- a/src/tensorfold/families/glm5_next/cuda/multi.py
++++ b/src/tensorfold/families/glm5_next/cuda/multi.py
+@@ -59,8 +59,9 @@ from .verify import BatchedVerify, Segment, SerialVerify, Verified
+ _NULL = contextlib.nullcontext()                    # TF_GLM_SEGPROF off, or not a profiled round's span
+ 
+ ADMIT, EVICT, MOVE, GROW, FILL, ROUND, FINISH, IDLE, SLOT, MFILL = range(1, 11)
++CHECKPOINT, RESUME = 11, 12                   # burst-prefix plans, decided only by rank 0
+ OPS = {ADMIT: "ADMIT", EVICT: "EVICT", MOVE: "MOVE", GROW: "GROW", FILL: "FILL", ROUND: "ROUND", FINISH: "FINISH",
+-       IDLE: "IDLE", SLOT: "SLOT", MFILL: "MFILL"}
++       IDLE: "IDLE", SLOT: "SLOT", MFILL: "MFILL", CHECKPOINT: "CHECKPOINT", RESUME: "RESUME"}
+ 
+ 
+ def watchdog_seconds(value: str | None = None) -> float:
+@@ -138,6 +139,14 @@ def fill_share(value: str | None = None) -> float:
+     return share
+ 
+ 
++def fill_credit(value: str | None = None) -> str:
++    """TF_GLM_FILL_CREDIT: steps (release default), or completed elapsed service for same-class contention."""
++    value = (os.environ.get("TF_GLM_FILL_CREDIT", "steps") if value is None else value).strip() or "steps"
++    if value not in ("steps", "time"):
++        raise ValueError(f"TF_GLM_FILL_CREDIT: steps or time, not {value!r}")
++    return value
++
++
+ def _ids_array(c) -> np.ndarray:
+     """A kept prompt's ids as an int64 array, made once and kept on the snapshot (its ids never change)."""
+ 
+@@ -376,11 +385,13 @@ class MultiDecoder:
+         self.fill_rows = fill_rows(e.prefill_rows, self.grid)
+         self.share = fill_share()
+         self.credit = 0.0
++        self.time_credit = prio.TimeCredit(self.share) if fill_credit() == "time" else None
+         # patch 0141: priority lanes (cuda.priority; TENSORFOLD_PRIORITY=0: the order as before). Rank 0 decides with
+         # them; rank 1 applies rank 0's messages, so they never reach a request's arithmetic
+         self.clock = time.monotonic                      # the rules' clock (tests drive a simulated one)
+         self.prio = prio.Settings.from_env()
+-        self.arbiter = prio.Arbiter(self.prio, self.share, lambda: self.clock()) if self.prio.enabled else None
++        self.arbiter = (prio.Arbiter(self.prio, self.share, lambda: self.clock(), self.time_credit)
++                        if self.prio.enabled else None)
+         self.starved_last = False                        # the last prompt chunk went to a starving stream
+         self.full_at = None                              # rank 0's clock at the last round of every decoding stream
+         self.rt_seen_at = None                           # rank 0's clock when a realtime request last arrived
+@@ -442,6 +453,10 @@ class MultiDecoder:
+         self.watchdog = watchdog_seconds()               # stack dumps of a stalled iteration (TF_GLM_MULTI_WATCHDOG_S)
+         self.lanes: dict[int, Lane] = {}                 # by sid, in admission order
+         self.kept: list = []                             # kept prompts (decode.Snapshot + kid, extent), oldest first
++        self.cache_reasons = os.environ.get("TF_GLM_CACHE_REASONS", "0").strip() == "1"
++        self.evicted_prefixes: list[tuple[int, bytes]] = []  # bounded fingerprints, never token text in logs
++        self.burst = os.environ.get("TF_GLM_BURST_PREFIX", "0").strip() == "1"
++        self.burst_wait: dict[int, tuple[int, int]] = {}     # consumer -> (producer, grid point), rank 0 only
+         self.next_sid = self.next_kid = self.next_order = 0
+         self.outbox: list[int] = []
+         self.idle = True
+@@ -473,6 +488,7 @@ class MultiDecoder:
+                             "paused": sum(l.decoding and l.paused for l in lanes)},
+                 "pool_tokens": self.pool.rows, "pool_free_tokens": self.pool.free_rows(),
+                 "kept_prompts": len(self.kept), **({"multi_prefill": dict(self.grouped)} if self.group else {}),
++                **({"fill_credit_seconds": dict(self.time_credit.seconds)} if self.time_credit is not None else {}),
+                 **({"lanes": self._class_counts(lanes), "arbiter": dict(self.arbiter.counts)}
+                    if self.arbiter is not None else {}),
+                 **({"round_cap": {"rows": cap.rows, **cap.counts}} if cap is not None and self.count > cap.rows
+@@ -686,6 +702,9 @@ class MultiDecoder:
+         if slot is None:
+             raise NoRoom(f"every one of the {self.count} stream slots is taken")
+         hit = self._resume(prompt) if draft and feed is None else None
++        if self.cache_reasons:
++            s.cache_reason = ("hit" if hit is not None else "vision" if feed is not None else
++                              "reuse_disabled" if not draft else self._cache_miss(prompt))
+         need = self._need(len(prompt))
+         # placement: take a kept extent over in place, or copy its rows into a new one while a stream writes in it
+         copy = 0
+@@ -699,10 +718,14 @@ class MultiDecoder:
+                 base = x.base
+             else:
+                 hit = None
++                if self.cache_reasons:
++                    s.cache_reason = "no_room"
+         if base is None:
+             base = self._room(need, [hit.extent] if hit is not None else [])
+             if base is None and hit is not None:          # no room beside the kept rows: start fresh
+                 hit = None
++                if self.cache_reasons:
++                    s.cache_reason = "no_room"
+                 base = self._room(need)
+             if base is None:
+                 raise NoRoom(f"no room for a {need}-token extent in the {self.pool.rows}-token pool now")
+@@ -784,22 +807,7 @@ class MultiDecoder:
+         if self.drafts is not None:
+             self._ctx(lane).reset()
+         if hit is not None:
+-            from .decode import put_ring_tail
+-
+-            st.rec[st.cur[0]].copy_(hit.rec)
+-            st.conv.copy_(hit.conv)
+-            put_ring_tail(st, hit)          # the index rows of its pools still filling, into this slot's rings
+-            st.set_pos(cut)
+-            if dflash:
+-                if hit.drafter_end != cut or hit.drafter_rows is None:
+-                    raise RuntimeError("a kept prompt without DFlash2's window was chosen for a DFlash2 stream")
+-                put_draft_window(self._ctx(lane), cut, hit.drafter_rows)
+-            if cut == len(prompt):          # a replay: its one FILL samples the kept head's row, prefilling nothing
+-                if hit.head is None:
+-                    raise RuntimeError(f"the kept prompt {a['kid']} is the whole prompt of stream {a['sid']} but "
+-                                       f"kept no head row")
+-                lane.head = hit.head.clone()
+-            self._touch(hit)
++            self._restore(lane, hit)
+         # where its prompt states are kept: the grid point (or the end) and rank 0's shared-prefix points
+         if a["draft"] and feed is None:
+             lane.point = grid_point(len(prompt), cut, self.grid)
+@@ -811,6 +819,114 @@ class MultiDecoder:
+         lane.since = self.clock()
+         self.lanes[lane.sid] = lane
+ 
++    def _restore(self, lane: Lane, hit) -> None:
++        """The shared admission/burst restore: recurrent, convolution, index ring and DFlash2 window state."""
++        from .decode import put_ring_tail
++
++        st, cut = lane.st, len(hit.ids)
++        st.rec[st.cur[0]].copy_(hit.rec)
++        st.conv.copy_(hit.conv)
++        put_ring_tail(st, hit)
++        st.set_pos(cut)
++        if lane.dflash:
++            if hit.drafter_end != cut or hit.drafter_rows is None:
++                raise RuntimeError("a kept prompt without DFlash2's window was chosen for a DFlash2 stream")
++            put_draft_window(self._ctx(lane), cut, hit.drafter_rows)
++        if cut == len(lane.s.prompt):
++            if hit.head is None:
++                raise RuntimeError(f"the kept prompt {hit.kid} is the whole prompt but kept no head row")
++            lane.head = hit.head.clone()
++        self._touch(hit)
++
++    def _can_checkpoint(self, lane: Lane, point: int) -> bool:
++        """A new read must not need drafter taps an earlier chunk may have skipped."""
++        if (not self.grid or lane.decoding or lane.feed is not None or not lane.s.draft
++                or lane.st.pos % self.grid):
++            return False
++        if point % self.grid or not lane.st.pos < point <= len(lane.s.prompt):
++            return False
++        return (lane.st.pos == lane.s.cached or not lane.dflash or point in lane.stops or point == lane.point
++                or point - lane.st.pos >= self._ctx(lane).window + 1)
++
++    def _checkpoint(self, lane: Lane, point: int) -> None:
++        """Both ranks: register a stop whose complete drafter read is still available or will be computed."""
++        if not self._can_checkpoint(lane, point):
++            raise RuntimeError("invalid burst checkpoint")
++        if point < len(lane.s.prompt):
++            lane.stops = sorted(set(lane.stops) | {point})
++
++    def _resume_lane(self, lane: Lane, hit) -> None:
++        """Both ranks: an untouched consumer already owns its destination extent. Never overwrite a partial fill."""
++        from .engine import grid_point
++
++        cut = len(hit.ids)
++        if (lane.decoding or lane.feed is not None or not lane.s.draft or lane.st.pos != lane.s.cached
++                or not lane.st.pos < cut <= len(lane.s.prompt) or (self.grid and cut % self.grid)
++                or list(lane.s.prompt[:cut]) != hit.ids
++                or (lane.dflash and (hit.drafter_end != cut or hit.drafter_rows is None))
++                or (cut == len(lane.s.prompt) and hit.head is None)):
++            raise RuntimeError("invalid burst resume")
++        self.arena.copy(hit.extent.base, lane.extent.base, cut)
++        lane.st.reset()
++        if self.drafts is not None:
++            self._ctx(lane).reset()
++        self._restore(lane, hit)
++        lane.s.cached = cut
++        lane.point = grid_point(len(lane.s.prompt), cut, self.grid)
++        lane.stops = [p for p in lane.stops if p > cut]
++        lane.shared = [p for p in lane.shared if p > cut]
++        if self.cache_reasons:
++            lane.s.cache_reason = "burst_hit"
++
++    def _burst_plan(self) -> None:
++        """Rank 0: recheck waiting siblings, then form same-class cohorts of untouched prompts.
++
++        Every cohort uses one actual common grid point and one producer. A partial producer is eligible only when
++        its complete new drafter window lies ahead, or the read was already planned. Different priority classes
++        never depend on one another. Cancellation/eviction releases a waiter to ordinary prefill.
++        """
++        from .engine import common_prefix
++
++        for sid, (source, point) in list(self.burst_wait.items()):
++            lane, producer = self.lanes.get(sid), self.lanes.get(source)
++            if lane is None or lane.s.done:
++                self.burst_wait.pop(sid)
++                continue
++            hit = self._resume(lane.s.prompt)
++            if hit is not None and len(hit.ids) >= point:
++                self._emit(RESUME, [sid, hit.kid])
++                self._resume_lane(lane, hit)
++                self.burst_wait.pop(sid)
++            elif producer is None or producer.s.done or producer.st.pos >= point:
++                self.burst_wait.pop(sid)
++
++        if not self.grid or self.g.serial_only:
++            return
++        producers = {sid for sid, _ in self.burst_wait.values()}
++        fresh = [l for l in self.lanes.values() if not l.decoding and not l.s.done and l.feed is None and l.s.draft
++                 and l.head is None and l.sid not in self.burst_wait
++                 and l.sid not in producers]
++        while fresh:
++            producer = fresh.pop(0)
++            if self.drafts is not None and not producer.dflash:
++                continue                         # this producer cannot save a reusable DFlash checkpoint
++            peers = []
++            for lane in fresh:
++                if lane.s.priority != producer.s.priority or lane.st.pos != lane.s.cached:
++                    continue
++                point = common_prefix(producer.s.prompt, lane.s.prompt) // self.grid * self.grid
++                if point > lane.st.pos and self._can_checkpoint(producer, point):
++                    peers.append((lane, point))
++            if not peers:
++                continue
++            point = min(p for _, p in peers)
++            peers = [(l, p) for l, p in peers if l.st.pos < point]
++            self._emit(CHECKPOINT, [producer.sid, point])
++            self._checkpoint(producer, point)
++            for lane, _ in peers:
++                self.burst_wait[lane.sid] = (producer.sid, point)
++                fresh.remove(lane)
++
+     def _ctx(self, lane: Lane):
+         """The lane's slot's DFlash2 context."""
+         return self.drafts.contexts[lane.slot]
+@@ -853,6 +969,43 @@ class MultiDecoder:
+     def _touch(self, c) -> None:
+         self.kept = [k for k in self.kept if k is not c] + [c]
+ 
++    def _cache_miss(self, prompt) -> str:
++        """Explain a failed lookup, without changing it. Indices are zero based; lengths count as divergence.
++
++        Prefer the candidate with the longest actual common prefix. Eviction requires a matching fingerprint;
++        an empty cache alone is cold, not evidence of eviction. Only scheduled live checkpoints count as pending.
++        """
++        from .engine import common_prefix
++
++        candidates = []
++        for c in self.kept:
++            n = len(c.ids)
++            common = common_prefix(prompt, _ids_array(c))
++            if common < n:
++                reason = f"token_mismatch:{common}"
++            elif self.grid and n % self.grid:
++                reason = "off_grid"
++            elif self.drafts is not None and (c.drafter_end != n or c.drafter_rows is None):
++                reason = "drafter_missing"
++            else:
++                reason = "head_missing"
++            candidates.append((common, reason))
++        for lane in self.lanes.values():
++            if lane.decoding or lane.feed is not None or not lane.s.draft:
++                continue
++            common = common_prefix(prompt, lane.s.prompt)
++            for point in set(lane.stops + ([lane.point] if lane.point is not None else [])):
++                if lane.st.pos < point <= common:
++                    candidates.append((point, "admitted_before_state"))
++        for n, digest in self.evicted_prefixes:
++            if n <= len(prompt) and self._prefix_fingerprint(prompt[:n]) == digest:
++                candidates.append((n, "evicted"))
++        return max(candidates, key=lambda pair: pair[0])[1] if candidates else "cold"
++
++    @staticmethod
++    def _prefix_fingerprint(ids) -> bytes:
++        return hashlib.sha256(np.asarray(ids, dtype="<i8").tobytes()).digest()
++
+     def _keep(self, lane: Lane, n: int, head=None) -> None:
+         """Both ranks: the lane's state at prompt position n (== its pos) becomes a kept prompt in its extent;
+         ``head``: at the prompt's end, the logits row its first token is sampled from (kept for a replay)."""
+@@ -883,6 +1036,9 @@ class MultiDecoder:
+     def _drop(self, c) -> None:
+         """Forget a kept prompt; its extent goes when nothing else holds it, else shrinks to what is kept."""
+ 
++        if self.cache_reasons:
++            self.evicted_prefixes.append((len(c.ids), self._prefix_fingerprint(c.ids)))
++            self.evicted_prefixes = self.evicted_prefixes[-max(1, min(64, self.g.cache_entries)):]
+         self.kept = [k for k in self.kept if k is not c]
+         x = c.extent
+         x.kept = [k for k in x.kept if k is not c]
+@@ -1006,17 +1162,28 @@ class MultiDecoder:
+             raise
+ 
+     def _fill_turn(self) -> Lane | None:
+-        filling = [l for l in self.lanes.values() if not l.decoding]
++        filling = [l for l in self.lanes.values() if not l.decoding and l.sid not in self.burst_wait]
+         if not filling:
++            if self.time_credit is not None:
++                self.time_credit.contend(None)
+             return None
+         decoding = [l for l in self.lanes.values() if l.decoding and not l.paused and not l.s.done]
++        if self.time_credit is not None:
++            if not decoding:
++                self.time_credit.contend(None)
++            elif self.arbiter is None:
++                self.time_credit.contend(0)
+         if self.arbiter is not None:
+             return self._ranked_fill(filling, decoding)
+         if decoding:
+-            self.credit += self.share
+-            if self.credit < 1:
+-                return None
+-            self.credit -= 1
++            if self.time_credit is not None:
++                if not self.time_credit.choose():
++                    return None
++            else:
++                self.credit += self.share
++                if self.credit < 1:
++                    return None
++                self.credit -= 1
+         s = next_fill([l.s for l in filling])
+         return self.lanes[s.sid]
+ 
+@@ -1051,16 +1218,36 @@ class MultiDecoder:
+         return [l for l in lanes if l.s.priority <= prio.REALTIME and l.decoding and not l.s.done
+                 and len(l.s.out) < self.prio.rt_head]
+ 
++    def _service_start(self) -> float | None:
++        if self.time_credit is None or self.time_credit.key is None:
++            return None
++        # Chunk launches and DFlash's ahead pass are asynchronous, often on side streams. Device completion
++        # brackets deliberately include all local streams; a host launch timer would charge the wrong service.
++        if self.w.device.type == "cuda":
++            torch.cuda.synchronize(self.w.device)
++        return time.perf_counter()
++
++    def _service_end(self, started: float | None, *, fill: bool) -> None:
++        if started is None:
++            return
++        if self.w.device.type == "cuda":
++            torch.cuda.synchronize(self.w.device)
++        self.time_credit.record(fill, time.perf_counter() - started)
++
+     def _iterate(self) -> list[Stream]:
++        if self.burst:
++            self._burst_plan()
+         prof = self.profiles[False] if self.profiles is not None else None      # prompt chunks count there
+         lane = self._fill_turn()
+         group = self._group(lane) if lane is not None and self.group else None
++        service_started = self._service_start()
+         if group is not None:
+             t = time.perf_counter()
+             rows = sum(stop - l.st.pos for l, stop in group)
+             self._emit(MFILL, [len(group), *[v for l, stop in group for v in (l.sid, stop)]])
+             self._flush()
+             firsts = self._fill_many(group)
++            self._service_end(service_started, fill=True)
+             now = self.clock()
+             for (l, _), first in zip(group, firsts):
+                 l.since = now
+@@ -1078,6 +1265,7 @@ class MultiDecoder:
+             self._emit(FILL, [lane.sid, stop])
+             self._flush()
+             first = self._fill(lane, stop)
++            self._service_end(service_started, fill=True)
+             lane.since = self.clock()
+             if first is not None:
+                 lane.s.take([first], self._ends(lane))
+@@ -1123,6 +1311,7 @@ class MultiDecoder:
+         if prof is not None:
+             prof.mark("message")
+         self._round(active, lone=lone)
++        self._service_end(service_started, fill=False)
+         if self.arbiter is not None:
+             self.arbiter.rounded()
+             if len(lanes) == everyone and self._round_cap().settled():     # every stream had its round
+@@ -1200,6 +1389,11 @@ class MultiDecoder:
+         rows to its next stop (a kept point or its end) when they fit, else the budget left in whole ``fill_unit``s.
+         Image prompts and replays of a kept head fill alone."""
+ 
++        # A producer checkpoint must survive until the next plan copies it, even with CACHE_ENTRIES=1.
++        # Another piece in the same MFILL could otherwise save a state and evict it before consumers resume.
++        if self.burst_wait:
++            return None
++
+         def plain(l: Lane) -> bool:
+             return not l.decoding and l.feed is None and l.head is None
+ 
+@@ -1619,6 +1813,8 @@ class MultiDecoder:
+         lane_info = getattr(s, "glm_lane", None)
+         if lane_info:
+             out.update(lane_info)
++        if self.cache_reasons and hasattr(s, "cache_reason"):
++            out["cache_reason"] = s.cache_reason
+         return out
+ 
+     # -- rank 1 --------------------------------------------------------------------------------------------------------------
+@@ -1689,6 +1885,10 @@ class MultiDecoder:
+                 self._round([self.lanes[sid] for sid in sids], depths, lone=lone)
+             elif op == SLOT:
+                 self._reslot(self.lanes[p[0]], p[1])
++            elif op == CHECKPOINT:
++                self._checkpoint(self.lanes[p[0]], p[1])
++            elif op == RESUME:
++                self._resume_lane(self.lanes[p[0]], self._kept_by_id(p[1]))
+             elif op == FINISH:
+                 self._finish(p[0])
+             elif op == IDLE:
+diff --git a/src/tensorfold/families/glm5_next/cuda/multi_tune.py b/src/tensorfold/families/glm5_next/cuda/multi_tune.py
+index c9733d0..7ea97d2 100644
+--- a/src/tensorfold/families/glm5_next/cuda/multi_tune.py
++++ b/src/tensorfold/families/glm5_next/cuda/multi_tune.py
+@@ -142,13 +142,26 @@ def reach_of(confs: Sequence[float]) -> list[float]:
+ 
+ # -- sampling --------------------------------------------------------------------------------------------------------
+ def sample_packed(w, parts: Sequence[tuple]) -> list[list[int]]:
++    """Batch opt-in top-k-off GPU draws; all remaining parts retain the release sampler."""
++    from tensorfold.cuda.gpu_sample_unbounded import sample_parts
++    from tensorfold.cuda.sampling import comm_gather, one_rank
++
++    out = sample_parts(parts, offset=w.vocab_offset, gather=one_rank if w.comm is None else comm_gather(w.comm))
++    missing = [k for k, tokens in enumerate(out) if tokens is None]
++    if missing:
++        for k, tokens in zip(missing, _sample_packed_host(w, [parts[k] for k in missing])):
++            out[k] = tokens
++    return out
++
++
++def _sample_packed_host(w, parts: Sequence[tuple]) -> list[list[int]]:
+     """parts [(logits [R, V/world], positions, sampling)] -> each part's tokens, bit for bit what ``decode.sample_rows``
+     gives each part alone, in two all-gathers for every part: (1) every top-k / greedy part's top candidates (values,
+     ids as fp32 bits) and every nucleus part's row maxima (fp64 as two fp32 words), (2) every nucleus row's
+     ``NUCLEUS`` best (value, id, mass), its shard's mass and width. Row by row the arithmetic is ``nucleus_rows``' and
+     ``sample_rows``'; a nucleus part some row of which runs past the candidates reads whole shards on its own."""
+ 
+-    from tensorfold.cuda.sampling import MASS, NUCLEUS, WIDER, _draw, _shares, comm_gather, one_rank, union_cover
++    from tensorfold.cuda.sampling import MASS, NUCLEUS, WIDER, _draw, _shares, comm_gather, one_rank, retry_wider
+     from tensorfold.engine.exact_sampling import MARGIN, choose_rows
+ 
+     gather = one_rank if w.comm is None else comm_gather(w.comm)
+@@ -232,7 +245,7 @@ def sample_packed(w, parts: Sequence[tuple]) -> list[list[int]]:
+             _, positions, sampling = parts[k]
+             drawn = _draw(got, positions, sampling)
+             m_k = mass[r0:r0 + R]
+-            if drawn is None and union_cover() and int(got[4].max()) > WIDER:     # as nucleus_rows: wider first
++            if drawn is None and retry_wider(sampling) and int(got[4].max()) > WIDER:
+                 drawn = _draw(_shares(gather, scaled_k, m_k, WIDER, int(w.vocab_offset), None), positions, sampling)
+             if drawn is None:              # a row's nucleus runs past the candidates: this part reads whole shards
+                 drawn = _draw(_shares(gather, scaled_k, m_k, int(got[4].max()), int(w.vocab_offset), None),
+diff --git a/src/tensorfold/families/glm5_next/cuda/segprof.py b/src/tensorfold/families/glm5_next/cuda/segprof.py
+index 6653b99..65a3482 100644
+--- a/src/tensorfold/families/glm5_next/cuda/segprof.py
++++ b/src/tensorfold/families/glm5_next/cuda/segprof.py
+@@ -314,14 +314,14 @@ def install() -> None:
+ 
+     timed0, mm0, gather0 = prof.timed, forward.mm, forward.gather
+ 
+-    def timed(name: str):
++    def timed(name: str, events_only: bool = False):
+         p = ACTIVE
+         kind = p.kind_of(name) if p is not None and p.kinds is not None else None
+         if kind is None:
+-            return timed0(name)
++            return timed0(name, events_only)
+         stack = ExitStack()
+         stack.enter_context(p.seg(kind))
+-        stack.enter_context(timed0(name))
++        stack.enter_context(timed0(name, events_only))
+         return stack
+ 
+     def mm(b, x, q, xs, out, f32: bool = False):
+diff --git a/tests/test_exact_sampling.py b/tests/test_exact_sampling.py
+index 3a8bedf..10804c5 100644
+--- a/tests/test_exact_sampling.py
++++ b/tests/test_exact_sampling.py
+@@ -90,7 +90,7 @@ def test_choose_rows_matches_choose_row_by_row_alone_or_batched():
+ def test_nucleus_without_top_k_matches_the_whole_vocabulary_draw():
+     """top_k 0: the fast nucleus (GPU candidates + normalizer) draws what sorting every logit draws."""
+ 
+-    import mlx.core as mx
++    mx = pytest.importorskip("mlx.core")
+ 
+     from tensorfold.engine import exact_sampling as es
+ 
+diff --git a/tests/test_glm_burst_prefix.py b/tests/test_glm_burst_prefix.py
+new file mode 100644
+index 0000000..58d8ff1
+--- /dev/null
++++ b/tests/test_glm_burst_prefix.py
+@@ -0,0 +1,272 @@
++"""Real admission, pool, snapshot and rank protocol with CPU tensors and a deterministic fake forward.
++
++The existing glm5_fakes builds MLX checkpoints, and cuda/prefix_checks runs real GPU forwards. This fixture uses
++their prefix-equality approach at the GLM concurrent seam, without allocating CUDA tensors or importing MLX.
++"""
++from types import SimpleNamespace as NS
++
++import pytest
++import torch
++
++from tensorfold.cuda.streams import Stream
++from tensorfold.families.glm5_next.cuda import decode, forward, multi
++from tensorfold.families.glm5_next.cuda.pool import Arena, Plane
++
++
++class State:
++    def __init__(self, w, capacity, rows, *, caches, base, slots, slot):
++        self.rec, self.conv, self.cur = torch.zeros(2, 1), torch.zeros(4), [0]
++        self.index, self.kc, self.mtp_len = [], [], 0
++        self.caches = caches
++        self.bind(base, capacity)
++        self.reset()
++
++    def bind(self, base, size):
++        self.base, self.capacity = base, size
++        self.kc = [self.caches.arena.planes[0].view(base, size)]
++
++    def reset(self):
++        self.rec.zero_()
++        self.conv.zero_()
++        self.cur, self.pos = [0], 0
++
++    def set_pos(self, pos):
++        self.pos = pos
++
++
++class Context:
++    def __init__(self):
++        self.ring, self.window = 16, 7
++        self.kc, self.vc = [torch.zeros(1, 16, 1)], [torch.zeros(1, 16, 1)]
++        self.pos_dev = torch.tensor(0)
++        self.reset()
++
++    def reset(self):
++        for c in self.kc + self.vc:
++            c.zero_()
++        self.context_end = 0
++        self.pos_dev.zero_()
++
++
++@pytest.fixture
++def factory(monkeypatch):
++    monkeypatch.setattr(forward, "State", State)
++    monkeypatch.setenv("TF_GLM_MULTI_PREFILL", "0")
++    monkeypatch.setenv("TF_GLM_MULTI_WATCHDOG_S", "0")
++    monkeypatch.setenv("TF_GLM_CACHE_REASONS", "1")
++
++    def prefill(e, prompt, start, rows, *, drafter, reads, **kw):
++        st = e.st
++        assert st.pos == start
++        e.reads.append((start, rows, tuple(reads)))
++        for p in range(start, start + rows):
++            token = prompt[p]
++            st.rec[0] += token
++            st.conv = torch.cat((st.conv[1:], torch.tensor([float(token)])))
++            st.kc[0][p] = token
++            if drafter is not None:
++                drafter.kc[0][0, p % 16, 0] = token
++                drafter.vc[0][0, p % 16, 0] = token * 2
++        st.set_pos(start + rows)
++        if drafter is not None:
++            drafter.context_end = st.pos
++        # Include all copied state in the result, making stale/missing copies observable.
++        value = st.rec[0].item() + st.conv.sum().item() + st.kc[0][:st.pos].sum().item()
++        if drafter is not None:
++            value += sum(t.sum().item() for t in multi.draft_window(drafter, st.pos))
++        logits = torch.zeros(1, 97)
++        logits[0, int(value) % 97] = 10
++        return logits
++
++    monkeypatch.setattr(decode, "prefill_chunk", prefill)
++
++    def make(burst=True, *, entries=32, streams=8):
++        monkeypatch.setenv("TF_GLM_BURST_PREFIX", str(int(burst)))
++        arena = Arena(32768, [Plane(torch.zeros(32768, 1))])
++        w = NS(cfg=NS(eos=()), vocab_offset=0, comm=None, world=1, device=torch.device("cpu"))
++        e = NS(w=w, caches=NS(rows=32768, arena=arena), slots=NS(count=streams), rows=16,
++               prefill_rows=128, reads=[], st=None)
++        def use(st):
++            prev, e.st = e.st, st
++            return prev
++        e.use = use
++        g = NS(e=e, rank=0, grid=64, drafter=None, limit=16384, serial_only=False,
++               shared=0, opener=None, costs=None, copy=None, cache_entries=entries, vision=None,
++               _ring=lambda: None, _share=lambda msg: None)
++        drafts = NS(contexts=[Context() for _ in range(streams)])
++        return multi.MultiDecoder(g, streams, verify=object(), drafts=drafts,
++                                  tune=multi.MultiSettings(lone=False))
++    return make
++
++
++def request(prompt, **kw):
++    s = Stream(list(prompt), 1, **kw)
++    s.glm = {"code": [11, 1, 0, 0]}
++    return s
++
++
++def complete(d, streams):
++    for s in streams:
++        d.admit(s)
++    for _ in range(100):
++        if not d.live():
++            break
++        d.finish(d.round())
++    assert not d.live()
++    return [s.out for s in streams]
++
++
++@pytest.mark.parametrize("entries", [1, 32])
++def test_four_siblings_read_shared_rows_once_and_keep_the_same_answers(factory, entries):
++    prompts = [list(range(300)) + [k] * 22 for k in range(4)]
++    off, on = factory(False), factory(entries=entries)
++    expected = complete(off, [request(p) for p in prompts])
++    streams = [request(p) for p in prompts]
++    assert complete(on, streams) == expected
++    assert [s.cached for s in streams] == [0, 256, 256, 256]
++    assert sum(rows for _, rows, _ in off.e.reads) == 4 * 322
++    assert sum(rows for _, rows, _ in on.e.reads) == 256 + 4 * 66
++    assert all(256 in reads for start, _, reads in on.e.reads if start < 256)
++
++
++def test_rank_zero_protocol_restores_all_state_with_follower_switch_off(factory):
++    leader, follower = factory(), factory(False)
++    follower.rank = 1
++    leader.g._share = follower.apply
++    prompts = [list(range(300)) + [k] * 22 for k in range(4)]
++    streams = [request(p) for p in prompts]
++    for s in streams:
++        leader.admit(s)
++    for _ in range(3):
++        leader.round()
++    # The third iteration carries checkpoint resume; its fill is applied on both ranks.
++    for sid, a in leader.lanes.items():
++        b = follower.lanes[sid]
++        assert a.st.pos == b.st.pos and a.s.cached == b.s.cached
++        assert torch.equal(a.st.rec, b.st.rec) and torch.equal(a.st.conv, b.st.conv)
++        assert torch.equal(a.st.kc[0][:a.st.pos], b.st.kc[0][:b.st.pos])
++        for x, y in zip(multi.draft_window(leader._ctx(a), a.st.pos),
++                        multi.draft_window(follower._ctx(b), b.st.pos)):
++            assert torch.equal(x, y)
++    assert [s.cached for s in streams] == [0, 256, 256, 256]
++
++
++def test_priorities_vision_serial_and_unavailable_drafter_windows_are_not_coalesced(factory):
++    d = factory()
++    a, b = request(range(322)), request(range(322), priority=0)
++    d.admit(a)
++    d.admit(b)
++    d._burst_plan()
++    assert not d.burst_wait
++    b.priority = a.priority
++    b.prompt = list(range(300)) + [-1] * 22
++    d.lanes[a.sid].st.pos = 64
++    d._ctx(d.lanes[a.sid]).window = 256    # new point 256 would need taps before the current position
++    d._burst_plan()
++    assert not d.burst_wait
++    d.lanes[a.sid].st.pos = 0
++    d.lanes[a.sid].feed = object()
++    d._burst_plan()
++    assert not d.burst_wait
++    d.lanes[a.sid].feed = None
++    a.draft = False
++    d._burst_plan()
++    assert not d.burst_wait
++
++
++@pytest.mark.parametrize("finish", [False, True])
++def test_missing_producer_or_evicted_checkpoint_releases_waiters(factory, finish):
++    d = factory()
++    a, b = request(range(322)), request(range(322))
++    d.admit(a)
++    d.admit(b)
++    d.round()
++    assert b.sid in d.burst_wait
++    if finish:
++        d._finish(a.sid)
++    else:
++        while d.lanes[a.sid].st.pos < d.burst_wait[b.sid][1]:
++            d.round()
++        for c in list(d.kept):
++            d._drop(c)
++    d._burst_plan()
++    assert b.sid not in d.burst_wait
++    assert d._fill_turn() is not None
++
++
++def test_whole_head_replay_and_new_turn_keep_the_grid_prefix(factory):
++    d = factory()
++    first = request(range(320))
++    complete(d, [first])
++    replay = request(range(320))
++    complete(d, [replay])
++    assert replay.cached == 320 and replay.out == first.out
++    turn = request(list(range(320)) + [80, 81, 82])
++    expected = complete(factory(False), [request(turn.prompt)])
++    assert complete(d, [turn]) == expected and turn.cached == 320
++
++
++def test_resume_rejects_wrong_tokens_and_partial_consumer(factory):
++    d = factory()
++    a = request(range(320))
++    complete(d, [a])
++    hit = d.kept[-1]
++    b = request([999] + list(range(1, 322)))
++    d.admit(b)
++    with pytest.raises(RuntimeError, match="invalid burst resume"):
++        d._resume_lane(d.lanes[b.sid], hit)
++    b.prompt = list(range(322))
++    d.lanes[b.sid].st.pos = 1
++    with pytest.raises(RuntimeError, match="invalid burst resume"):
++        d._resume_lane(d.lanes[b.sid], hit)
++
++
++def test_placement_refusal_is_logged_without_claiming_a_hit(factory, monkeypatch):
++    d = factory(False)
++    a = request(range(320))
++    d.admit(a)
++    while not a.done:
++        d.round()
++    # Source extent still has a writer; refuse a protected copy, then permit ordinary fresh placement.
++    room = d._room
++    monkeypatch.setattr(d, "_room", lambda need, protect=(): None if protect else room(need))
++    b = request(range(322))
++    d.admit(b)
++    assert b.cached == 0 and d.stats(b)["cache_reason"] == "no_room"
++
++
++def test_grouped_prefill_cannot_evict_a_producer_before_resume(factory):
++    d = factory(entries=1)
++    d.group = True
++    a, b = request(range(322)), request(range(322))
++    d.admit(a)
++    d.admit(b)
++    d._burst_plan()
++    assert d._group(d.lanes[a.sid]) is None
++
++
++def test_siblings_arriving_after_first_chunk_use_the_partial_producer(factory):
++    d = factory()
++    a = request(list(range(300)) + [0] * 22)
++    d.admit(a)
++    d.round()
++    assert d.lanes[a.sid].st.pos == 128
++    rest = [request(list(range(300)) + [i] * 22) for i in (1, 2, 3)]
++    complete(d, rest)
++    assert [s.cached for s in rest] == [256, 256, 256]
++    assert sum(rows for _, rows, _ in d.e.reads) == 256 + 4 * 66
++    for s in [a] + rest:
++        assert s.out == complete(factory(False), [request(s.prompt)])[0]
++
++
++def test_existing_read_is_safe_near_a_partial_producer_but_new_skipped_window_is_not(factory):
++    d = factory()
++    a = request(range(322))
++    d.admit(a)
++    lane = d.lanes[a.sid]
++    lane.st.pos = 128
++    d._ctx(lane).window = 256
++    assert not d._can_checkpoint(lane, 256)
++    assert d._can_checkpoint(lane, 320)  # prompt's ordinary grid point was in reads from the beginning
++    with pytest.raises(RuntimeError, match='invalid burst checkpoint'):
++        d._checkpoint(lane, 256)
+diff --git a/tests/test_glm_cache_reasons.py b/tests/test_glm_cache_reasons.py
+new file mode 100644
+index 0000000..3f0c6ae
+--- /dev/null
++++ b/tests/test_glm_cache_reasons.py
+@@ -0,0 +1,78 @@
++"""Cache decisions on the CPU: evidence for misses and the single request-log field."""
++from types import SimpleNamespace as NS
++
++import pytest
++
++from tensorfold.cuda.server import print_done
++from tensorfold.families.glm5_next.cuda.multi import MultiDecoder
++
++
++def decoder():
++    d = MultiDecoder.__new__(MultiDecoder)
++    d.kept, d.lanes, d.evicted_prefixes = [], {}, []
++    d.grid, d.drafts, d.cache_reasons = 64, object(), True
++    d.g = NS(cache_entries=2)
++    return d
++
++
++def snap(n=128, **kw):
++    return NS(**(dict(ids=list(range(n)), drafter_end=n, drafter_rows=[], head=None) | kw))
++
++
++@pytest.mark.parametrize("snapshot,prompt,reason", [
++    (snap(ids=[0, 99] + list(range(2, 128))), list(range(129)), "token_mismatch:1"),
++    (snap(), list(range(80)), "token_mismatch:80"),
++    (snap(127), list(range(129)), "off_grid"),
++    (snap(drafter_rows=None), list(range(129)), "drafter_missing"),
++    (snap(drafter_end=127), list(range(129)), "drafter_missing"),
++    (snap(), list(range(128)), "head_missing"),
++])
++def test_reason_does_not_change_lookup(snapshot, prompt, reason):
++    d = decoder()
++    d.kept = [snapshot]
++    assert d._resume(prompt) is None
++    assert d._cache_miss(prompt) == reason
++    assert d._resume(prompt) is None
++
++
++def test_cold_pending_and_eviction_require_evidence():
++    d = decoder()
++    prompt = list(range(129))
++    assert d._cache_miss(prompt) == "cold"
++    d.lanes[0] = NS(decoding=False, feed=None, s=NS(draft=True, prompt=prompt),
++                    st=NS(pos=0), stops=[128], point=128)
++    assert d._cache_miss(prompt) == "admitted_before_state"
++    d.lanes.clear()
++    d.evicted_prefixes = [(128, d._prefix_fingerprint(prompt[:128]))]
++    assert d._cache_miss(prompt) == "evicted"
++    assert d._cache_miss([9] + prompt[1:]) == "cold"
++
++
++def test_longest_matching_prefix_and_exact_head_replay():
++    d = decoder()
++    d.kept = [snap(64), snap(128), snap(192)]
++    assert d._resume(list(range(129))) is d.kept[1]
++    d.kept[1].head = object()
++    assert d._resume(list(range(128))) is d.kept[1]
++
++
++def test_eviction_fingerprints_are_bounded_and_hold_no_state():
++    d = decoder()
++    d._settle = lambda x: None
++    for n in (64, 128, 192):
++        c = snap(n, extent=NS(kept=[]))
++        d.kept.append(c)
++        c.extent.kept.append(c)
++        d._drop(c)
++        assert c.drafter_rows is None
++    assert [n for n, _ in d.evicted_prefixes] == [128, 192]
++    assert all(len(h) == 32 for _, h in d.evicted_prefixes)
++
++
++def test_done_line_is_unchanged_when_off_and_has_one_reason_when_on(capsys):
++    for stats in ({}, {"cache_reason": "token_mismatch:17"}):
++        print_done(200, 0, False, [1, 2], "length", stats, NS(first=None))
++        line = capsys.readouterr().out
++        assert line.count("cache_reason=") == bool(stats)
++        if stats:
++            assert line.rstrip().endswith("cache_reason=token_mismatch:17")
+diff --git a/tests/test_glm_fill_credit.py b/tests/test_glm_fill_credit.py
+new file mode 100644
+index 0000000..3aac022
+--- /dev/null
++++ b/tests/test_glm_fill_credit.py
+@@ -0,0 +1,84 @@
++"""Measured service, priority/deadline overrides and completion fences, entirely on the CPU."""
++from types import SimpleNamespace as NS
++
++import pytest
++
++from tensorfold.cuda import priority as p
++from tensorfold.families.glm5_next.cuda import multi
++
++
++@pytest.mark.parametrize("share", [0.25, 0.5, 0.8])
++def test_expensive_chunks_get_equal_weighted_time_not_equal_step_counts(share):
++    credit = p.TimeCredit(share)
++    credit.contend(2)
++    counts = [0, 0]
++    for _ in range(1000):
++        fill = credit.choose()
++        counts[fill] += 1
++        credit.record(fill, 0.4 if fill else 0.02)
++    seconds = credit.seconds
++    assert abs(seconds["prefill"] - share * sum(seconds.values())) <= 0.4
++    assert counts[0] > counts[1]
++
++
++def test_idle_and_class_changes_discard_credit_and_full_share_has_no_division_by_zero():
++    c = p.TimeCredit(0.5)
++    c.contend(2)
++    c.record(True, 1)
++    assert c.balance < 0
++    c.contend(None)
++    c.record(False, 100)
++    c.contend(2)
++    assert c.balance == 0
++    c.record(False, 1)
++    c.contend(0)
++    assert c.balance == 0
++    c = p.TimeCredit(1)
++    c.contend(2)
++    assert c.choose()
++    c.record(True, 1)
++    assert c.choose()
++
++
++def test_release_steps_and_priority_deadlines_still_win():
++    now = [0.0]
++    settings = p.Settings.from_env({"TENSORFOLD_PRIORITY_SHORT_ROWS": "0"})
++    steps = p.Arbiter(settings, 0.5, lambda: now[0])
++    assert [steps.choose(2, 4096, False, 2) for _ in range(4)] == [False, True, False, True]
++    credit = p.TimeCredit(0.5)
++    arb = p.Arbiter(settings, 0.5, lambda: now[0], credit)
++    assert not arb.choose(2, 4096, False, 2)
++    credit.record(False, 1)
++    arb.last_round = 0
++    now[0] = settings.round_gap_s + 1
++    assert not arb.choose(2, 4096, False, 2)  # overdue round, even with ample fill credit
++    arb.rounded()
++    credit.record(True, 10)
++    assert arb.choose(2, 4096, True, 2)       # starvation override, even with fill debt
++    assert not arb.choose(3, 4096, False, 0, hold=True)
++    assert credit.key is None               # cross-class rules remain iteration based
++
++
++def test_time_brackets_wait_for_side_streams_and_steps_do_not_sync(monkeypatch):
++    d = multi.MultiDecoder.__new__(multi.MultiDecoder)
++    d.w = NS(device=NS(type="cuda"))
++    seen = []
++    monkeypatch.setattr(multi.torch.cuda, "synchronize", lambda device: seen.append("sync"))
++    times = iter([2.0, 2.4])
++    monkeypatch.setattr(multi.time, "perf_counter", lambda: next(times))
++    d.time_credit = None
++    assert d._service_start() is None and not seen
++    d.time_credit = p.TimeCredit(0.5)
++    d.time_credit.contend(2)
++    start = d._service_start()
++    d._service_end(start, fill=True)
++    assert seen == ["sync", "sync"]
++    assert d.time_credit.seconds["prefill"] == pytest.approx(0.4)
++
++
++def test_switch_is_opt_in_and_invalid_values_fail(monkeypatch):
++    monkeypatch.delenv("TF_GLM_FILL_CREDIT", raising=False)
++    assert multi.fill_credit() == "steps"
++    assert multi.fill_credit("time") == "time"
++    with pytest.raises(ValueError, match="TF_GLM_FILL_CREDIT"):
++        multi.fill_credit("seconds")
+diff --git a/tests/test_gpu_sample_unbounded.py b/tests/test_gpu_sample_unbounded.py
+new file mode 100644
+index 0000000..8aebdde
+--- /dev/null
++++ b/tests/test_gpu_sample_unbounded.py
+@@ -0,0 +1,341 @@
++"""Real tensor arithmetic, CPU-only, including four-rank collectives and host fallbacks."""
++
++from concurrent.futures import ThreadPoolExecutor
++import threading
++from types import SimpleNamespace
++
++import numpy as np
++import pytest
++import torch
++
++from tensorfold.cuda import gpu_sample_unbounded as gpu
++from tensorfold.cuda import sampling as cs
++from tensorfold.engine.exact_sampling import Sampling, uniform
++from tensorfold.families.glm5_next.cuda.multi_tune import sample_packed
++
++
++@pytest.fixture(autouse=True)
++def checked_paths(monkeypatch):
++    # Communication-budget tests exclude the one-time startup vote. Self-check
++    # tests below explicitly reset it and exercise the real gate separately.
++    monkeypatch.setattr(gpu, "_state", {"full": True, "nucleus": True})
++
++
++class Ranks:
++    def __init__(self, world=4):
++        self.world = world
++        self.slots = [None] * world
++        self.barrier = threading.Barrier(world, timeout=30)
++        self.sizes = [[] for _ in range(world)]
++
++    def gather(self, rank):
++        def gather(words):
++            self.sizes[rank].append(words.numel() * words.element_size())
++            self.slots[rank] = words.clone()
++            self.barrier.wait()
++            both = torch.stack(self.slots)
++            self.barrier.wait()
++            return both
++        return gather
++
++    def run(self, fn):
++        with ThreadPoolExecutor(self.world) as pool:
++            futures = [pool.submit(fn, r, self.gather(r)) for r in range(self.world)]
++            result = [f.result(timeout=60) for f in futures]
++        assert all(x == result[0] for x in result)
++        assert all(x == self.sizes[0] for x in self.sizes)
++        return result[0]
++
++
++def test_uniform_bits():
++    seeds = [0, 1, -1, 2**63 + 91, 2**64 - 1]
++    positions = [0, 1, 2**32 + 7, 10**6, 2**63 - 1]
++    ids = torch.arange(4096)[None].expand(len(seeds), -1)
++    got = gpu.uniforms(torch.tensor([gpu._signed(s) for s in seeds]), torch.tensor(positions), ids).numpy()
++    for r, (s, p) in enumerate(zip(seeds, positions)):
++        np.testing.assert_array_equal(got[r], uniform(s, p, ids[r].numpy()))
++
++
++@pytest.mark.parametrize("temperature", [1e-7, 0.3, 1.0, 2.5])
++@pytest.mark.parametrize("widths", [[1, 1, 1, 1], [1, 17, 31, 7], [67, 67, 67, 67]])
++def test_full_four_shards_match_host(monkeypatch, temperature, widths):
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "1")
++    rng = torch.Generator().manual_seed(11)
++    x = (torch.randn(16, sum(widths), generator=rng) * 3).bfloat16()
++    x[::3] = x[::3].round()  # logit ties; keyed score ties are separately rejected below
++    x[1, :-1] = -torch.inf   # grammar: entire shards masked, one valid token
++    positions = [r * 10007 for r in range(len(x))]
++    offsets = np.cumsum([0] + widths).tolist()
++    for seed in [0, 9, -1, 2**63 + 3, 17921]:
++        s = Sampling(seed, temperature, 0, 1.0)
++        monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "0")
++        expected = cs.nucleus_rows(x, positions, s)
++        monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "1")
++        ranks = Ranks()
++        def run(r, gather):
++            return cs.nucleus_rows(x[:, offsets[r]:offsets[r + 1]], positions, s,
++                                   offset=offsets[r], gather=gather)
++        assert ranks.run(run) == expected
++        assert ranks.sizes[0] == [len(x) * 48]  # one winner exchange, no candidates
++
++
++def test_full_near_ties_are_not_certified():
++    ids = torch.tensor([[0, 1]])
++    s = Sampling(3, 1, 0, 1)
++    u = uniform(s.seed, 7, ids.numpy()[0])
++    # Construct an exact score tie before float32 logit quantization.
++    scaled = torch.from_numpy(np.log(-np.log(u)))[None]
++    got = gpu.full_local(scaled, ids, [7], [s])[None]
++    assert not gpu.full_merge(got)[1].item()
++    assert not gpu.separated(torch.tensor([1.0]), torch.tensor([1.0 + 1e-13])).item()
++
++
++def test_full_fallback_is_batched_across_streams(monkeypatch):
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "1")
++    monkeypatch.setattr(gpu, "separated", lambda a, b: torch.zeros_like(a, dtype=torch.bool))
++    x = torch.randn(5, 80, generator=torch.Generator().manual_seed(44))
++    ss = [Sampling(8, 0.7, 0, 1), Sampling(11, 1.5, 0, 1.1)]
++    positions = [[7, 8], [77, 78, 79]]
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "0")
++    expected = [cs.nucleus_rows(x[:2], positions[0], ss[0]), cs.nucleus_rows(x[2:], positions[1], ss[1])]
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "1")
++    ranks = Ranks()
++    def run(r, gather):
++        comm = SimpleNamespace(world=4, all_gather=lambda inp, out: out.copy_(gather(inp).flatten()))
++        w = SimpleNamespace(comm=comm, world=4, vocab_offset=r * 20)
++        shard = x[:, r * 20:(r + 1) * 20]
++        return sample_packed(w, [(shard[:2], positions[0], ss[0]), (shard[2:], positions[1], ss[1])])
++    assert ranks.run(run) == expected
++    assert ranks.sizes[0] == [5 * 48, 5 * (3 * 20 + 2) * 8]
++
++
++def test_id_map_and_probabilities_keep_reference(monkeypatch):
++    x = torch.tensor([[3.0, -torch.inf, 2.0, 1.0]])
++    ids = torch.tensor([40, 7, 99, 2])
++    s = Sampling(44, 1, 0, 1)
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "0")
++    probs = []
++    expected = cs.nucleus_rows(x, [91], s, id_map=ids, probs=probs)
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "1")
++    assert cs.nucleus_rows(x, [91], s, id_map=ids) == expected
++    actual_probs = []
++    assert cs.nucleus_rows(x, [91], s, id_map=ids, probs=actual_probs) == expected
++    assert actual_probs == probs
++
++
++def test_defaults_leave_reference(monkeypatch):
++    monkeypatch.delenv("TENSORFOLD_GPU_SAMPLE_FULL", raising=False)
++    monkeypatch.delenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", raising=False)
++    assert not gpu.wanted("full") and not gpu.wanted("nucleus")
++    x = torch.zeros(2, 4)
++    parts = [(x, [3, 4], Sampling(4, 1, 0, 1))]
++    assert gpu.sample_parts(parts) == [None]
++
++
++@pytest.mark.parametrize("top_p", [0.01, 0.5, 0.8, 0.95, 0.99, 1.0 - 2**-40])
++@pytest.mark.parametrize("min_p", [0.0, 0.05, 1.0])
++def test_nucleus_four_shards_match_host(monkeypatch, top_p, min_p):
++    monkeypatch.setenv("TENSORFOLD_NUCLEUS_UNION", "1")
++    monkeypatch.setattr(cs, "NUCLEUS", 8)
++    monkeypatch.setattr(cs, "WIDER", 16)
++    widths, offsets = [1, 41, 19, 37], [0, 1, 42, 61, 98]
++    x = torch.randn(12, sum(widths), generator=torch.Generator().manual_seed(18)).bfloat16() * 3
++    x[::4] = x[::4].round()
++    x[1, :-1] = -torch.inf
++    x[2] = 0  # flat logits exercise ties at the candidate boundary and complete-shard retry
++    positions = [19 * r + 671 for r in range(len(x))]
++    for seed, temp in [(0, 1e-7), (991, 0.3), (-1, 1.0), (2**63 + 77, 2.0)]:
++        s = Sampling(seed, temp, 0, top_p, min_p)
++        monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "0")
++        expected = cs.nucleus_rows(x, positions, s)
++        monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "1")
++        ranks = Ranks()
++        def run(r, gather):
++            return cs.nucleus_rows(x[:, offsets[r]:offsets[r + 1]], positions, s, offset=offsets[r], gather=gather)
++        assert ranks.run(run) == expected
++
++
++def test_nucleus_certified_without_host_candidates(monkeypatch):
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "1")
++    x = torch.randn(7, 120, generator=torch.Generator().manual_seed(555)) * 3
++    s = Sampling(81, 0.8, 0, 0.93, 0.02)
++    positions = list(range(13, 20))
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "0")
++    expected = cs.nucleus_rows(x, positions, s)
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "1")
++    def no_fallback(*args, **kwargs):
++        raise AssertionError("certified rows must not copy candidates to host")
++    monkeypatch.setattr(gpu, "_fallback", no_fallback)
++    ranks = Ranks()
++    assert ranks.run(lambda r, gather: cs.nucleus_rows(x[:, 30*r:30*(r+1)], positions, s, offset=30*r,
++                                                      gather=gather)) == expected
++    assert ranks.sizes[0] == [7 * 8, 7 * (3 * cs.NUCLEUS + 2) * 8, 7 * 32]
++
++
++@pytest.mark.parametrize("union", ["0", "1"])
++def test_nucleus_close_cuts_batched_across_streams(monkeypatch, union):
++    monkeypatch.setenv("TENSORFOLD_NUCLEUS_UNION", union)
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "0")
++    x = torch.zeros(5, 80)
++    parts = [(x[:2], [3, 4], Sampling(33, 1, 0, 0.5)), (x[2:], [70, 71, 72], Sampling(41, 1, 0, 0.25))]
++    expected = [cs.nucleus_rows(*part) for part in parts]
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "1")
++    ranks = Ranks()
++    def run(r, gather):
++        return gpu.sample_parts([(a[:, r*20:(r+1)*20], b, c) for a, b, c in parts], offset=r*20, gather=gather)
++    assert ranks.run(run) == expected
++    assert ranks.sizes[0] == [5 * 8, 5 * (3 * cs.NUCLEUS + 2) * 8, 5 * 32, 5 * (3 * 20 + 2) * 8]
++
++
++def test_cut_certificate_uses_integer_mass_not_float_softmax(monkeypatch):
++    # A one-unit change at 2^58 scale is invisible to float64, so it MUST fall back.
++    s = Sampling(3, 1, 0, 0.5)
++    vals = torch.tensor([[0.0, -1.0]], dtype=torch.float64)
++    ids = torch.tensor([[0, 1]])
++    mass = torch.tensor([[2**57 - 1, 2**57 + 1]])
++    got = gpu.nucleus_pack(vals, mass, ids, 2)[None]
++    _, certain, covered = gpu.nucleus_merge(got, [7], [s])
++    assert covered.item() and not certain.item()
++
++
++@pytest.mark.parametrize("kind,p", [("full", 1.0), ("nucleus", 0.95)])
++def test_padding_rows_do_not_affect_real_rows(monkeypatch, kind, p):
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_" + kind.upper(), "1")
++    x = torch.randn(4, 19, generator=torch.Generator().manual_seed(21))
++    x[0, :9] = -torch.inf
++    s = Sampling(71, 0.8, 0, p)
++    pos = [51, 52, 53, 54]
++    alone = cs.nucleus_rows(x, pos, s)
++    padded = torch.cat([x, torch.zeros(5, 19)])
++    assert cs.nucleus_rows(padded, pos + [0] * 5, s)[:4] == alone
++    # Graph padding excluded from the part cannot enter its keyed draws.
++    assert gpu.sample_parts([(padded[:4], pos, s)])[0] == alone
++
++
++def test_mixed_full_nucleus_topk_parts(monkeypatch):
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE", "0")  # existing top-k kernel needs CUDA
++    x = torch.randn(8, 99, generator=torch.Generator().manual_seed(91))
++    parts = [(x[:2], [31, 32], Sampling(2, 0.9, 0, 1)),
++             (x[2:5], [91, 92, 93], Sampling(17, 1, 0, 0.93, 0.05)),
++             (x[5:7], [99, 100], Sampling(37, 1, 20, 0.95)), (x[7:], [123], None)]
++    w = SimpleNamespace(comm=None, vocab_offset=0)
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "0")
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "0")
++    expected = sample_packed(w, parts)
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "1")
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "1")
++    assert sample_packed(w, parts) == expected
++
++
++@pytest.mark.parametrize("kind", ["full", "nucleus"])
++def test_first_use_check_actual_arithmetic(kind):
++    assert gpu.check(kind, "cpu") == (True, "")
++
++
++@pytest.mark.parametrize("kind", ["full", "nucleus"])
++def test_first_use_mismatch_disables_both_paths_once(monkeypatch, capsys, kind):
++    gpu.reset()
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_" + kind.upper(), "1")
++    function = kind + "_merge"
++    real = getattr(gpu, function)
++    calls = []
++    def wrong(*args):
++        calls.append(1)
++        result = list(real(*args))
++        result[0] = result[0] + 12345  # fault injection into certified output
++        return tuple(result)
++    monkeypatch.setattr(gpu, function, wrong)
++    assert not gpu.enabled(kind, "cpu", cs.one_rank)
++    assert not gpu.enabled(kind, "cpu", cs.one_rank)
++    assert gpu._state == {"full": False, "nucleus": False}
++    assert len(calls) == 1
++    assert "certified tokens differ" in capsys.readouterr().out
++    assert not gpu.enabled(kind, "cpu", cs.one_rank)
++    assert not capsys.readouterr().out
++
++
++def test_check_exception_fails_closed(monkeypatch, capsys):
++    gpu.reset()
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "1")
++    def fail(*args):
++        raise RuntimeError("injected unavailable operation")
++    monkeypatch.setattr(gpu, "check", fail)
++    assert not gpu.enabled("full", "cpu", cs.one_rank)
++    assert "off: RuntimeError: injected unavailable operation" in capsys.readouterr().out
++
++
++def test_rank_disagreement_disables_process(monkeypatch, capsys):
++    gpu.reset()
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "1")
++    monkeypatch.setattr(gpu, "check", lambda *args: (True, ""))
++    def peer_failed(words):
++        got = words.expand(4, -1).clone()
++        got[2].zero_()
++        return got
++    assert not gpu.enabled("nucleus", "cpu", peer_failed)
++    assert gpu._state == {"full": False, "nucleus": False}
++    assert "another rank failed" in capsys.readouterr().out
++
++
++def test_successful_check_runs_once(monkeypatch, capsys):
++    gpu.reset()
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "1")
++    calls = []
++    real = gpu.check
++    def checked(*args):
++        calls.append(1)
++        return real(*args)
++    monkeypatch.setattr(gpu, "check", checked)
++    for _ in range(3):
++        assert gpu.enabled("full", "cpu", cs.one_rank)
++    assert len(calls) == 1
++    assert capsys.readouterr().out.count("checked against host rule") == 1
++
++
++def test_switches_have_distinct_startup_codes(monkeypatch):
++    codes = []
++    for value in range(8):
++        for bit, name in enumerate(["TENSORFOLD_SAMPLE_SKIP_FUTILE", "TENSORFOLD_GPU_SAMPLE_FULL",
++                                    "TENSORFOLD_GPU_SAMPLE_NUCLEUS"]):
++            monkeypatch.setenv(name, str((value >> bit) & 1))
++        codes.append(gpu.settings_code())
++    assert codes == list(range(8))
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_FULL", "typo")
++    with pytest.raises(ValueError, match="TENSORFOLD_GPU_SAMPLE_FULL"):
++        gpu.settings_code()
++
++
++def test_nucleus_rank_certificate_disagreement_batches_fallback(monkeypatch):
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "0")
++    x = torch.randn(4, 80, generator=torch.Generator().manual_seed(663)) * 3
++    s, positions = Sampling(39, 1, 0, 0.93), [9, 17, 23, 719]
++    expected = cs.nucleus_rows(x, positions, s)
++    monkeypatch.setenv("TENSORFOLD_GPU_SAMPLE_NUCLEUS", "1")
++    local = threading.local()
++    real = gpu.nucleus_merge
++    def disagree(*args):
++        token, certain, covered = real(*args)
++        if local.rank == 2:
++            certain.zero_()
++        return token, certain, covered
++    monkeypatch.setattr(gpu, "nucleus_merge", disagree)
++    ranks = Ranks()
++    def run(r, gather):
++        local.rank = r
++        return cs.nucleus_rows(x[:, 20*r:20*(r+1)], positions, s, offset=20*r, gather=gather)
++    assert ranks.run(run) == expected
++    assert ranks.sizes[0] == [4*8, 4*(3*cs.NUCLEUS+2)*8, 4*32, 4*(3*20+2)*8]
++
++
++@pytest.mark.parametrize("p", [1.0, 0.95])
++def test_completely_masked_rows_preserve_reference_error(monkeypatch, p):
++    x, s = torch.full((1, 8), -torch.inf), Sampling(71, 1, 0, p)
++    switch = "TENSORFOLD_GPU_SAMPLE_" + ("FULL" if p == 1 else "NUCLEUS")
++    monkeypatch.setenv(switch, "0")
++    # The release does not define a token for an entirely masked row. It must
++    # not become a fabricated certified token in the candidate implementation.
++    with pytest.raises(Exception) as reference:
++        cs.nucleus_rows(x, [11], s)
++    monkeypatch.setenv(switch, "1")
++    with pytest.raises(type(reference.value)):
++        cs.nucleus_rows(x, [11], s)
+diff --git a/tests/test_sampler_retry.py b/tests/test_sampler_retry.py
+new file mode 100644
+index 0000000..a7129e2
+--- /dev/null
++++ b/tests/test_sampler_retry.py
+@@ -0,0 +1,40 @@
++"""Skipping an attempt which cannot cover partial shards preserves the reference draw."""
++
++from types import SimpleNamespace
++
++import pytest
++import torch
++
++from tensorfold.cuda import sampling as cs
++from tensorfold.engine.exact_sampling import Sampling
++from tensorfold.families.glm5_next.cuda.multi_tune import sample_packed
++
++
++@pytest.mark.parametrize("packed", [False, True])
++@pytest.mark.parametrize("top_p", [1.0, 1.1])
++def test_futile_retry_same_tokens(monkeypatch, packed, top_p):
++    monkeypatch.setenv("TENSORFOLD_NUCLEUS_UNION", "1")
++    monkeypatch.setattr(cs, "NUCLEUS", 8)
++    monkeypatch.setattr(cs, "WIDER", 16)
++    x = torch.randn(5, 33, generator=torch.Generator().manual_seed(7))
++    positions, s = [0, 1, 17, 99, 10000], Sampling(93, 0.7, 0, top_p)
++    calls = []
++    real = cs._shares
++    monkeypatch.setattr(cs, "_shares", lambda *a: calls.append(a[3]) or real(*a))
++    w = SimpleNamespace(comm=None, vocab_offset=0)
++    def draw():
++        return sample_packed(w, [(x, positions, s)])[0] if packed else cs.nucleus_rows(x, positions, s)
++    monkeypatch.delenv("TENSORFOLD_SAMPLE_SKIP_FUTILE", raising=False)
++    expected = draw()
++    assert 16 in calls and 33 in calls
++    calls.clear()
++    monkeypatch.setenv("TENSORFOLD_SAMPLE_SKIP_FUTILE", "1")
++    assert draw() == expected
++    assert 16 not in calls and 33 in calls
++
++
++@pytest.mark.parametrize("top_p,min_p", [(0.95, 0.0), (1.0, 0.1), (0.0, 0.0)])
++def test_other_settings_keep_retry(monkeypatch, top_p, min_p):
++    monkeypatch.setenv("TENSORFOLD_NUCLEUS_UNION", "1")
++    monkeypatch.setenv("TENSORFOLD_SAMPLE_SKIP_FUTILE", "1")
++    assert cs.retry_wider(Sampling(7, 1, 0, top_p, min_p))
+diff --git a/tests/test_sampler_window_tools.py b/tests/test_sampler_window_tools.py
+new file mode 100644
+index 0000000..6cf5e2e
+--- /dev/null
++++ b/tests/test_sampler_window_tools.py
+@@ -0,0 +1,27 @@
++"""The operator's reply gate must compare token IDs and the identical request."""
++
++import importlib.util
++from pathlib import Path
++
++import pytest
++
++spec = importlib.util.spec_from_file_location("reply_check", Path(__file__).parents[1] / "tools/sampler_reply_check.py")
++reply_check = importlib.util.module_from_spec(spec)
++spec.loader.exec_module(reply_check)
++
++
++def test_gate_rejects_same_text_different_tokenization():
++    choice = [{"message": {"content": "same", "reasoning_content": "thought"}, "finish_reason": "stop"}]
++    a = {"name": "a", "request_sha256": "abc", "reply": {"token_ids": [1, 2], "choices": choice}}
++    assert reply_check.compare(a, dict(a))
++    assert not reply_check.compare(a, {**a, "reply": {"token_ids": [12], "choices": choice}})
++    assert not reply_check.compare(a, {**a, "request_sha256": "different"})
++
++
++def test_gate_requires_token_ids_and_explicit_seed():
++    with pytest.raises(ValueError, match="token_ids"):
++        reply_check.reply_bits({"choices": []})
++    with pytest.raises(ValueError, match="seed"):
++        reply_check.checked_request({"name": "a", "body": {}})
++    body = dict(seed=7, temperature=1, top_k=0, top_p=0.95, min_p=0, return_token_ids=True)
++    assert reply_check.checked_request({"name": "a", "body": body}) == reply_check.canonical(body)
+diff --git a/tools/sampler_device_check.py b/tools/sampler_device_check.py
+new file mode 100644
+index 0000000..50b8940
+--- /dev/null
++++ b/tools/sampler_device_check.py
+@@ -0,0 +1,66 @@
++"""Operator-only synthetic device gate; no model or service is started.
++
++CPU: python tools/sampler_device_check.py --device cpu
++GPU window: torchrun --standalone --nproc-per-node=4 tools/sampler_device_check.py --device cuda --distributed
++"""
++
++import argparse
++import os
++
++import torch
++
++from tensorfold.cuda import gpu_sample_unbounded as gpu
++from tensorfold.cuda import sampling as host
++from tensorfold.engine.exact_sampling import Sampling
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--device", required=True)
++    parser.add_argument("--distributed", action="store_true")
++    parser.add_argument("--trials", type=int, default=32)
++    args = parser.parse_args()
++    rank, world = 0, 1
++    device = torch.device(args.device)
++    gather = host.one_rank
++    if args.distributed:
++        import torch.distributed as dist
++        rank = int(os.environ["RANK"])
++        if device.type == "cuda":
++            device = torch.device("cuda", int(os.environ["LOCAL_RANK"]))
++            torch.cuda.set_device(device)
++        dist.init_process_group("nccl" if device.type == "cuda" else "gloo")
++        world = dist.get_world_size()
++        def gather(words):
++            got = torch.empty(world * words.numel(), dtype=words.dtype, device=device)
++            dist.all_gather_into_tensor(got, words.contiguous())
++            return got.view(world, -1)
++    os.environ["TENSORFOLD_NUCLEUS_UNION"] = "1"
++    gpu.reset()
++    for kind in ("full", "nucleus"):
++        switch = "TENSORFOLD_GPU_SAMPLE_" + kind.upper()
++        os.environ[switch] = "1"
++        assert gpu.enabled(kind, device, gather), f"{kind} self-check failed"
++        for trial in range(args.trials):
++            g = torch.Generator().manual_seed(731 + trial)
++            x = (torch.randn(8, 4096 * world, generator=g) * 3).bfloat16()
++            x[::3] = x[::3].round()
++            x[1, :-1] = -torch.inf
++            x = x[:, rank*4096:(rank+1)*4096].to(device)
++            s = Sampling(2**63 + trial, [1e-7, 0.3, 1.0, 2.0][trial % 4], 0,
++                         1.0 if kind == "full" else [0.5, 0.95, 0.99][trial % 3],
++                         0.0 if kind == "full" else [0.0, 0.05][trial % 2])
++            positions = list(range(1700 + 17*trial, 1708 + 17*trial))
++            os.environ[switch] = "0"
++            expected = host.nucleus_rows(x, positions, s, offset=rank*4096, gather=gather)
++            os.environ[switch] = "1"
++            actual = host.nucleus_rows(x, positions, s, offset=rank*4096, gather=gather)
++            assert actual == expected, (kind, trial, rank, actual, expected)
++        if rank == 0:
++            print(f"{kind}: {args.trials * 8} rows equal to device-generated release host draws on {world} ranks")
++    if args.distributed:
++        dist.destroy_process_group()
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tools/sampler_reply_check.py b/tools/sampler_reply_check.py
+new file mode 100644
+index 0000000..113c506
+--- /dev/null
++++ b/tools/sampler_reply_check.py
+@@ -0,0 +1,80 @@
++"""Record or compare seeded real-model replies using a frozen JSONL request corpus.
++
++Each corpus line: {"name": "case", "body": {OpenAI chat request}}. Require explicit
++seed/temperature/top_k/top_p/min_p, stream=false and return_token_ids=true. Outputs
++are exclusively created; existing evidence is never overwritten. No service is started.
++"""
++
++import argparse
++from concurrent.futures import ThreadPoolExecutor
++import hashlib
++import json
++from pathlib import Path
++import time
++import urllib.request
++
++
++def canonical(value):
++    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
++
++
++def checked_request(case):
++    body = case["body"]
++    for key in ("seed", "temperature", "top_k", "top_p", "min_p"):
++        if key not in body:
++            raise ValueError(f"{case['name']}: explicit {key} required")
++    if body.get("stream", False) or body.get("return_token_ids") is not True:
++        raise ValueError("stream=false and return_token_ids=true required")
++    return canonical(body)
++
++
++def reply_bits(response):
++    ids = response.get("tensorfold", {}).get("token_ids")
++    if not isinstance(ids, list) or not ids or any(type(x) is not int for x in ids):
++        raise ValueError("response must include nonempty tensorfold.token_ids")
++    choices = [{key: choice[key] for key in ("index", "message", "text", "finish_reason") if key in choice}
++               for choice in response["choices"]]
++    return {"token_ids": ids, "choices": choices}
++
++
++def compare(actual, expected):
++    return (actual["name"] == expected["name"] and actual["request_sha256"] == expected["request_sha256"]
++            and actual["reply"] == expected["reply"])
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--base-url", required=True)
++    parser.add_argument("--requests", type=Path, required=True)
++    parser.add_argument("--output", type=Path, required=True)
++    parser.add_argument("--reference", type=Path)
++    parser.add_argument("--concurrency", type=int, default=1)
++    args = parser.parse_args()
++    cases = [json.loads(line) for line in args.requests.read_text().splitlines() if line.strip()]
++    bodies = [checked_request(case) for case in cases]
++    expected = [json.loads(line) for line in args.reference.read_text().splitlines()] if args.reference else None
++    if expected is not None and len(expected) != len(cases):
++        raise ValueError("reference and corpus lengths differ")
++    def run(pair):
++        case, body = pair
++        request = urllib.request.Request(args.base_url.rstrip("/") + "/v1/chat/completions", body,
++                                         {"Content-Type": "application/json"})
++        start = time.monotonic()
++        with urllib.request.urlopen(request, timeout=1800) as reply:
++            response = json.load(reply)
++        return {"name": case["name"], "request_sha256": hashlib.sha256(body).hexdigest(),
++                "reply": reply_bits(response), "seconds": time.monotonic() - start}
++    bad = []
++    with args.output.open("x") as output, ThreadPoolExecutor(args.concurrency) as pool:
++        for i, result in enumerate(pool.map(run, zip(cases, bodies))):
++            output.write(json.dumps(result, ensure_ascii=False) + "\n")
++            output.flush()
++            if expected is not None and not compare(result, expected[i]):
++                bad.append(result["name"])
++    print(f"{len(cases)} replies {'compared' if expected is not None else 'recorded'}; {len(bad)} mismatches")
++    if bad:
++        raise SystemExit("mismatched cases: " + ", ".join(bad))
++
++
++if __name__ == "__main__":
++    main()

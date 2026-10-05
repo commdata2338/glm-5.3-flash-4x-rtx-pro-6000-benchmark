@@ -1,0 +1,232 @@
+[tensorfold] EXL3 support is experimental: replies are exact, but the MLX checkpoint (Vontra/GLM-5.3-Flash-MLX-4bit-MTP) is tested more and runs faster (docs/recipes/glm-5.3-flash.md)
+[tensorfold] GLM-5.3-Flash runs on two NVIDIA GPUs with 128 GB each (two DGX Sparks): pull it on both and serve with --tp 2 on both (docs/recipes/glm-5.3-flash.md)
+[tensorfold] loading glm-5.3-flash: GLM-5.3-Flash (glm5_next) on CUDA, rank 0 of 4
+[tensorfold] paired sends and receives over a second NCCL communicator with NCCL_P2P_DISABLE=1 (TF_NCCL_EXCHANGE_ENV); all-gathers on the first
+[tensorfold] EXL3 routed experts (mcg, 4 bits): GLM's own kernels (TF_GLM_EXL3_PATH=auto)
+[tensorfold] CUDA rank 0 startup estimate 58.82 GiB within 86.40 GiB; native 1048576, allocated prompt/reply window 1048576, cache slots 1048592
+[tensorfold] launch table /cache/launch-table.json: 15 entries over 5 kernels for NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition (188 SMs, sm_120) (crc 4515275d)
+[tensorfold] building CUDA extension tensorfold_gpu_sample_v2 (first start after an install or update; later starts reuse it)
+[tensorfold] GPU sampling: on (checked against the host rule)
+[tensorfold] the checkpoint's MTP head is not loaded (TF_GLM_MTP=auto): DFlash2 drafts every request
+[tensorfold] CUDA extension tensorfold_glm_l2pf_v2 waits on the build lock /cache/torch_extensions/tensorfold_glm_l2pf_v2/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] L2 prefetch in decode windows (bulk, up to 8 MiB a site): a 45 sites 8.0 MiB, f 45 sites 8.0 MiB, o 45 sites 8.0 MiB
+[tensorfold] decode partials of windows of 8+ rows: two shots (each rank sums its rows' partials rank 0 first, then a bf16 all-gather; scatter on the send/receive communicator, gather by the engine), the same bits (TF_GLM_TWOSHOT_ROWS); checked bit for bit at start against the all-gather
+[tensorfold] TF_GLM_EXPERT_PROMPT_KERNEL=k12-p80: K12 prompt expert kernels (exact: the prompt kernels' bits)
+[tensorfold] CUDA extension tensorfold_glm_hc_v2a2 waits on the build lock /cache/torch_extensions/tensorfold_glm_hc_v2a2/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] decode fusion gates: on (checked bit for bit)
+[tensorfold] CUDA extension tensorfold_glm_kda_v2a3 waits on the build lock /cache/torch_extensions/tensorfold_glm_kda_v2a3/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] decode fusion kdaout: on (checked bit for bit)
+[tensorfold] decode fusion hc: on (checked bit for bit)
+[tensorfold] DSA fusion norms: on (checked bit for bit)
+[tensorfold] DSA fusion writes: on (checked bit for bit)
+[tensorfold] decode fusion router: on (checked bit for bit)
+[tensorfold] CUDA extension tensorfold_experts_v8 waits on the build lock /cache/torch_extensions/tensorfold_experts_v8/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] CUDA extension tensorfold_glm_exl3_v20a2 waits on the build lock /cache/torch_extensions/tensorfold_glm_exl3_v20a2/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] CUDA extension tensorfold_glm_moe_glue_v1 waits on the build lock /cache/torch_extensions/tensorfold_glm_moe_glue_v1/lock; if no other build is running, a killed build left it: stop this start, delete the lock and start again
+[tensorfold] MoE glue combine: on (checked bit for bit)
+[tensorfold] prompt chunks' hyper-connections: rows split between the ranks, exchanges by copy engines (CUDA IPC) on a second stream in 4 pieces, the next block's front on own rows meanwhile (chunks of 512+ rows)
+[tensorfold] prompt chunks' DSA token selection split between the ranks from position 16384
+[tensorfold] building CUDA extension tensorfold_ipc_v3 (first start after an install or update; later starts reuse it)
+[tensorfold] the index split's pools over CUDA IPC (copy engines, up to 2048 KiB a rank)
+[tensorfold] prompt chunks skip the DFlash2 context rows no later draft reads (outside every read point's sliding window), context updates queue without a host sync each
+[tensorfold] MoE glue (TF_GLM_MOE_GLUE): the shared expert on a second stream (prompt lanes: from the lane's glue on); prompt lanes' combine on that stream; a CUDA combine; the shared expert's gate/up with SwiGLU in one prompt kernel (tile 1); prompt lanes' routes split between the ranks (own rows on the exchange stream, the picks swapped with the rows) (kernels checked bit for bit at first use)
+[tensorfold] prompt lanes' swapped rows written straight into the peers' row buffers (TF_GLM_LANE_DIRECT)
+[tensorfold] TF_GLM_DRAFT_FAST=all: the fused DFlash2 block pass (attention in auto window pieces, block rows by stream count), auto16 rank sums, next round's pass launched at a round's end, one top-k and one GPU selector chain for every stream's draft, every rank on rank 0's drafts (drafts only propose: replies unchanged)
+[tensorfold] prompt chunks in two lanes interleaved block by block (each lane's exchange and glue beside the other lane's compute; lanes of 512+ rows); KDA recurrences on a stream of their own beside the projections and the other lane's MLP / MoE block (TF_GLM_KDA_OVERLAP)
+[tensorfold] verify windows up to 16 rows, CUDA graphs for 1, 2, 3, 4, 5, 6, 7, 8, 16 rows (TF_GLM_MAX_ROWS, TF_GLM_WIDE_GRAPHS); copies from the reply match 16 tokens (TF_GLM_COPY_REPLY_MATCH)
+[tensorfold] TF_GLM_KV=fp8: the DSA latent cache and the indexer's pooled keys as e4m3 rows with a power-of-two scale each (lossy; drafted replies still equal serial ones)
+[tensorfold] prompt chunks and kept prompt states on a 64-token grid (TF_GLM_PROMPT_GRID)
+[tensorfold] TF_GLM_KDA_CHUNKED=1: KDA prompt chunks in chunked (WY) form, 32-row sub-chunks (close to the serial kernel, not its bits; decode keeps the serial kernel)
+[tensorfold] building CUDA extension tensorfold_glm_kda_split (first start after an install or update; later starts reuse it)
+[tensorfold] TF_GLM_KDA_SPLIT: the KDA prompt recurrence on the whole GPU (pieces of 32 value columns, 512 threads a state block; prep one wave; passes of 2048 rows), kda_chunk.cu's bits
+[tensorfold] shared-prefix prompt states: kept where a prompt stops sharing another and at the end of its system block, when they add 256+ tokens (TF_GLM_SHARED_PREFIX)
+[tensorfold] TF_GLM_EXPERT_PROMPT_KERNEL=k12-p80: exl3.cu's prompt kernels (plans of 128 members, TF_GLM_EXL3_PASS; K12 takes 64)
+[tensorfold] drafter timings (ms, fastest of 7): {'v1': 7.53, 'v2': 8.22, 'v3': 9.34, 'v4': 10.3, 'v5': 11.02, 'v6': 11.52, 'v7': 12.02, 'v8': 12.13, 'block': 2.46, 'taps8': 0.81}
+[tensorfold] drafter costs (ms): verify 7.5 8.8 9.4 10.1 10.7 11.4 12.0 12.7; DFlash2 block 2.46 (+0.102 a tap row)
+[tensorfold] vision: image and video input, a 1.05 GiB tower with 0.75 GiB of workspace; at most 2048 tokens a picture, 16384 a clip (128 frames at 2 a second)
+[tensorfold] segment profile (TF_GLM_SEGPROF=4, kinds): the profiled windows' logits equal the plain ones bit for bit at widths [1, 2, 4, 8, 16, 32, 64, 128]; replay cost (fastest of 3) by width: 1: +1.24 ms (+17.0%, 744 events), 2: +1.26 ms (+15.0%, 744 events), 4: +1.27 ms (+12.0%, 744 events), 8: +1.24 ms (+9.5%, 744 events), 16: +1.15 ms (+7.1%, 744 events), 32: +1.24 ms (+5.7%, 744 events), 64: +1.20 ms (+3.3%, 744 events), 128: +0.97 ms (+1.7%, 744 events)
+[tensorfold] --parallel 40: up to 40 requests decode together, their caches in one pool of 5097472 tokens (each up to 1048576); DFlash2 drafts, prompt chunks of 2048 rows while others decode (TF_GLM_FILL_ROWS, TF_GLM_FILL_SHARE 0.5); waiting prompts share prompt chunks (TF_GLM_MULTI_PREFILL); sampler packed, depth policy, async messages on, lone stream on the one-stream graphs off
+[tensorfold] --parallel 40: priority lanes realtime > interactive > normal > background (default normal): of 40 slots 1 kept for realtime and 1 more for interactive, starve 2000 ms, round gap 1000 ms, short chunk 256 rows, shares up 1 / down 0.25, admission age 10 s, at most 2 yields a request, tiers hold 900 s, realtime head 32 tokens, chunks of later classes at most 2048 rows while realtime requests arrive
+[tensorfold] serving glm-5.3-flash at http://127.0.0.1:8021/v1 on CUDA, rank 0 of 4 (sampling: temperature 1.0, top_p 0.95; drafts: on; prompts: bf16 activations; context: 1048576; loaded in 377.9s)
+[tensorfold] 127.0.0.1 "GET /v1/models HTTP/1.1" 200 -
+[tensorfold] done req-6d11265fb73b prompt=11 cached=0 thinking=False tokens=2 sha=46670d94e046 finish=stop tok/s=13.7 ttft=0.67s prefill=0.67s rounds=1 accepted=0/1
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] building CUDA extension tensorfold_glm_dsa_ws_v1 (first start after an install or update; later starts reuse it)
+[tensorfold] fast top-512 pools: on (checked byte for byte)
+[tensorfold] fast DSA sparse attention (warp roles, CUDA): on (checked bit for bit)
+[tensorfold] done req-ef268cba9d6b prompt=56397 cached=0 thinking=True tokens=16 sha=a78c85eacc59 finish=length tok/s=152.9 ttft=33.79s prefill=33.78s rounds=6 accepted=9/14
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 9.9 rows a round, 744 events a forward: ms a round: verify GPU 19.92 = experts 5.90 (29.6%) + shared 0.67 (3.4%) + dsa 5.37 (27.0%) + kda 0.59 (2.9%) + dense 1.90 (9.5%) + head 0.14 (0.7%) + exchange 3.62 (18.2%) + glue 1.73 (8.7%); sampler span 0.35, commit span 0.28
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 15.2 rows a round, 744 events a forward: ms a round: verify GPU 23.15 = experts 7.92 (34.2%) + shared 0.67 (2.9%) + dsa 5.78 (25.0%) + kda 0.67 (2.9%) + dense 1.97 (8.5%) + head 0.15 (0.6%) + exchange 4.24 (18.3%) + glue 1.74 (7.5%); sampler span 0.41, commit span 0.32
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 17.5 rows a round, 744 events a forward: ms a round: verify GPU 24.53 = experts 8.80 (35.9%) + shared 0.70 (2.8%) + dsa 5.98 (24.4%) + kda 0.71 (2.9%) + dense 2.08 (8.5%) + head 0.15 (0.6%) + exchange 4.36 (17.8%) + glue 1.75 (7.2%); sampler span 0.39, commit span 0.29
+[tensorfold] done req-48a5bd6ad9a7 prompt=56397 cached=0 thinking=True tokens=2000 sha=a00b4efd5463 finish=length tok/s=119.9 ttft=32.59s prefill=8.82s rounds=492 accepted=1507/1872
+[tensorfold] done req-c863b753e0fc prompt=56398 cached=0 thinking=True tokens=2000 sha=682f8005e678 finish=length tok/s=81.1 ttft=26.21s prefill=12.91s rounds=577 accepted=1422/1890
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 12.2 rows a round, 744 events a forward: ms a round: verify GPU 21.38 = experts 6.86 (32.1%) + shared 0.66 (3.1%) + dsa 5.55 (26.0%) + kda 0.62 (2.9%) + dense 1.93 (9.0%) + head 0.14 (0.7%) + exchange 3.88 (18.1%) + glue 1.73 (8.1%); sampler span 0.35, commit span 0.31
+[tensorfold] done req-5db3508f43e6 prompt=56397 cached=0 thinking=True tokens=2000 sha=0d79a6b9f973 finish=length tok/s=55.9 ttft=17.19s prefill=11.02s rounds=698 accepted=1301/1795
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 5.5 rows a round, 744 events a forward: ms a round: verify GPU 16.61 = experts 3.98 (23.9%) + shared 0.66 (4.0%) + dsa 5.01 (30.2%) + kda 0.50 (3.0%) + dense 1.83 (11.0%) + head 0.14 (0.9%) + exchange 2.67 (16.1%) + glue 1.82 (10.9%); sampler span 0.19, commit span 0.20
+[tensorfold] done req-4474fdb881ac prompt=56397 cached=0 thinking=True tokens=2000 sha=ea0ae6adb288 finish=length tok/s=107.8 ttft=36.94s prefill=5.79s rounds=814 accepted=1185/1881
+[tensorfold] done req-0dd4fcbcf0f7 prompt=56397 cached=56320 thinking=True tokens=16 sha=2040c7ef7968 finish=length tok/s=188.6 ttft=0.11s prefill=0.09s rounds=5 accepted=10/12
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 16.3 rows a round, 744 events a forward: ms a round: verify GPU 22.77 = experts 7.07 (31.0%) + shared 1.63 (7.2%) + dsa 6.06 (26.6%) + kda 0.70 (3.1%) + dense 2.21 (9.7%) + head 0.16 (0.7%) + exchange 4.05 (17.8%) + glue 0.90 (3.9%); sampler span 0.44, commit span 0.31
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 27.3 rows a round, 744 events a forward: ms a round: verify GPU 30.33 = experts 11.37 (37.5%) + shared 1.72 (5.7%) + dsa 6.98 (23.0%) + kda 0.92 (3.0%) + dense 2.38 (7.8%) + head 0.16 (0.5%) + exchange 5.96 (19.6%) + glue 0.84 (2.8%); sampler span 0.66, commit span 0.38
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 31.2 rows a round, 744 events a forward: ms a round: verify GPU 32.93 = experts 12.16 (36.9%) + shared 3.87 (11.8%) + dsa 7.50 (22.8%) + kda 0.97 (2.9%) + dense 2.77 (8.4%) + head 0.18 (0.6%) + exchange 6.70 (20.4%) + glue -1.23 (-3.7%); sampler span 0.72, commit span 0.44
+[tensorfold] done req-44bdd6d877ae prompt=56397 cached=56320 thinking=True tokens=2000 sha=8613303c14c0 finish=length tok/s=107.2 ttft=0.94s prefill=0.52s rounds=523 accepted=1476/1990
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 29.1 rows a round, 744 events a forward: ms a round: verify GPU 31.42 = experts 11.71 (37.3%) + shared 2.67 (8.5%) + dsa 7.18 (22.8%) + kda 0.93 (2.9%) + dense 2.55 (8.1%) + head 0.17 (0.5%) + exchange 6.29 (20.0%) + glue -0.08 (-0.3%); sampler span 0.69, commit span 0.44
+[tensorfold] done req-eaf492cbf4e6 prompt=56398 cached=56320 thinking=True tokens=2000 sha=f88b652026c9 finish=length tok/s=94.4 ttft=0.94s prefill=0.52s rounds=601 accepted=1398/1775
+[tensorfold] done req-fc18961bba62 prompt=56397 cached=56320 thinking=True tokens=2000 sha=c26400185cc1 finish=length tok/s=92.2 ttft=0.59s prefill=0.52s rounds=618 accepted=1381/1860
+[tensorfold] done req-9b09b4e26b31 prompt=56397 cached=56320 thinking=True tokens=2000 sha=691d35dba138 finish=length tok/s=83.3 ttft=0.59s prefill=0.52s rounds=704 accepted=1295/1900
+[tensorfold] done req-a233a86a062a prompt=56398 cached=56320 thinking=True tokens=2000 sha=80236ee4e2bb finish=length tok/s=81.5 ttft=0.81s prefill=0.52s rounds=725 accepted=1274/1886
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 18.5 rows a round, 744 events a forward: ms a round: verify GPU 25.01 = experts 8.81 (35.2%) + shared 0.67 (2.7%) + dsa 6.05 (24.2%) + kda 0.75 (3.0%) + dense 2.08 (8.3%) + head 0.15 (0.6%) + exchange 4.77 (19.1%) + glue 1.73 (6.9%); sampler span 0.51, commit span 0.36
+[tensorfold] done req-3f1c3e8b2881 prompt=56397 cached=56320 thinking=True tokens=2000 sha=5ecdaf9f41f3 finish=length tok/s=79.7 ttft=0.58s prefill=0.52s rounds=749 accepted=1250/1739
+[tensorfold] done req-e753d9d60fef prompt=56397 cached=56320 thinking=True tokens=2000 sha=e3598df94825 finish=length tok/s=78.3 ttft=0.73s prefill=0.52s rounds=773 accepted=1226/1678
+[tensorfold] done req-bcfbbf3464ff prompt=56397 cached=56320 thinking=True tokens=2000 sha=0a269bc4a6ca finish=length tok/s=75.4 ttft=0.94s prefill=0.52s rounds=834 accepted=1165/1808
+[tensorfold] done req-1185d70c045a prompt=56397 cached=56320 thinking=True tokens=16 sha=2a60df6b8fea finish=length tok/s=220.3 ttft=0.12s prefill=0.09s rounds=4 accepted=11/12
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 20.4 rows a round, 744 events a forward: ms a round: verify GPU 25.70 = experts 7.30 (28.4%) + shared 2.64 (10.3%) + dsa 7.25 (28.2%) + kda 0.76 (3.0%) + dense 2.63 (10.2%) + head 0.18 (0.7%) + exchange 4.90 (19.1%) + glue 0.04 (0.2%); sampler span 0.53, commit span 0.36
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 55.6 rows a round, 744 events a forward: ms a round: verify GPU 49.64 = experts 16.95 (34.2%) + shared 8.84 (17.8%) + dsa 12.56 (25.3%) + kda 1.42 (2.9%) + dense 4.28 (8.6%) + head 0.26 (0.5%) + exchange 11.00 (22.2%) + glue -5.67 (-11.4%); sampler span 1.25, commit span 0.64
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 59.5 rows a round, 744 events a forward: ms a round: verify GPU 53.22 = experts 18.04 (33.9%) + shared 8.63 (16.2%) + dsa 13.46 (25.3%) + kda 1.46 (2.7%) + dense 4.52 (8.5%) + head 0.28 (0.5%) + exchange 12.23 (23.0%) + glue -5.39 (-10.1%); sampler span 1.27, commit span 0.66
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 56.8 rows a round, 744 events a forward: ms a round: verify GPU 51.06 = experts 17.43 (34.1%) + shared 9.10 (17.8%) + dsa 12.85 (25.2%) + kda 1.42 (2.8%) + dense 4.17 (8.2%) + head 0.26 (0.5%) + exchange 11.76 (23.0%) + glue -5.93 (-11.6%); sampler span 1.26, commit span 0.65
+[tensorfold] done req-3505abcaab21 prompt=56397 cached=56320 thinking=True tokens=2000 sha=e3954beaa4bd finish=length tok/s=64.9 ttft=0.77s prefill=0.64s rounds=537 accepted=1462/1948
+[tensorfold] done req-6ce283d2dbc5 prompt=56397 cached=56320 thinking=True tokens=2000 sha=86da4dc6e4c3 finish=length tok/s=58.2 ttft=0.80s prefill=0.64s rounds=604 accepted=1395/1997
+[tensorfold] done req-94c3a9e0ac24 prompt=56398 cached=56320 thinking=True tokens=2000 sha=b46039398ca3 finish=length tok/s=53.2 ttft=1.01s prefill=0.64s rounds=666 accepted=1333/1791
+[tensorfold] done req-d1e651af0da2 prompt=56397 cached=56320 thinking=True tokens=2000 sha=ca85fbfa80d2 finish=length tok/s=52.3 ttft=1.57s prefill=0.64s rounds=679 accepted=1320/1848
+[tensorfold] done req-dc21ea54fd25 prompt=56397 cached=56320 thinking=True tokens=2000 sha=22757c9b581b finish=length tok/s=52.0 ttft=1.09s prefill=0.64s rounds=684 accepted=1315/1761
+[tensorfold] done req-11e0a3c702dd prompt=56397 cached=56320 thinking=True tokens=2000 sha=f9113e6a0cec finish=length tok/s=51.9 ttft=1.56s prefill=0.64s rounds=687 accepted=1312/1869
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 50.1 rows a round, 744 events a forward: ms a round: verify GPU 46.58 = experts 16.03 (34.4%) + shared 9.52 (20.4%) + dsa 11.38 (24.4%) + kda 1.33 (2.9%) + dense 3.92 (8.4%) + head 0.25 (0.5%) + exchange 10.67 (22.9%) + glue -6.52 (-14.0%); sampler span 1.15, commit span 0.63
+[tensorfold] done req-4e7f0ee7ab86 prompt=56397 cached=56320 thinking=True tokens=2000 sha=904c2feb4b54 finish=length tok/s=51.4 ttft=1.56s prefill=0.64s rounds=696 accepted=1303/1799
+[tensorfold] done req-abb1e0b46f07 prompt=56398 cached=56320 thinking=True tokens=2000 sha=da66ca324ea2 finish=length tok/s=51.2 ttft=0.78s prefill=0.64s rounds=700 accepted=1299/1899
+[tensorfold] done req-92f689c19a29 prompt=56397 cached=56320 thinking=True tokens=2000 sha=6f5cc1e3c275 finish=length tok/s=49.1 ttft=1.00s prefill=0.64s rounds=750 accepted=1249/1796
+[tensorfold] done req-7d50036ed2d7 prompt=56398 cached=56320 thinking=True tokens=2000 sha=ade26d88c8e9 finish=length tok/s=48.8 ttft=1.10s prefill=0.64s rounds=757 accepted=1242/1783
+[tensorfold] done req-bee4eb27e312 prompt=56398 cached=56320 thinking=True tokens=2000 sha=7e38bbba45dd finish=length tok/s=48.6 ttft=1.46s prefill=0.64s rounds=761 accepted=1238/1779
+[tensorfold] done req-196f1c2a35e1 prompt=56398 cached=56320 thinking=True tokens=2000 sha=1aae416a3d7e finish=length tok/s=48.4 ttft=1.67s prefill=0.64s rounds=769 accepted=1230/1710
+[tensorfold] done req-a28895fba32a prompt=56397 cached=56320 thinking=True tokens=2000 sha=918295d8b094 finish=length tok/s=47.9 ttft=1.48s prefill=0.64s rounds=785 accepted=1214/1744
+[tensorfold] done req-de6ed2d64c37 prompt=56397 cached=56320 thinking=True tokens=2000 sha=910c93547d6c finish=length tok/s=47.2 ttft=1.83s prefill=0.64s rounds=814 accepted=1185/1744
+[tensorfold] done req-d13c125b4459 prompt=56397 cached=56320 thinking=True tokens=2000 sha=d12340006cb6 finish=length tok/s=47.1 ttft=1.68s prefill=0.64s rounds=821 accepted=1178/1861
+[tensorfold] done req-8eece37fde8b prompt=56398 cached=56320 thinking=True tokens=2000 sha=9d4daaf24076 finish=length tok/s=46.8 ttft=1.84s prefill=0.64s rounds=835 accepted=1164/1843
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /tokenize HTTP/1.1" 200 -
+[tensorfold] done req-ecdb0593fb52 prompt=1035 cached=0 thinking=False tokens=16 sha=2ce622417512 finish=length tok/s=198.3 ttft=0.38s prefill=0.35s rounds=6 accepted=9/16
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 16.7 rows a round, 744 events a forward: ms a round: verify GPU 23.46 = experts 7.77 (33.1%) + shared 1.43 (6.1%) + dsa 5.66 (24.1%) + kda 0.70 (3.0%) + dense 2.15 (9.2%) + head 0.16 (0.7%) + exchange 4.58 (19.5%) + glue 1.01 (4.3%); sampler span 0.47, commit span 0.31
+[tensorfold] done req-7addc76e0474 prompt=1036 cached=0 thinking=False tokens=400 sha=d45bc7dabd3a finish=length tok/s=300.6 ttft=0.35s prefill=0.34s rounds=88 accepted=311/533
+[tensorfold] done req-3aef1ea24dc3 prompt=1035 cached=960 thinking=False tokens=16 sha=86c77227e7cd finish=length tok/s=280.5 ttft=0.09s prefill=0.08s rounds=4 accepted=11/14
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 15.8 rows a round, 744 events a forward: ms a round: verify GPU 19.04 = experts 7.36 (38.6%) + shared 1.01 (5.3%) + dsa 2.00 (10.5%) + kda 0.70 (3.7%) + dense 2.05 (10.7%) + head 0.15 (0.8%) + exchange 4.38 (23.0%) + glue 1.39 (7.3%); sampler span 0.37, commit span 0.30
+[tensorfold] done req-d8cbbca0257d prompt=1035 cached=960 thinking=False tokens=400 sha=3c1bee991ac3 finish=length tok/s=104.2 ttft=0.73s prefill=0.72s rounds=137 accepted=262/340
+[tensorfold] done req-d8c82863441e prompt=1035 cached=960 thinking=False tokens=400 sha=04b02d2bab17 finish=length tok/s=102.3 ttft=0.74s prefill=0.72s rounds=140 accepted=259/345
+[tensorfold] done req-c8852e769a26 prompt=1035 cached=960 thinking=False tokens=400 sha=86c57673b313 finish=length tok/s=96.0 ttft=0.73s prefill=0.72s rounds=150 accepted=249/345
+[tensorfold] done req-e98c684f9bcc prompt=1035 cached=960 thinking=False tokens=400 sha=b15b5be1ad9b finish=length tok/s=94.9 ttft=0.74s prefill=0.72s rounds=152 accepted=247/363
+[tensorfold] done req-405954344a2e prompt=1035 cached=960 thinking=False tokens=400 sha=5dfcc73507ce finish=length tok/s=94.3 ttft=0.74s prefill=0.72s rounds=153 accepted=246/308
+[tensorfold] done req-36ade9e2ea7d prompt=1036 cached=960 thinking=False tokens=400 sha=82b4d6adfe54 finish=length tok/s=94.3 ttft=0.73s prefill=0.72s rounds=153 accepted=246/347
+[tensorfold] done req-a658f0c2fe72 prompt=1036 cached=960 thinking=False tokens=400 sha=5d60508d4358 finish=length tok/s=94.0 ttft=0.74s prefill=0.72s rounds=154 accepted=245/359
+[tensorfold] done req-204037210c90 prompt=1035 cached=960 thinking=False tokens=400 sha=b5930c3496e2 finish=length tok/s=93.4 ttft=0.73s prefill=0.72s rounds=156 accepted=243/349
+[tensorfold] done req-0998823d9851 prompt=1035 cached=960 thinking=False tokens=16 sha=86c77227e7cd finish=length tok/s=283.9 ttft=0.09s prefill=0.08s rounds=4 accepted=11/14
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 29.8 rows a round, 744 events a forward: ms a round: verify GPU 26.94 = experts 11.15 (41.4%) + shared 3.94 (14.6%) + dsa 2.60 (9.6%) + kda 0.97 (3.6%) + dense 2.82 (10.5%) + head 0.19 (0.7%) + exchange 6.65 (24.7%) + glue -1.37 (-5.1%); sampler span 0.68, commit span 0.40
+[tensorfold] done req-f92a6e1b29ed prompt=1035 cached=960 thinking=False tokens=400 sha=4cf58316fa76 finish=length tok/s=84.3 ttft=0.37s prefill=0.36s rounds=132 accepted=267/380
+[tensorfold] done req-4c6e99972ca4 prompt=1036 cached=960 thinking=False tokens=400 sha=cb6f53f8756f finish=length tok/s=75.9 ttft=0.39s prefill=0.36s rounds=147 accepted=252/357
+[tensorfold] done req-5b1581d4fbd1 prompt=1036 cached=960 thinking=False tokens=400 sha=1856fdc67d9f finish=length tok/s=75.1 ttft=0.37s prefill=0.36s rounds=149 accepted=250/327
+[tensorfold] done req-cd4edc493419 prompt=1035 cached=960 thinking=False tokens=400 sha=1977877d45de finish=length tok/s=74.2 ttft=0.38s prefill=0.36s rounds=151 accepted=248/344
+[tensorfold] done req-7e373a4ce05a prompt=1035 cached=960 thinking=False tokens=400 sha=cfc6f92257a5 finish=length tok/s=73.9 ttft=0.39s prefill=0.36s rounds=152 accepted=247/311
+[tensorfold] done req-3f84e3bee8ec prompt=1035 cached=960 thinking=False tokens=400 sha=e95124adb511 finish=length tok/s=73.9 ttft=0.39s prefill=0.36s rounds=152 accepted=247/345
+[tensorfold] done req-e948e5a8c251 prompt=1035 cached=960 thinking=False tokens=400 sha=2d386c1d3435 finish=length tok/s=72.4 ttft=0.38s prefill=0.36s rounds=157 accepted=242/337
+[tensorfold] done req-c2b8ae3f0239 prompt=1036 cached=960 thinking=False tokens=400 sha=70610a20c74c finish=length tok/s=71.3 ttft=0.39s prefill=0.36s rounds=161 accepted=238/342
+[tensorfold] done req-821c55b6e40d prompt=1035 cached=960 thinking=False tokens=400 sha=f09ca2584a18 finish=length tok/s=71.0 ttft=0.38s prefill=0.36s rounds=162 accepted=237/373
+[tensorfold] done req-2901bab675ce prompt=1036 cached=960 thinking=False tokens=400 sha=112217e89237 finish=length tok/s=70.4 ttft=0.37s prefill=0.36s rounds=165 accepted=234/360
+[tensorfold] done req-89b1f65eabca prompt=1035 cached=960 thinking=False tokens=400 sha=06026f3c7bcd finish=length tok/s=69.5 ttft=0.39s prefill=0.36s rounds=170 accepted=229/343
+[tensorfold] done req-2087f505945d prompt=1036 cached=960 thinking=False tokens=400 sha=a95d2ba7c859 finish=length tok/s=69.0 ttft=0.38s prefill=0.36s rounds=173 accepted=226/313
+[tensorfold] done req-8e43320bff78 prompt=1035 cached=960 thinking=False tokens=16 sha=86c77227e7cd finish=length tok/s=282.5 ttft=0.09s prefill=0.09s rounds=4 accepted=11/14
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+[tensorfold] segment profile, 40 rounds (1 in 4 batched rounds), 39.9 rows a round, 744 events a forward: ms a round: verify GPU 31.26 = experts 12.63 (40.4%) + shared 6.57 (21.0%) + dsa 3.03 (9.7%) + kda 1.15 (3.7%) + dense 3.38 (10.8%) + head 0.22 (0.7%) + exchange 8.05 (25.7%) + glue -3.77 (-12.1%); sampler span 0.84, commit span 0.48
+[tensorfold] done req-d21f3c6506d2 prompt=1035 cached=960 thinking=False tokens=400 sha=2be5717a8596 finish=length tok/s=73.7 ttft=0.42s prefill=0.41s rounds=128 accepted=271/363
+[tensorfold] done req-d0a0fe65276a prompt=1035 cached=960 thinking=False tokens=400 sha=a5cba31e5ae2 finish=length tok/s=69.5 ttft=0.44s prefill=0.41s rounds=136 accepted=263/359
+[tensorfold] done req-f5409b1d53c7 prompt=1035 cached=960 thinking=False tokens=400 sha=ae0e394da441 finish=length tok/s=68.5 ttft=0.42s prefill=0.41s rounds=138 accepted=261/342
+[tensorfold] done req-16231265e5da prompt=1035 cached=960 thinking=False tokens=400 sha=e6e658b8376d finish=length tok/s=66.6 ttft=0.44s prefill=0.41s rounds=142 accepted=257/342
+[tensorfold] done req-65af3be4ebe9 prompt=1035 cached=960 thinking=False tokens=400 sha=409efd0e903d finish=length tok/s=65.8 ttft=0.45s prefill=0.41s rounds=144 accepted=255/357
+[tensorfold] done req-e094551f4e87 prompt=1036 cached=960 thinking=False tokens=400 sha=26ed447e4e7b finish=length tok/s=61.8 ttft=0.45s prefill=0.41s rounds=155 accepted=244/331
+[tensorfold] done req-d0c5f3601846 prompt=1035 cached=960 thinking=False tokens=400 sha=56c7e00a1512 finish=length tok/s=61.8 ttft=0.42s prefill=0.41s rounds=155 accepted=244/339
+[tensorfold] done req-e72aa3a2a2a3 prompt=1036 cached=960 thinking=False tokens=400 sha=f4a53ec05e82 finish=length tok/s=61.7 ttft=0.43s prefill=0.41s rounds=155 accepted=244/360
+[tensorfold] done req-cbde5c6cecd2 prompt=1036 cached=960 thinking=False tokens=400 sha=d4257b1c25b3 finish=length tok/s=61.5 ttft=0.44s prefill=0.41s rounds=156 accepted=243/358
+[tensorfold] done req-926f006d5073 prompt=1036 cached=960 thinking=False tokens=400 sha=9b8069d68335 finish=length tok/s=60.7 ttft=0.42s prefill=0.41s rounds=159 accepted=240/363
+[tensorfold] done req-b41b5ca1338d prompt=1035 cached=960 thinking=False tokens=400 sha=8f6b6468c9e8 finish=length tok/s=60.4 ttft=0.45s prefill=0.41s rounds=160 accepted=239/355
+[tensorfold] done req-21d159582083 prompt=1035 cached=960 thinking=False tokens=400 sha=ee67f5cbc4e8 finish=length tok/s=59.8 ttft=0.45s prefill=0.41s rounds=163 accepted=236/324
+[tensorfold] done req-2fc7bd7028af prompt=1036 cached=960 thinking=False tokens=400 sha=55349553b7b3 finish=length tok/s=59.5 ttft=0.43s prefill=0.41s rounds=165 accepted=234/324
+[tensorfold] done req-f1490543ab51 prompt=1035 cached=960 thinking=False tokens=400 sha=f3ccd2668ac5 finish=length tok/s=59.3 ttft=0.43s prefill=0.41s rounds=166 accepted=233/358
+[tensorfold] done req-4bea4444c57e prompt=1036 cached=960 thinking=False tokens=400 sha=d8184819854c finish=length tok/s=59.3 ttft=0.43s prefill=0.41s rounds=166 accepted=233/334
+[tensorfold] done req-94260b0a8999 prompt=1035 cached=960 thinking=False tokens=400 sha=32e30242ec2a finish=length tok/s=59.1 ttft=0.42s prefill=0.41s rounds=168 accepted=231/332

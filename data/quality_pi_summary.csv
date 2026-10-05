@@ -1,0 +1,19 @@
+run,engine,configuration,data_set,tasks,base_tests_pass,all_tests_pass,base_tests_percent,base_tests_ci95_low,base_tests_ci95_high,all_tests_percent,all_tests_ci95_low,all_tests_ci95_high
+tensorfold,TensorFold,recipe 1.0.1,HumanEval+,164,162,152,98.8,95.7,99.7,92.7,87.6,95.8
+tensorfold,TensorFold,recipe 1.0.1,MBPP+,378,369,323,97.6,95.5,98.7,85.4,81.5,88.6
+tensorfold,TensorFold,recipe 1.0.1,both,542,531,475,98.0,96.4,98.9,87.6,84.6,90.1
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on",HumanEval+,164,162,152,98.8,95.7,99.7,92.7,87.6,95.8
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on",MBPP+,378,370,324,97.9,95.9,98.9,85.7,81.8,88.9
+tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on",both,542,532,476,98.2,96.6,99.0,87.8,84.8,90.3
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",HumanEval+,164,162,156,98.8,95.7,99.7,95.1,90.7,97.5
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",MBPP+,378,370,322,97.9,95.9,98.9,85.2,81.3,88.4
+vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",both,542,532,478,98.2,96.6,99.0,88.2,85.2,90.6
+vllm_links_on_8_run2,Jovian Judgement r24,"8 slots, GPU links on, stock template, second run (session 5)",HumanEval+,164,161,153,98.2,94.8,99.4,93.3,88.4,96.2
+vllm_links_on_8_run2,Jovian Judgement r24,"8 slots, GPU links on, stock template, second run (session 5)",MBPP+,378,369,322,97.6,95.5,98.7,85.2,81.3,88.4
+vllm_links_on_8_run2,Jovian Judgement r24,"8 slots, GPU links on, stock template, second run (session 5)",both,542,530,475,97.8,96.2,98.7,87.6,84.6,90.1
+jovian_r281_8,Jovian Judgement r28.1,"8 slots, GPU links on, stock template",HumanEval+,164,161,153,98.2,94.8,99.4,93.3,88.4,96.2
+jovian_r281_8,Jovian Judgement r28.1,"8 slots, GPU links on, stock template",MBPP+,378,368,316,97.4,95.2,98.6,83.6,79.5,87.0
+jovian_r281_8,Jovian Judgement r28.1,"8 slots, GPU links on, stock template",both,542,529,469,97.6,95.9,98.6,86.5,83.4,89.1
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce",HumanEval+,164,161,155,98.2,94.8,99.4,94.5,89.9,97.1
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce",MBPP+,378,369,324,97.6,95.5,98.7,85.7,81.8,88.9
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce",both,542,530,479,97.8,96.2,98.7,88.4,85.4,90.8

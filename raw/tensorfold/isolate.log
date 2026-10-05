@@ -1,0 +1,21 @@
+# 19:36:48 isolation probes, C=4, 400 tokens
+{"shared_context_tokens": 992}
+{"concurrency": 4, "context_tokens": 1035, "output_tokens": 400, "median_ttft_s": 0.157, "status": "measured", "shared_decode_s": 2.51, "aggregate_decode_tps": 543.6, "median_decode_tps": 130.0}
+{"shared_context_tokens": 992}
+{"concurrency": 4, "context_tokens": 1036, "output_tokens": 400, "median_ttft_s": 0.251, "status": "measured", "shared_decode_s": 36.3, "aggregate_decode_tps": 39.8, "median_decode_tps": 10.1}
+{"shared_context_tokens": 992}
+{"concurrency": 4, "context_tokens": 1042, "output_tokens": 400, "median_ttft_s": 0.167, "status": "measured", "shared_decode_s": 1.34, "aggregate_decode_tps": 873.9, "median_decode_tps": 222.4}
+{"shared_context_tokens": 992}
+{"concurrency": 4, "context_tokens": 1042, "output_tokens": 400, "median_ttft_s": 0.254, "status": "measured", "shared_decode_s": 23.92, "aggregate_decode_tps": 46.4, "median_decode_tps": 10.5}
+# E 1K temp 1 top_p 0.95 thinking-on
+{"shared_context_tokens": 992}
+{"concurrency": 4, "context_tokens": 1042, "output_tokens": 400, "median_ttft_s": 0.175, "status": "measured", "shared_decode_s": 3.14, "aggregate_decode_tps": 390.4, "median_decode_tps": 90.4}
+# E2 1K temp 1 top_p 0.99 thinking-on
+{"shared_context_tokens": 992}
+{"concurrency": 4, "context_tokens": 1042, "output_tokens": 400, "median_ttft_s": 0.173, "status": "measured", "shared_decode_s": 3.48, "aggregate_decode_tps": 406.1, "median_decode_tps": 103.5}
+# E3 1K temp 1 top_p 1.0 top_k 50 thinking-on
+{"shared_context_tokens": 992}
+{"concurrency": 4, "context_tokens": 1042, "output_tokens": 400, "median_ttft_s": 0.17, "status": "measured", "shared_decode_s": 2.35, "aggregate_decode_tps": 549.3, "median_decode_tps": 127.5}
+# E4 1K temp 1 only (server default top_p) thinking-on
+{"shared_context_tokens": 992}
+{"concurrency": 4, "context_tokens": 1042, "output_tokens": 400, "median_ttft_s": 0.166, "status": "measured", "shared_decode_s": 1.19, "aggregate_decode_tps": 791.7, "median_decode_tps": 157.7}

@@ -1,0 +1,6 @@
+{"label": "r24-8slot-live", "context_in": "user message", "step": "first request, 16 tokens", "shared_context_tokens": 56348, "seconds": 5.42, "prompt_tokens": 56386, "completion_tokens": 16, "cached_tokens": null}
+{"label": "r24-8slot-live", "context_in": "user message", "step": "the same request again", "shared_context_tokens": 56348, "seconds": 5.21, "prompt_tokens": 56386, "completion_tokens": 16, "cached_tokens": null}
+{"label": "r24-8slot-live", "context_in": "user message", "step": "same context, other question", "shared_context_tokens": 56348, "seconds": 0.47, "prompt_tokens": 56387, "completion_tokens": 16, "cached_tokens": null}
+{"label": "r24-8slot-live", "context_in": "user message", "step": "the same request, 300 tokens", "shared_context_tokens": 56348, "seconds": 1.54, "prompt_tokens": 56386, "completion_tokens": 300, "cached_tokens": null}
+{"label": "r24-8slot-live", "context_in": "user message", "step": "the same request again, after 300 tokens", "shared_context_tokens": 56348, "seconds": 0.45, "prompt_tokens": 56386, "completion_tokens": 16, "cached_tokens": null}
+{"label": "r24-8slot-live", "context_in": "user message", "step": "same context, third question", "shared_context_tokens": 56348, "seconds": 0.45, "prompt_tokens": 56386, "completion_tokens": 16, "cached_tokens": null}

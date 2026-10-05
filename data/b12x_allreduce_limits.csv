@@ -1,0 +1,6 @@
+setting,value
+algorithm_for_four_gpus,oneshot
+one_shot_max_bytes,86016
+fused_max_bytes,86016
+two_shot_bf16_max_bytes,786432
+dma_min_bytes,6291456

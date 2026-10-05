@@ -1,0 +1,34 @@
+[transformers] You are using a model of type `glm5_next` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+ok   thinking on  | one turn | {}
+ok   thinking on  | one turn | {'enable_thinking': True}
+ok   thinking on  | one turn | {'reasoning_effort': 'low'}
+ok   thinking on  | one turn | {'reasoning_effort': 'high'}
+ok   thinking on  | one turn | {'enable_thinking': True, 'reasoning_effort': 'max'}
+ok   thinking on  | one turn | {'thinking': False}
+ok   thinking off | one turn | tail 'p><|user|>Say hello.<|assistant|><think></think>'
+ok   thinking off | one turn | tail 'p><|user|>Say hello.<|assistant|><think></think>'
+ok   thinking on  | system + turn | {}
+ok   thinking on  | system + turn | {'enable_thinking': True}
+ok   thinking on  | system + turn | {'reasoning_effort': 'low'}
+ok   thinking on  | system + turn | {'reasoning_effort': 'high'}
+ok   thinking on  | system + turn | {'enable_thinking': True, 'reasoning_effort': 'max'}
+ok   thinking on  | system + turn | {'thinking': False}
+ok   thinking off | system + turn | tail 'e.<|user|>Say hello.<|assistant|><think></think>'
+ok   thinking off | system + turn | tail 'e.<|user|>Say hello.<|assistant|><think></think>'
+ok   thinking on  | multi-turn with reasoning | {}
+ok   thinking on  | multi-turn with reasoning | {'enable_thinking': True}
+ok   thinking on  | multi-turn with reasoning | {'reasoning_effort': 'low'}
+ok   thinking on  | multi-turn with reasoning | {'reasoning_effort': 'high'}
+ok   thinking on  | multi-turn with reasoning | {'enable_thinking': True, 'reasoning_effort': 'max'}
+ok   thinking on  | multi-turn with reasoning | {'thinking': False}
+ok   thinking off | multi-turn with reasoning | tail 'nk>4<|user|>And 3+3?<|assistant|><think></think>'
+ok   thinking off | multi-turn with reasoning | tail 'nk>4<|user|>And 3+3?<|assistant|><think></think>'
+ok   thinking on  | tool call history | {}
+ok   thinking on  | tool call history | {'enable_thinking': True}
+ok   thinking on  | tool call history | {'reasoning_effort': 'low'}
+ok   thinking on  | tool call history | {'reasoning_effort': 'high'}
+ok   thinking on  | tool call history | {'enable_thinking': True, 'reasoning_effort': 'max'}
+ok   thinking on  | tool call history | {'thinking': False}
+ok   thinking off | tool call history | tail '|user|>Summarise it.<|assistant|><think></think>'
+ok   thinking off | tool call history | tail '|user|>Summarise it.<|assistant|><think></think>'
+FAILURES 0

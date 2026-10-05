@@ -1,0 +1,21 @@
+{
+ "torch": "2.13.0a0+9186a08b2c.nv26.07",
+ "buffer_mib": 256,
+ "repeats": 8,
+ "pairs": [
+  {
+   "src": 0,
+   "dst": 1,
+   "peer_access": true,
+   "direct_gib_per_s": 50.25,
+   "staged_gib_per_s": 26.73
+  },
+  {
+   "src": 0,
+   "dst": 2,
+   "peer_access": true,
+   "direct_gib_per_s": 50.33,
+   "staged_gib_per_s": 26.72
+  }
+ ]
+}

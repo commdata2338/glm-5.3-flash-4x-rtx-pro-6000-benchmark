@@ -1,0 +1,2 @@
+{"shared_context_tokens": 56348}
+{"concurrency": 4, "context_tokens": 56398, "output_tokens": 2000, "median_ttft_s": 29.327, "status": "measured", "shared_decode_s": 173.54, "aggregate_decode_tps": 39.8, "median_decode_tps": 10.0}

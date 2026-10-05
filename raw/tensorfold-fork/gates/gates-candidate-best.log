@@ -1,0 +1,31 @@
+=== gate ===
+gate code_t0 {"drafted": "defcaf8bbdb5", "serial": "defcaf8bbdb5", "same": true, "tokens": 384, "drafted_s": 1.43, "serial_s": 3.3, "rounds": 112}
+gate prose_t0 {"drafted": "4274992f89cf", "serial": "4274992f89cf", "same": true, "tokens": 384, "drafted_s": 2.06, "serial_s": 3.31, "rounds": 175}
+gate struct_t0 {"drafted": "09b617a9f934", "serial": "09b617a9f934", "same": true, "tokens": 384, "drafted_s": 1.12, "serial_s": 3.41, "rounds": 71}
+gate prose_sampled_s1234 {"drafted": "b007a53c3c28", "serial": "b007a53c3c28", "same": true, "tokens": 384, "drafted_s": 2.14, "serial_s": 3.42, "rounds": 184}
+gate code_sampled_s99 {"drafted": "0bcd70ff177a", "serial": "0bcd70ff177a", "same": true, "tokens": 384, "drafted_s": 1.4, "serial_s": 3.39, "rounds": 109}
+gate prose_topk20_s7 {"drafted": "d655f9fc87ea", "serial": "d655f9fc87ea", "same": true, "tokens": 384, "drafted_s": 1.93, "serial_s": 3.37, "rounds": 163}
+gate prose_nucleus_s5 {"drafted": "338bca3b3e58", "serial": "338bca3b3e58", "same": true, "tokens": 384, "drafted_s": 2.38, "serial_s": 4.03, "rounds": 177}
+gate think_low_s11 {"drafted": "3987739999c3", "serial": "3987739999c3", "same": true, "tokens": 48, "drafted_s": 0.21, "serial_s": 0.48, "rounds": 9}
+gate conc sampled 4 4/4 2/2
+gate conc greedy 4 4/4 2/2
+gate conc sampled 8 8/8 2/2
+gate conc greedy 8 8/8 2/2
+gate conc sampled 16 16/16 2/2
+gate conc greedy 16 16/16 2/2
+gate tool 0 {"sha": "e8035b15fc3a", "calls": [["get_weather", "{\"city\":\"Lisbon\",\"unit\":\"c\"}"]], "ok": true}
+gate tool 1 {"sha": "9cccdcaf97f1", "calls": [["lookup", "{\"topic\":\"population of Reykjavik\"}"]], "ok": true}
+gate tool 2 {"sha": "a5aa45bcd8ce", "calls": [["add_event", "{\"date\":\"2026-11-03\",\"time\":\"15:30\",\"title\":\"dentist\"}"]], "ok": true}
+gate tool 3 {"sha": "427c0c4efc04", "calls": [["get_weather", "{\"city\":\"Osaka\"}"]], "ok": true}
+gate tool 4 {"sha": "0fefa39a6461", "calls": [["lookup", "{\"topic\":\"who designed the Eddystone lighthouse\"}"]], "ok": true}
+gate image {"sha": "372ed94b3e1e", "text": "A red square and a blue circle.", "ok": true}
+GATE PASS []
+=== gatelong ===
+gatelong 8k_greedy {"sha": "c9cb633dc876", "prompt_tokens": 8043, "cached": 0, "s": 1.19, "text": "The last record id is 9574.\n\nThree words from it: estuary, lagoon, canyon."}
+gatelong 8k_seeded {"sha": "0d5f5caf776f", "prompt_tokens": 8043, "cached": 8000, "s": 0.25, "text": "The last record is **Record 9574**.\n\nThree words from it: *estuary*, *lagoon*, *"}
+gatelong 32k_greedy {"sha": "83341303b8f2", "prompt_tokens": 31996, "cached": 0, "s": 4.06, "text": "The last record id is 2067. Three words from it: zephyr, copper, anchor."}
+gatelong 32k_seeded {"sha": "9cc499711335", "prompt_tokens": 31996, "cached": 31936, "s": 0.23, "text": "The last record above is Record 2067. Three words from it: zephyr, copper, ancho"}
+gatelong 100k_greedy {"sha": "266200aaa5ea", "prompt_tokens": 99889, "cached": 0, "s": 12.39, "text": "The last record id is 9494. Three words from it: prairie, granite, meadow."}
+gatelong 100k_seeded {"sha": "06a1f54aceed", "prompt_tokens": 99889, "cached": 99840, "s": 0.33, "text": "**Record ID:** 9494\n\n**Three words from it:** prairie, granite, meadow"}
+GATELONG PASS []
+HARD PASS

@@ -1,0 +1,13 @@
+--- a/config.json
++++ b/config.json
+@@ -282,6 +282,10 @@
+       "model.language_model.layers.9.mlp.experts": {
+         "group_size": 16,
+         "quant_algo": "NVFP4"
++      },
++      "model.layers.45.mlp.experts": {
++        "group_size": 32,
++        "quant_algo": "MXFP8"
+       }
+     }
+   },

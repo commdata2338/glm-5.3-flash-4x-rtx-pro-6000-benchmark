@@ -1,0 +1,105 @@
+[I_PLATFORM] Linux x86_64, Docker access and NVIDIA runtime are ready.
+[I_GPU] Four GPUs have enough free memory and no compute workloads.
+[I_DISK] Enough disk space for missing weights, image and kernel cache.
+[I_HF_TOKEN] Optional Hugging Face token is set; its value will not be printed.
+Image is ready: tensorfold-glm53:1.0.0 (2ac85f7a683e18bb)
+Weights are ready: Mia-AiLab/GLM-5.3-Flash-EXL3-4bpw-TensorFold @ 78353f1f6eb2c96fa6c62de57b44345d1f497c38
+DFlash2 weights: CC BY-NC-ND 4.0, non-commercial. DRAFTER=mtp skips them.
+Weights are ready: incoai/GLM-5.3-Flash-DFlash2 @ bf582e4eacc1810f76656d1811693ff6c6737d2a
+[I_GPU] Four GPUs have enough free memory and no compute workloads.
+[I_P2P] CUDA peer access is available between all four GPUs.
+Compile CUDA kernels and run one-time launch-table autotune on the first selected GPU (GPUs must be idle).
+[autotune 00:12:09] glm_autotune 1 on NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition (188 SMs, sm_120, L2 128 MiB), torch 2.13.0a0+9186a08b2c.nv26.07
+[autotune 00:12:09] shapes (derived): q4 [(160, 4096), (1024, 4096), (2048, 128), (2048, 4096), (4096, 512), (4096, 1536), (4096, 2048), (4096, 3072), (4096, 4096), (6144, 4096), (6416, 4096)], f8 [(38720, 4096)], b16 [], exl3 {'D': 4096, 'NI': 512, 'E': 288, 'top_k': 8, 'limit': 10.0}, kda heads [16]
+[autotune 00:12:09] engine settings seen (the baselines follow them): {'TF_GLM_EXL3_LOADS': 'nc', 'TF_GLM_DENSE': 'fp8'}
+[autotune 00:12:09] --- exl3_dec
+[autotune 00:12:09] exl3_dec: D 4096, width 512, 288 experts, top 8; baseline (environment) gu {'ld': 1, 'wn': 1, 'fuse': 0, 'xrow': 1}, dn {'ld': 1, 'wn': 1, 'fuse': 1}
+[tensorfold] building CUDA extension tensorfold_experts_v8 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_glm_exl3_v20a2 (first start after an install or update; later starts reuse it)
+[autotune 00:13:27] exl3_dec: the reference equals the grouped kernel path bit for bit
+[autotune 00:13:28] exl3_dec gate/up 4096x512 rows 1-1: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 41.0 us -> {"fuse": 0, "ld": 2, "wn": 1, "xrow": 1} 39.0 us (+4.8%)
+[autotune 00:13:28] exl3_dec gate/up 4096x512 rows 2-2: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 55.3 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 55.3 us (+0.0%)
+[autotune 00:13:29] exl3_dec gate/up 4096x512 rows 3-4: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 98.4 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 98.4 us (+0.0%)
+[autotune 00:13:30] exl3_dec gate/up 4096x512 rows 5-8: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 161.9 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 161.9 us (+0.0%)
+[autotune 00:13:30] exl3_dec gate/up 4096x512 rows 9-16: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 278.0 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 278.0 us (+0.0%)
+[autotune 00:13:32] exl3_dec gate/up 4096x512 rows 17-32: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 477.1 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 477.1 us (+0.0%)
+[autotune 00:13:33] exl3_dec gate/up 4096x512 rows 33-63: 36/36 exact, baseline {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 707.5 us -> {"fuse": 0, "ld": 1, "wn": 1, "xrow": 1} 707.5 us (+0.0%)
+[autotune 00:13:34] exl3_dec down 512x4096 rows 1-1: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 41.0 us -> {"fuse": 1, "ld": 1, "wn": 1} 41.0 us (+0.0%)
+[autotune 00:13:34] exl3_dec down 512x4096 rows 2-2: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 55.4 us -> {"fuse": 1, "ld": 1, "wn": 1} 55.4 us (+0.0%)
+[autotune 00:13:34] exl3_dec down 512x4096 rows 3-4: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 100.4 us -> {"fuse": 1, "ld": 1, "wn": 1} 100.4 us (+0.0%)
+[autotune 00:13:35] exl3_dec down 512x4096 rows 5-8: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 162.2 us -> {"fuse": 1, "ld": 1, "wn": 1} 162.2 us (+0.0%)
+[autotune 00:13:35] exl3_dec down 512x4096 rows 9-16: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 279.5 us -> {"fuse": 1, "ld": 1, "wn": 1} 279.5 us (+0.0%)
+[autotune 00:13:36] exl3_dec down 512x4096 rows 17-32: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 461.2 us -> {"fuse": 1, "ld": 1, "wn": 1} 461.2 us (+0.0%)
+[autotune 00:13:36] exl3_dec down 512x4096 rows 33-63: 18/18 exact, baseline {"fuse": 1, "ld": 1, "wn": 1} 705.0 us -> {"fuse": 1, "ld": 1, "wn": 1} 705.0 us (+0.0%)
+[autotune 00:13:36] exl3_dec rows 1-1: whole routed experts 40.7 -> 38.9 us (+4.4%)
+[autotune 00:13:36] exl3_dec rows 2-2: whole routed experts 55.0 -> 55.0 us (+0.0%)
+[autotune 00:13:36] exl3_dec rows 3-4: whole routed experts 98.2 -> 98.0 us (+0.1%)
+[autotune 00:13:36] exl3_dec rows 5-8: whole routed experts 161.5 -> 161.5 us (-0.0%)
+[autotune 00:13:37] exl3_dec rows 9-16: whole routed experts 280.5 -> 280.0 us (+0.2%)
+[autotune 00:13:37] exl3_dec rows 17-32: whole routed experts 462.9 -> 461.0 us (+0.4%)
+[autotune 00:13:37] exl3_dec rows 33-63: whole routed experts 637.4 -> 637.0 us (+0.1%)
+[autotune 00:13:37] exl3_dec: 87 s
+[autotune 00:13:37] --- kda_step
+[tensorfold] building CUDA extension tensorfold_glm_kda_v2a3 (first start after an install or update; later starts reuse it)
+[autotune 00:13:56] kda_step: 16 heads; the reference equals the fused chain bit for bit
+[autotune 00:13:56] kda_step 16 rows 1-1: 8/8 exact, baseline {"tr": 16, "warps": 4} 10.2 us -> {"tr": 16, "warps": 4} 10.2 us (+0.0%)
+[autotune 00:13:56] kda_step 16 rows 2-2: 8/8 exact, baseline {"tr": 16, "warps": 4} 10.2 us -> {"tr": 16, "warps": 4} 10.2 us (+0.0%)
+[autotune 00:13:56] kda_step 16 rows 3-4: 8/8 exact, baseline {"tr": 16, "warps": 4} 10.5 us -> {"tr": 16, "warps": 4} 10.5 us (+0.0%)
+[autotune 00:13:56] kda_step 16 rows 5-8: 8/8 exact, baseline {"tr": 16, "warps": 4} 12.3 us -> {"tr": 16, "warps": 4} 12.3 us (+0.0%)
+[autotune 00:13:56] kda_step 16 rows 9-16: 8/8 exact, baseline {"tr": 16, "warps": 4} 16.3 us -> {"tr": 16, "warps": 4} 16.3 us (+0.0%)
+[autotune 00:13:56] kda_step 16 rows 17-32: 8/8 exact, baseline {"tr": 16, "warps": 4} 24.7 us -> {"tr": 16, "warps": 4} 24.7 us (+0.0%)
+[autotune 00:13:57] kda_step 16 rows 33-63: 8/8 exact, baseline {"tr": 16, "warps": 4} 41.0 us -> {"tr": 16, "warps": 4} 41.0 us (+0.0%)
+[autotune 00:13:57] kda_step: 20 s
+[autotune 00:13:57] --- q4_prefill
+[tensorfold] building CUDA extension tensorfold_qmm_v5m2 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qmm_prefill2_v2 (first start after an install or update; later starts reuse it)
+[autotune 00:14:59] q4_prefill 160x4096 rows 1-256: 36/36 exact, baseline 0 104.0 us -> 50 22.8 us (+78.1%)
+[autotune 00:14:59] q4_prefill 160x4096 rows 257-512: 36/36 exact, baseline 0 104.4 us -> 50 24.1 us (+76.9%)
+[autotune 00:15:00] q4_prefill 160x4096 rows 513-2048: 36/36 exact, baseline 0 104.4 us -> 50 36.8 us (+64.8%)
+[autotune 00:15:00] q4_prefill 160x4096 rows 2049-4096: 36/36 exact, baseline 0 104.8 us -> 48 55.3 us (+47.2%)
+[autotune 00:15:01] q4_prefill 1024x4096 rows 1-256: 36/36 exact, baseline 0 104.0 us -> 50 32.4 us (+68.9%)
+[autotune 00:15:02] q4_prefill 1024x4096 rows 257-512: 36/36 exact, baseline 0 104.4 us -> 50 36.9 us (+64.7%)
+[autotune 00:15:02] q4_prefill 1024x4096 rows 513-2048: 36/36 exact, baseline 0 114.7 us -> 34 112.2 us (+2.1%)
+[autotune 00:15:03] q4_prefill 1024x4096 rows 2049-4096: 36/36 exact, baseline 0 223.4 us -> 34 186.0 us (+16.8%)
+[autotune 00:15:03] q4_prefill 2048x128 rows 1-256: 36/36 exact, baseline 0 10.2 us -> 54 6.2 us (+39.8%)
+[autotune 00:15:04] q4_prefill 2048x128 rows 257-512: 36/36 exact, baseline 0 10.2 us -> 48 7.8 us (+24.1%)
+[autotune 00:15:04] q4_prefill 2048x128 rows 513-2048: 36/36 exact, baseline 0 18.4 us -> 1 16.3 us (+11.6%)
+[autotune 00:15:05] q4_prefill 2048x128 rows 2049-4096: 36/36 exact, baseline 0 26.6 us -> 3 24.5 us (+7.6%)
+[autotune 00:15:05] q4_prefill 2048x4096 rows 1-256: 36/36 exact, baseline 0 104.7 us -> 50 36.9 us (+64.8%)
+[autotune 00:15:06] q4_prefill 2048x4096 rows 257-512: 36/36 exact, baseline 0 106.5 us -> 3 63.5 us (+40.4%)
+[autotune 00:15:07] q4_prefill 2048x4096 rows 513-2048: 36/36 exact, baseline 0 224.9 us -> 39 188.6 us (+16.1%)
+[autotune 00:15:08] q4_prefill 2048x4096 rows 2049-4096: 36/36 exact, baseline 0 343.6 us -> 9 311.0 us (+9.5%)
+[autotune 00:15:08] q4_prefill 4096x512 rows 1-256: 36/36 exact, baseline 0 20.1 us -> 48 12.3 us (+38.9%)
+[autotune 00:15:09] q4_prefill 4096x512 rows 257-512: 36/36 exact, baseline 0 20.5 us -> 48 18.4 us (+10.2%)
+[autotune 00:15:09] q4_prefill 4096x512 rows 513-2048: 36/36 exact, baseline 0 59.7 us -> 9 49.4 us (+17.2%)
+[autotune 00:15:10] q4_prefill 4096x512 rows 2049-4096: 36/36 exact, baseline 0 110.2 us -> 34 94.2 us (+14.5%)
+[autotune 00:15:10] q4_prefill 4096x1536 rows 1-256: 36/36 exact, baseline 0 44.6 us -> 48 22.6 us (+49.4%)
+[autotune 00:15:11] q4_prefill 4096x1536 rows 257-512: 36/36 exact, baseline 0 47.4 us -> 48 43.3 us (+8.6%)
+[autotune 00:15:12] q4_prefill 4096x1536 rows 513-2048: 36/36 exact, baseline 0 143.4 us -> 33 130.4 us (+9.0%)
+[autotune 00:15:12] q4_prefill 4096x1536 rows 2049-4096: 36/36 exact, baseline 0 274.7 us -> 34 229.7 us (+16.4%)
+[autotune 00:15:13] q4_prefill 4096x2048 rows 1-256: 36/36 exact, baseline 0 56.9 us -> 48 28.6 us (+49.7%)
+[autotune 00:15:14] q4_prefill 4096x2048 rows 257-512: 36/36 exact, baseline 0 61.7 us -> 34 59.7 us (+3.3%)
+[autotune 00:15:14] q4_prefill 4096x2048 rows 513-2048: 36/36 exact, baseline 0 185.9 us -> 33 167.5 us (+9.9%)
+[autotune 00:15:15] q4_prefill 4096x2048 rows 2049-4096: 36/36 exact, baseline 0 356.4 us -> 34 300.7 us (+15.6%)
+[autotune 00:15:16] q4_prefill 4096x3072 rows 1-256: 36/36 exact, baseline 0 82.3 us -> 48 45.3 us (+44.9%)
+[autotune 00:15:17] q4_prefill 4096x3072 rows 257-512: 36/36 exact, baseline 0 88.4 us -> 0 88.4 us (+0.0%)
+[autotune 00:15:18] q4_prefill 4096x3072 rows 513-2048: 36/36 exact, baseline 0 266.5 us -> 33 239.8 us (+10.0%)
+[autotune 00:15:19] q4_prefill 4096x3072 rows 2049-4096: 36/36 exact, baseline 0 520.7 us -> 34 441.2 us (+15.3%)
+[autotune 00:15:20] q4_prefill 4096x4096 rows 1-256: 36/36 exact, baseline 0 106.5 us -> 3 65.6 us (+38.4%)
+[autotune 00:15:20] q4_prefill 4096x4096 rows 257-512: 36/36 exact, baseline 0 116.3 us -> 0 116.3 us (+0.0%)
+[autotune 00:15:21] q4_prefill 4096x4096 rows 513-2048: 36/36 exact, baseline 0 347.7 us -> 33 312.9 us (+10.0%)
+[autotune 00:15:23] q4_prefill 4096x4096 rows 2049-4096: 36/36 exact, baseline 0 692.1 us -> 34 604.5 us (+12.7%)
+[autotune 00:15:24] q4_prefill 6144x4096 rows 1-256: 36/36 exact, baseline 0 112.4 us -> 34 109.1 us (+2.9%)
+[autotune 00:15:25] q4_prefill 6144x4096 rows 257-512: 36/36 exact, baseline 0 225.6 us -> 55 162.1 us (+28.1%)
+[autotune 00:15:26] q4_prefill 6144x4096 rows 513-2048: 36/36 exact, baseline 0 568.9 us -> 47 432.9 us (+23.9%)
+[autotune 00:15:28] q4_prefill 6144x4096 rows 2049-4096: 36/36 exact, baseline 0 1059.6 us -> 47 892.8 us (+15.7%)
+[autotune 00:15:30] q4_prefill 6416x4096 rows 1-256: 36/36 exact, baseline 0 113.0 us -> 0 113.0 us (+0.0%)
+[autotune 00:15:30] q4_prefill 6416x4096 rows 257-512: 36/36 exact, baseline 0 226.9 us -> 55 174.4 us (+23.1%)
+[autotune 00:15:32] q4_prefill 6416x4096 rows 513-2048: 36/36 exact, baseline 0 570.9 us -> 34 464.4 us (+18.7%)
+[autotune 00:15:34] q4_prefill 6416x4096 rows 2049-4096: 36/36 exact, baseline 0 1080.8 us -> 47 976.1 us (+9.7%)
+[autotune 00:15:34] q4_prefill: 98 s
+[autotune 00:15:34] --- exl3_prompt
+[autotune 00:15:35] exl3_prompt all rows 1000-4096: 6/6 exact, baseline {"passm": 64, "stages": 3} 3993.6 us -> {"passm": 128, "stages": 4} 3766.3 us (+5.7%)
+[autotune 00:15:35] exl3_prompt: 1 s
+[autotune 00:15:35] wrote /cache/launch-table.json: 15 entries over 5 kernels in 206 s; start the engine with TF_GLM_TUNE=<that path inside the container>
+Prepared. Start the API with ./start.sh.

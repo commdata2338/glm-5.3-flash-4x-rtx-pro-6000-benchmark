@@ -1,0 +1,72 @@
+{
+ "ok": true,
+ "backend": "tensorfold",
+ "busy": false,
+ "requests_running": 0,
+ "requests_total": 1,
+ "prompt_tokens_total": 11,
+ "completion_tokens_total": 2,
+ "prefill_seconds_total": 0.0409,
+ "decode_seconds_total": 0.0118,
+ "cached_tokens_total": 0,
+ "rounds_total": 1,
+ "drafted_total": 1,
+ "accepted_total": 0,
+ "streams": {
+  "decoding": 0,
+  "prefilling": 0,
+  "max": 40,
+  "filling": 0,
+  "paused": 0
+ },
+ "pool_tokens": 5097472,
+ "pool_free_tokens": 5097472,
+ "kept_prompts": 0,
+ "multi_prefill": {
+  "chunks": 0,
+  "pieces": 0,
+  "rows": 0
+ },
+ "lanes": {
+  "realtime": {
+   "filling": 0,
+   "decoding": 0
+  },
+  "interactive": {
+   "filling": 0,
+   "decoding": 0
+  },
+  "normal": {
+   "filling": 0,
+   "decoding": 0
+  },
+  "background": {
+   "filling": 0,
+   "decoding": 0
+  }
+ },
+ "arbiter": {
+  "chunks": 0,
+  "rounds": 0,
+  "starved": 0,
+  "overdue": 0,
+  "short": 0,
+  "held": 0
+ },
+ "priority": {
+  "default": "normal",
+  "waiting": {
+   "realtime": 0,
+   "interactive": 0,
+   "normal": 0,
+   "background": 0
+  },
+  "reserved_slots": {
+   "realtime": 0,
+   "interactive": 0
+  },
+  "preempted": 0,
+  "yields": 0
+ },
+ "context_length": 1048576
+}

@@ -1,0 +1,7 @@
+run,engine,configuration,target_tokens,prompt_tokens,max_tokens,completion_tokens,finish_reason,passphrase_recalled,seconds
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",200000,199274,300,47,stop,True,30.15
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",200000,199317,300,57,stop,True,30.25
+official_default_16,Official vLLM 0.31.0,"16 slots, default kernels and all-reduce, first pass",30000,29901,300,9,stop,True,4.28
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",200000,199140,300,98,stop,True,30.32
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",200000,198995,300,66,stop,True,31.05
+official_pcie_16,Official vLLM 0.31.0,"16 slots, PCIe all-reduce on, sampled drafts, 22 capture sizes, first pass",30000,29988,300,9,stop,True,4.49

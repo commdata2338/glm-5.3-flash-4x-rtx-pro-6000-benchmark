@@ -1,0 +1,6 @@
+{"label": "stock-auto-16", "context_in": "user message", "step": "first request, 16 tokens", "shared_context_tokens": 56348, "seconds": 9.2, "prompt_tokens": 56383, "completion_tokens": 16, "cached_tokens": null}
+{"label": "stock-auto-16", "context_in": "user message", "step": "the same request again", "shared_context_tokens": 56348, "seconds": 0.65, "prompt_tokens": 56383, "completion_tokens": 16, "cached_tokens": null}
+{"label": "stock-auto-16", "context_in": "user message", "step": "same context, other question", "shared_context_tokens": 56348, "seconds": 0.7, "prompt_tokens": 56384, "completion_tokens": 16, "cached_tokens": null}
+{"label": "stock-auto-16", "context_in": "user message", "step": "the same request, 300 tokens", "shared_context_tokens": 56348, "seconds": 2.22, "prompt_tokens": 56383, "completion_tokens": 300, "cached_tokens": null}
+{"label": "stock-auto-16", "context_in": "user message", "step": "the same request again, after 300 tokens", "shared_context_tokens": 56348, "seconds": 0.64, "prompt_tokens": 56383, "completion_tokens": 16, "cached_tokens": null}
+{"label": "stock-auto-16", "context_in": "user message", "step": "same context, third question", "shared_context_tokens": 56348, "seconds": 0.66, "prompt_tokens": 56383, "completion_tokens": 16, "cached_tokens": null}
