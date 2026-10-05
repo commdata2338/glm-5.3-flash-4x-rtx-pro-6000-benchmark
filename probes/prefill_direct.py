@@ -5,7 +5,7 @@ The prompt size comes from the usage that the server reports. Thinking is off an
 
   python3 prefill_direct.py --base-url http://127.0.0.1:8020 --out prefill-direct.jsonl
 
-The paper used this probe to compare two prefill chunk sizes of the TensorFold fork (Appendix E.5). The prefill
+The paper used this probe to compare two prefill chunk sizes of TensorFold modified (Appendix E.5). The prefill
 numbers of the other sections come from sparkDash, which uses a different prompt text. Compare the results of this
 probe only with other results of this probe.
 """

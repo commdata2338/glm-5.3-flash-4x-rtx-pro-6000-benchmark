@@ -179,23 +179,23 @@ jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",json,4,4,0,748.53,193.36,188.4,203.28,80.09
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",json,8,8,0,1017.69,140.58,131.65,150.03,335.63
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",json,16,16,0,1461.29,105.41,92.74,110.21,494.54
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,1,1,0,261.2,261.2,261.2,261.2,42.19
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,2,2,0,426.6,218.08,213.3,222.86,55.88
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,4,4,0,587.7,148.64,146.93,163.68,79.32
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,8,8,0,870.78,114.12,108.85,119.32,133.53
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,16,16,0,1134.29,73.06,70.89,77.38,316.16
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,1,1,0,422.16,422.16,422.16,422.16,49.77
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,2,2,0,589.89,304.8,304.24,305.36,73.04
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,4,4,0,806.98,229.62,201.75,234.13,105.31
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,8,8,0,1076.95,151.01,134.62,158.13,1355.59
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,16,16,0,1350.11,90.75,84.39,106.1,310.79
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,1,1,0,499.55,499.55,499.55,499.55,34.66
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,2,2,0,805.65,405.5,402.82,408.18,53.01
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,4,4,0,1053.85,320.04,263.47,356.42,73.45
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,8,8,0,1501.31,224.91,187.71,227.64,112.89
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,16,16,0,2015.23,135.26,125.97,137.34,330.75
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,1,1,0,352.42,352.42,352.42,352.42,47.32
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,2,2,0,554.61,281.32,277.3,285.33,66.65
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,4,4,0,885.06,246.15,221.29,255.92,94.74
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,8,8,0,1302.55,169.51,162.82,185.2,154.37
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,16,16,0,1457.05,100.28,93.4,109.34,355.88
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,1,1,0,261.2,261.2,261.2,261.2,42.19
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,2,2,0,426.6,218.08,213.3,222.86,55.88
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,4,4,0,587.7,148.64,146.93,163.68,79.32
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,8,8,0,870.78,114.12,108.85,119.32,133.53
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",prose,16,16,0,1134.29,73.06,70.89,77.38,316.16
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,1,1,0,422.16,422.16,422.16,422.16,49.77
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,2,2,0,589.89,304.8,304.24,305.36,73.04
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,4,4,0,806.98,229.62,201.75,234.13,105.31
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,8,8,0,1076.95,151.01,134.62,158.13,1355.59
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",code,16,16,0,1350.11,90.75,84.39,106.1,310.79
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,1,1,0,499.55,499.55,499.55,499.55,34.66
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,2,2,0,805.65,405.5,402.82,408.18,53.01
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,4,4,0,1053.85,320.04,263.47,356.42,73.45
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,8,8,0,1501.31,224.91,187.71,227.64,112.89
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",structured,16,16,0,2015.23,135.26,125.97,137.34,330.75
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,1,1,0,352.42,352.42,352.42,352.42,47.32
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,2,2,0,554.61,281.32,277.3,285.33,66.65
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,4,4,0,885.06,246.15,221.29,255.92,94.74
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,8,8,0,1302.55,169.51,162.82,185.2,154.37
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",json,16,16,0,1457.05,100.28,93.4,109.34,355.88

@@ -1,6 +1,6 @@
 # GLM-5.3-Flash on four RTX PRO 6000 Blackwell GPUs: tests of TensorFold and vLLM on one host
 
-Authors: [commdata2338](https://github.com/commdata2338) and [Claude Opus 5.5](https://www.anthropic.com/claude), an AI model of Anthropic. Version 1.0, 4 October 2026.
+Authors: [commdata2338](https://github.com/commdata2338) and [Claude Opus 5.5](https://www.anthropic.com/claude), an AI model of Anthropic. Version 1.1, 4 October 2026.
 
 Each result is from one run on one host, unless the text gives a different number of runs. Tell us if you find an
 error.
@@ -42,17 +42,19 @@ RTX PRO 6000 Blackwell GPUs. The tests used the same tools and the same construc
 - **The draft method** proposes the subsequent tokens, and the model accepts the tokens that are correct. Accepted
   draft tokens increase the speed.
 
-A fork is a copy of the source code of an engine with changes. For each engine, we did tests of the engine with no
-fork and of one fork. The TensorFold fork is ours. The vLLM fork is **Jovian Judgement**, by
-[local-inference-lab](https://github.com/local-inference-lab). The lab uses this name for the development branch of its
-fork ([`dev/jovian-judgement`](https://github.com/local-inference-lab/vllm/tree/dev/jovian-judgement)) and for its
-release images. In this paper, the name refers to the two release images that we measured: r24 and r28.1. It does
-not refer to the latest code of the branch. With no release number, it is release r24.
+For each engine, we did tests of two versions: one as its authors published it, and one with changes.
+
+- **TensorFold modified** is the TensorFold recipe with our changes.
+- **Jovian Judgement** is the vLLM fork by [local-inference-lab](https://github.com/local-inference-lab). A fork is a copy
+  of the source code of a project with changes. The lab uses the name Jovian Judgement for the development branch
+  of its fork ([`dev/jovian-judgement`](https://github.com/local-inference-lab/vllm/tree/dev/jovian-judgement)) and
+  for its release images. In this paper, the name refers to the two release images that we measured: r24 and r28.1.
+  It does not refer to the latest code of the branch. With no release number, it is release r24.
 
 | Server | What it is | Made by | Weights | Draft method |
 |---|---|---|---|---|
 | **TensorFold** | The TensorFold engine in a recipe for four RTX PRO 6000 GPUs. The recipe adds 87 patches to the engine. | Aevonix Research (recipe), ashhart (engine) | EXL3 at 4 bits for each weight | A separate draft model (DFlash2), and copy drafts |
-| **TensorFold fork** | TensorFold with our changes: a sampler on the GPU for requests with no top_k, and one prefill for requests that arrive together. | The authors of this paper | The same | The same |
+| **TensorFold modified** | TensorFold with our changes: a sampler on the GPU for requests with no top_k, and one prefill for requests that arrive together. | The authors of this paper | The same | The same |
 | **Official vLLM** | Release 0.31.0 of the vLLM engine, with no change to its code ([image](https://hub.docker.com/r/vllm/vllm-openai/tags?name=v0.31.0)). It has a default configuration and a tuned configuration in our tests. | The vLLM project | NVFP4 | The MTP head of the model |
 | **Jovian Judgement r24** | The vLLM fork by local-inference-lab, release r24 of 4 September 2026 ([image](https://hub.docker.com/r/voipmonitor/vllm/tags?name=jovian-judgement-community-20260904-r24)). It has the [B12X](https://github.com/local-inference-lab/b12x) kernels of the same lab for this GPU type, direct transfers between the GPUs, and draft tokens from the sampler. | local-inference-lab | The same NVFP4 weights | The MTP head of the model |
 | **Jovian Judgement r28.1** | A later release of the same fork, of 8 September 2026 ([image](https://hub.docker.com/r/voipmonitor/vllm/tags?name=jovian-judgement-community-20260908-r28.1)). We used it with the settings of release r24. | local-inference-lab | The same NVFP4 weights | The MTP head of the model |
@@ -61,22 +63,23 @@ not refer to the latest code of the branch. With no release number, it is releas
   The comparison of these two recipes is the primary subject of this paper.
 - **The official vLLM** uses the same weights as Jovian Judgement. It shows how the fork is different from the
   release of the vLLM project.
-- **The TensorFold fork** is a test of changes that came from a comparison of the two engines. It shows which
+- **TensorFold modified** is a test of changes that came from a comparison of the two engines. It shows which
   differences these changes remove.
 - **Release r28.1** shows if a later release of Jovian Judgement changes the results.
 
-Section 1 gives the differences between each fork and its base. These are comparisons of recipes. The servers have
+Section 1 gives the differences between Jovian Judgement and the official vLLM, and between TensorFold modified
+and TensorFold. These are comparisons of recipes. The servers have
 different weights, draft methods, kernels, and settings.
 
 **What we found.** Figure 1 and the points below it give the primary results.
 
-<img src="figures/figure1-three-loads.png" alt="Three loads on each server" width="740">
+<img src="figures/figure1-three-loads.png" alt="Three loads on each server" width="840">
 
 *Figure 1. Three loads on each server. Panel A is the decode test with one greedy code request. Panel B is the
 prefill of one cold prompt of 64K tokens. Panel C is the test with a shared context of 56K tokens and 16 requests,
 with thinking on, temperature 1, top_p 0.95, and top_k 20. With its default settings, release r28.1 of Jovian
 Judgement gave no speed in panel C. With one more setting, it gave 1,101 tokens/s (section 4). Sections
-2, 3, and 4 give the conditions and the results. The TensorFold fork gave the same reply tokens as TensorFold in each
+2, 3, and 4 give the conditions and the results. TensorFold modified gave the same reply tokens as TensorFold in each
 equality test that we did (section 8.2).*
 
 - **Short greedy answers.** At one request, TensorFold was 35% faster than Jovian Judgement for code. At 16 requests,
@@ -96,22 +99,22 @@ equality test that we did (section 8.2).*
 - **Release r28.1 of Jovian Judgement** had 89% to 106% of the decode speed of release r24 at 1 and at 16 requests
   (section 2). With its default settings, it keeps the cache state at three points of a request only. In the agent
   run, its median model call was 0.87 s, and release r24 had 1.48 s and 1.61 s (sections 5 and 7).
-- **The TensorFold fork** removed two problems of TensorFold and gave the same replies. It was not faster than Jovian
+- **TensorFold modified** removed two problems of TensorFold and gave the same replies. It was not faster than Jovian
   Judgement with a long shared context (section 9).
 
 **Which server had the best result for each load in our tests**
 
 | Load | Best result | Section |
 |---|---|---|
-| Short greedy answers, 1 or 2 concurrent requests | TensorFold and the TensorFold fork | 2 |
-| Short greedy answers, 16 concurrent requests | No clear difference between TensorFold, the TensorFold fork, and Jovian Judgement for prose, code, and JSON. For the count task, TensorFold was 11% faster than Jovian Judgement. | 2 |
+| Short greedy answers, 1 or 2 concurrent requests | TensorFold and TensorFold modified | 2 |
+| Short greedy answers, 16 concurrent requests | No clear difference between TensorFold, TensorFold modified, and Jovian Judgement for prose, code, and JSON. For the count task, TensorFold was 11% faster than Jovian Judgement. | 2 |
 | A long prompt that the server reads for the first time | Jovian Judgement, the two releases | 3 |
 | A long shared context, 4 to 16 requests with a sampler | Jovian Judgement r24, and release r28.1 with the policy `aligned` | 4 |
 | A client that sends top_p 1.0 and no top_k | All servers that have this test, but not TensorFold. Release r28.1 has this test with the policy `aligned` only. | 4 |
 | A client that sends the same prompt again | All servers but Jovian Judgement r24 | 5 |
 | A shared context in a user message, with a different question in each request | All servers but Jovian Judgement r28.1 with its default settings | 5 |
-| Four cold requests that arrive together with a shared prefix | Jovian Judgement r28.1 with the policy `aligned`, and the TensorFold fork | 5 |
-| An agent with a small context and many short model calls | TensorFold, the TensorFold fork, and Jovian Judgement r28.1, with unequal work | 7 |
+| Four cold requests that arrive together with a shared prefix | Jovian Judgement r28.1 with the policy `aligned`, and TensorFold modified | 5 |
+| An agent with a small context and many short model calls | TensorFold, TensorFold modified, and Jovian Judgement r28.1, with unequal work | 7 |
 | Accuracy of Python tasks through an agent | No difference found | 7 |
 
 This table is for one host and for these tests. It is not a general recommendation. Section 10 gives the limits.
@@ -129,13 +132,13 @@ Appendix G explains the B12X kernels of Jovian Judgement in simple words, with d
 - [6. The direct GPU links](#6-the-direct-gpu-links)
 - [7. Quality through an agent](#7-quality-through-an-agent)
 - [8. Correctness](#8-correctness)
-- [9. The TensorFold fork](#9-the-tensorfold-fork)
+- [9. TensorFold modified](#9-tensorfold-modified)
 - [10. Limits](#10-limits)
-- [Appendix A. The servers and the host](#appendix-a-the-servers-and-the-host): [A.1](#a1-the-two-recipes), [A.2](#a2-the-official-vllm), [A.3](#a3-the-tensorfold-fork), [A.4](#a4-the-host), [A.5](#a5-direct-gpu-links)
-- [Appendix B. Method](#appendix-b-method): [B.1](#b1-tools), [B.2](#b2-how-we-made-the-requests-equal), [B.3](#b3-the-quality-run), [B.4](#b4-the-equality-tests-of-the-tensorfold-fork), [B.5](#b5-sessions-and-test-sequence), [B.6](#b6-variation-between-runs)
+- [Appendix A. The servers and the host](#appendix-a-the-servers-and-the-host): [A.1](#a1-the-two-recipes), [A.2](#a2-the-official-vllm), [A.3](#a3-tensorfold-modified), [A.4](#a4-the-host), [A.5](#a5-direct-gpu-links)
+- [Appendix B. Method](#appendix-b-method): [B.1](#b1-tools), [B.2](#b2-how-we-made-the-requests-equal), [B.3](#b3-the-quality-run), [B.4](#b4-the-equality-tests-of-tensorfold-modified), [B.5](#b5-sessions-and-test-sequence), [B.6](#b6-variation-between-runs)
 - [Appendix C. Full speed results](#appendix-c-full-speed-results): [C.1](#c1-all-tests-in-one-table), [C.2](#c2-short-greedy-answers), [C.3](#c3-prefill-of-a-cold-prompt), [C.4](#c4-long-shared-context-with-thinking-on), [C.5](#c5-sampler-settings-and-tensorfold), [C.6](#c6-time-to-the-first-token-and-reuse-of-a-prompt), [C.7](#c7-the-direct-gpu-links-and-jovian-judgement), [C.8](#c8-the-two-checkpoint-policies-of-jovian-judgement-r281)
 - [Appendix D. Full results of the quality run](#appendix-d-full-results-of-the-quality-run): [D.1](#d1-task-accuracy), [D.2](#d2-the-work-of-the-agent), [D.3](#d3-what-this-result-shows-and-what-it-does-not-show)
-- [Appendix E. Why the servers are different, and the changes of the TensorFold fork](#appendix-e-why-the-servers-are-different-and-the-changes-of-the-tensorfold-fork): [E.1](#e1-jovian-judgement-and-the-official-vllm), [E.2](#e2-tensorfold-the-sampler-the-reuse-the-prefill-and-the-parts-of-a-round), [E.3](#e3-functions-of-jovian-judgement-and-their-equivalents-in-tensorfold), [E.4](#e4-the-changes-of-the-tensorfold-fork), [E.5](#e5-settings-of-the-release-that-we-measured)
+- [Appendix E. Why the servers are different, and the changes of TensorFold modified](#appendix-e-why-the-servers-are-different-and-the-changes-of-tensorfold-modified): [E.1](#e1-jovian-judgement-and-the-official-vllm), [E.2](#e2-tensorfold-the-sampler-the-reuse-the-prefill-and-the-parts-of-a-round), [E.3](#e3-functions-of-jovian-judgement-and-their-equivalents-in-tensorfold), [E.4](#e4-the-changes-of-tensorfold-modified), [E.5](#e5-settings-of-the-release-that-we-measured)
 - [Appendix F. Limits, and how to do the tests again](#appendix-f-limits-and-how-to-do-the-tests-again): [F.1](#f1-limits), [F.2](#f2-how-to-do-the-tests-again)
 - [Appendix G. B12X in simple words](#appendix-g-b12x-in-simple-words): [G.1](#g1-what-b12x-is), [G.2](#g2-the-two-types-of-work), [G.3](#g3-three-ideas-that-can-make-a-kernel-faster), [G.4](#g4-what-our-tests-show), [G.5](#g5-the-costs), [G.6](#g6-when-b12x-is-a-good-selection)
 - [License](#license)
@@ -172,11 +175,11 @@ release r24 does not have, and release r24 has 91 commits that release r28.1 doe
 with the settings and the weights of release r24. The largest difference that we found is the rule for the reuse of
 a prompt (section 5).
 
-**The TensorFold fork and TensorFold.** The TensorFold fork is the TensorFold of the recipe with our changes. The
+**TensorFold modified and TensorFold.** TensorFold modified is the TensorFold of the recipe with our changes. The
 weights, the draft model, and the other settings are the same. Each change has a setting, and each setting is off by
 default. Appendix A.3 gives the settings, and Appendix E.4 gives each change.
 
-| Function | TensorFold | TensorFold fork |
+| Function | TensorFold | TensorFold modified |
 |---|---|---|
 | Sampler for a request with a top_k value | On the GPU | The same |
 | Sampler for a request with no top_k | On the CPU | On the GPU. A row with a result that is not certain uses the CPU rule. |
@@ -191,7 +194,7 @@ default. Appendix A.3 gives the settings, and Appendix E.4 gives each change.
 | Configuration | Weights | Draft tokens | Slots | Chat template | KV cache | Sessions |
 |---|---|---|---:|---|---|---|
 | TensorFold | EXL3 at 4 bits, FP8 dense layers | DFlash2 and copy drafts | 40 | the renderer of TensorFold | one pool of 5.10M tokens | 1, 3, 4 |
-| TensorFold fork | the same | the same | 40 | the same | one pool of 5.09M tokens | 4 |
+| TensorFold modified | the same | the same | 40 | the same | one pool of 5.09M tokens | 4 |
 | Jovian Judgement r24, speed tests | NVFP4 | MTP at depth 3, from the sampler | 16 | with the thinking switch | 2.68M tokens (memory fraction 0.90) | 1, 3 |
 | Jovian Judgement r24, usual configuration | NVFP4 | the same | 8 | standard | 3.47M tokens (memory fraction 0.93) | 1 (section 6), 4 and 5 (section 7) |
 | Jovian Judgement r28.1, speed tests | NVFP4 | the same | 16 | with the thinking switch | 2.56M to 2.58M tokens (memory fraction 0.90) | 5 |
@@ -211,8 +214,8 @@ used more than 262K tokens. Appendix B.5 gives the sessions.
   configurations. The test of the direct GPU links used release r24 only.
 - **The official vLLM did not start with the settings of Jovian Judgement.** Three changes were necessary
   (Appendix A.2). Release r28.1 of Jovian Judgement started with the settings of release r24.
-- **The changes of the TensorFold fork** are in the file
-  [`patches/tensorfold-fork-engine.patch`](patches/tensorfold-fork-engine.patch).
+- **The changes of TensorFold modified** are in the file
+  [`patches/tensorfold-modified-engine.patch`](patches/tensorfold-modified-engine.patch).
 
 Appendix A gives the recipes and the host. Appendix B gives the method.
 
@@ -224,7 +227,7 @@ less for prose, code, and JSON.**
 The decode test of sparkDash sends greedy requests with thinking off. Each stream writes 400 tokens. The test has
 four prompt types, and 1 to 16 concurrent requests.
 
-<img src="figures/figure2-decode-by-output-type.png" alt="Total decode speed for each output type on each server" width="740">
+<img src="figures/figure2-decode-by-output-type.png" alt="Total decode speed for each output type on each server" width="840">
 
 *Figure 2. Decode test of sparkDash: greedy, thinking off, 400 tokens for each stream. The two axes are
 logarithmic. Thus an equal distance between two lines is an equal ratio of their speeds. For the official vLLM, the
@@ -233,7 +236,7 @@ figure shows the second of two runs.*
 | Server | Prose, 1 | Prose, 16 | Code, 1 | Code, 16 | Count task, 1 | Count task, 16 | JSON, 1 | JSON, 16 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | TensorFold | 247 | 1,091 | 426 | 1,319 | 498 | 1,930 | 349 | 1,475 |
-| TensorFold fork | 261 | 1,134 | 422 | 1,350 | 500 | 2,015 | 352 | 1,457 |
+| TensorFold modified | 261 | 1,134 | 422 | 1,350 | 500 | 2,015 | 352 | 1,457 |
 | Jovian Judgement r24 | 225 | 1,105 | 315 | 1,265 | 342 | 1,739 | 325 | 1,516 |
 | Jovian Judgement r28.1 | 239 | 1,079 | 316 | 1,123 | 340 | 1,600 | 307 | 1,486 |
 | Official vLLM, default | 185 | 866 | 210 | 955 | 245 | 1,461 | 218 | 1,011 |
@@ -245,7 +248,7 @@ The table shows the total tokens/s at 1 and at 16 concurrent requests. Each row 
   count task, and 7% for JSON.
 - **TensorFold and Jovian Judgement at 16 requests.** The difference was 4% or less for prose, code, and JSON. This is
   less than the variation between runs (Appendix B.6). For the count task, TensorFold was 11% faster.
-- **The TensorFold fork** gave 94% to 106% of the speed of TensorFold in each cell. Its changes do not apply to
+- **TensorFold modified** gave 94% to 106% of the speed of TensorFold in each cell. Its changes do not apply to
   greedy requests.
 - **The official vLLM** gave 67% to 84% of the decode speed of Jovian Judgement in its default configuration. In its
   tuned configuration, it gave 65% to 103%.
@@ -264,7 +267,7 @@ vLLM. It also gives a second greedy test with a context of 1K tokens.
 The prefill test of sparkDash sends one cold prompt of 8K to 256K tokens. The speed is the prompt tokens divided by
 the time to the first token.
 
-<img src="figures/figure3-cold-prompt-prefill.png" alt="Prefill speed for each prompt size on each server" width="740">
+<img src="figures/figure3-cold-prompt-prefill.png" alt="Prefill speed for each prompt size on each server" width="840">
 
 *Figure 3. Prefill test of sparkDash with one cold prompt. The speed axis starts at 5,000 tokens/s. For the
 official vLLM, the figure shows the second of two runs.*
@@ -272,7 +275,7 @@ official vLLM, the figure shows the second of two runs.*
 | Server | 8K | 64K | 256K |
 |---|---:|---:|---:|
 | TensorFold | 8,300 | 9,263 | 8,679 |
-| TensorFold fork | 7,274 | 9,370 | 8,766 |
+| TensorFold modified | 7,274 | 9,370 | 8,766 |
 | Jovian Judgement r24 | 10,787 | 11,141 | 10,030 |
 | Jovian Judgement r28.1 | 10,353 | 10,929 | 9,850 |
 | Official vLLM, default | 6,862 | 7,079 | 6,686 |
@@ -282,7 +285,7 @@ The table shows the prompt tokens/s for three prompt sizes. Each row is one run.
 
 - **Jovian Judgement and TensorFold kept their prefill speed up to 256K tokens.** A 256K prompt got its first token
   after 26.1 s on Jovian Judgement and after 30.2 s on TensorFold.
-- **The TensorFold fork** gave 101% to 102% of the speed of TensorFold from 16K to 256K tokens. At 8K tokens, it
+- **TensorFold modified** gave 101% to 102% of the speed of TensorFold from 16K to 256K tokens. At 8K tokens, it
   gave 88%. Its changes do not apply to the prefill of one prompt.
 - **The official vLLM gave 60% to 69% of the prefill speed of Jovian Judgement.** In the default configuration, a 256K
   prompt got its first token after 39.2 s. The speed of this configuration was near to the speed of Jovian Judgement
@@ -303,7 +306,7 @@ This test has the shape of an agent load. C requests start at the same time. Eac
 tokens of source code and a different short question. Each request writes 2,000 tokens at temperature 1, with
 thinking at effort max. We did the test with three groups of sampler settings.
 
-<img src="figures/figure4-long-context-thinking-on.png" alt="Decode speed and time to the first token with a long shared context" width="740">
+<img src="figures/figure4-long-context-thinking-on.png" alt="Decode speed and time to the first token with a long shared context" width="840">
 
 *Figure 4. Shared context of 56K tokens, thinking on, temperature 1, 2,000 tokens for each stream. Panels A to C
 show the total decode speed for three groups of sampler settings. Panel D shows the median time to the first token
@@ -314,21 +317,21 @@ release r28.1 of Jovian Judgement. The table gives its results.*
 | Requests | Server | top_p 0.95, top_k 20 | top_p 0.95, no top_k | top_p 1.0, no top_k | Time to first token, s |
 |---:|---|---:|---:|---:|---:|
 | 4 | TensorFold | 471 | 325 | 40 | 0.6 |
-|  | TensorFold fork | 464 | 475 | 391 | 0.6 |
+|  | TensorFold modified | 464 | 475 | 391 | 0.6 |
 |  | Jovian Judgement r24 | 564 | 551 | 579 | 1.1 |
 |  | Jovian Judgement r28.1 | no value | no value | no test | 24.0 |
 |  | Jovian Judgement r28.1, policy aligned | 579 | 570 | 562 | 1.1 |
 |  | Official vLLM, default | 390 | 383 | 382 | 2.9 |
 |  | Official vLLM, tuned | 473 | 463 | 445 | 2.8 |
 | 8 | TensorFold | 667 | 427 | no test | 1.2 |
-|  | TensorFold fork | 645 | 650 | 640 | 1.3 |
+|  | TensorFold modified | 645 | 650 | 640 | 1.3 |
 |  | Jovian Judgement r24 | 825 | 795 | 805 | 2.6 |
 |  | Jovian Judgement r28.1 | no value | no value | no test | 49.9 |
 |  | Jovian Judgement r28.1, policy aligned | 822 | 798 | 795 | 2.6 |
 |  | Official vLLM, default | 557 | 556 | 513 | 2.7 |
 |  | Official vLLM, tuned | 660 | 640 | 660 | 2.6 |
 | 16 | TensorFold | 778 | 482 | no test | 2.3 |
-|  | TensorFold fork | 797 | 806 | 787 | 2.7 |
+|  | TensorFold modified | 797 | 806 | 787 | 2.7 |
 |  | Jovian Judgement r24 | 1,123 | 1,140 | 1,135 | 5.6 |
 |  | Jovian Judgement r28.1 | no value | no value | no test | 100.7 |
 |  | Jovian Judgement r28.1, policy aligned | 1,101 | 1,085 | 1,092 | 5.6 |
@@ -348,9 +351,9 @@ all requests.
 - **With top_p 1.0 and no top_k,** TensorFold gave a total of 40 tokens/s for four streams. The other servers that
   have this test did not show this large decrease. Release r28.1 has this test with the policy `aligned` only. The server defaults of TensorFold are top_p 0.95 and top_k 20. Thus a client that sends no
   sampler settings does not get this decrease. A client that sends top_p 1.0 and no top_k gets it.
-- **The TensorFold fork with top_p 0.95** had the same speed with top_k 20 and with no top_k. The difference was 3%
+- **TensorFold modified with top_p 0.95** had the same speed with top_k 20 and with no top_k. The difference was 3%
   or less. With top_p 1.0 and no top_k, it did not have the large decrease of TensorFold. At 4 requests, its speed
-  was 16% lower than with top_k 20. Jovian Judgement stayed 1.2 to 1.5 times faster than the TensorFold fork.
+  was 16% lower than with top_k 20. Jovian Judgement stayed 1.2 to 1.5 times faster than TensorFold modified.
 - **With top_p 0.95, the official vLLM** gave 68% to 75% of the speed of Jovian Judgement in its default
   configuration. In the tuned configuration, it gave 80% to 87%. These ranges contain the cells with top_k 20 and
   the cells with no top_k.
@@ -360,7 +363,7 @@ all requests.
   16 requests. Section 5 gives the cause.
 - **Jovian Judgement r28.1 with the checkpoint policy `aligned`** had the speed of release r24. The difference was
   5% or less in each cell.
-- **TensorFold and the TensorFold fork gave the first token in the least time.** With the context in the cache,
+- **TensorFold and TensorFold modified gave the first token in the least time.** With the context in the cache,
   top_p 0.95, and no top_k, their time to the first token was approximately half that of Jovian Judgement.
 - **The token count** of the two TensorFold servers is an estimate in this test. In 20 waves with the context in the
   cache, the probe gave a speed 2% to 6% lower than the server log (Appendix B.1). This check does not measure the
@@ -381,7 +384,7 @@ releases of Jovian Judgement had 16 slots in this test.
 | Server | Cold | Same prompt again | Same prompt and a new turn | Answer of the model and a new turn |
 |---|---:|---:|---:|---:|
 | TensorFold | 10.3, 10.3 | 0.16, 0.02 | 0.37, 10.4 | 0.32, 0.29 |
-| TensorFold fork | 10.2, 10.2 | 0.18, 0.02 | 0.39, 10.4 | 0.34, 0.28 |
+| TensorFold modified | 10.2, 10.2 | 0.18, 0.02 | 0.39, 10.4 | 0.34, 0.28 |
 | Jovian Judgement r24 | 8.0, 8.0 | 7.9, 7.9 | 0.56, 0.56 | 0.57, 0.56 |
 | Jovian Judgement r28.1 | 8.3, 8.1 | 0.14, 0.13 | 8.2, 8.2 | 0.42, 0.42 |
 | Jovian Judgement r28.1, policy aligned | 8.1, 8.1 | 0.49, 0.47 | 0.58, 0.57 | 0.58, 0.57 |
@@ -390,13 +393,13 @@ releases of Jovian Judgement had 16 slots in this test.
 
 - **A cold prompt.** Jovian Judgement gave the first token after 8.0 s. TensorFold used 10.3 s, and the official vLLM
   used 12.2 s. These times agree with the prefill speeds of section 3.
-- **The same prompt again.** TensorFold, the TensorFold fork, the official vLLM, and Jovian Judgement r28.1 used
+- **The same prompt again.** TensorFold, TensorFold modified, the official vLLM, and Jovian Judgement r28.1 used
   their cache. Jovian Judgement r24 did the prefill again. With MTP draft tokens, release r24 finds no cache entry
   for a prompt that stops at the same point as an earlier prompt.
 - **The answer of the model and a new turn.** This is the usual sequence of a conversation, and each server used
   its cache. The first token came after 0.3 s on TensorFold and after 0.7 s on the official vLLM. It came after
   0.6 s on Jovian Judgement r24 and after 0.4 s on release r28.1.
-- **The same prompt and a new turn, with no answer between.** TensorFold and the TensorFold fork did the full
+- **The same prompt and a new turn, with no answer between.** TensorFold and TensorFold modified did the full
   prefill again in one of the two runs. The cause is the shape of our probe and a grid of 64 tokens (Appendix C.6).
   Jovian Judgement r28.1 did the full prefill again in the two runs. Its rule for the cache state is the cause (see
   below).
@@ -438,15 +441,15 @@ the policy `aligned` had 16 slots.
 | Server | Time to the first token of each of the four requests, s |
 |---|---:|
 | TensorFold | 9.0, 14.4, 18.6, 21.8 |
-| TensorFold fork | 5.5, 5.5, 5.5, 5.5 |
+| TensorFold modified | 5.5, 5.5, 5.5, 5.5 |
 | Jovian Judgement r24 | 4.4, 8.4, 8.4, 8.8 |
 | Jovian Judgement r28.1 | 4.5, 9.3, 12.7, 16.5 |
 | Jovian Judgement r28.1, policy aligned | 4.8, 4.8, 4.8, 5.1 |
 | Official vLLM, default | 8.8, 13.7, 14.2, 14.7 |
 | Official vLLM, tuned | 9.1, 14.2, 14.7, 15.1 |
 
-- **TensorFold** did the prefill of the shared part for each request. **The TensorFold fork** did it one time, and
-  the replies had the same token ids on the two servers. For this test, the TensorFold fork had the three sampler
+- **TensorFold** did the prefill of the shared part for each request. **TensorFold modified** did it one time, and
+  the replies had the same token ids on the two servers. For this test, TensorFold modified had the three sampler
   settings and burst reuse on, and CUDA IPC off.
 - **Jovian Judgement r24** gave the first token of one request after 4.4 s, and of the other three requests after
   8.4 s to 8.8 s.
@@ -472,7 +475,7 @@ We measured Jovian Judgement with the links off and then with the links on. The 
 two measurements were in the same boot of the host. The change is the effect of two settings together
 (Appendix C.7).
 
-<img src="figures/figure5-jovian-judgement-gpu-links.png" alt="Jovian Judgement with the direct GPU links off and on" width="740">
+<img src="figures/figure5-jovian-judgement-gpu-links.png" alt="Jovian Judgement with the direct GPU links off and on" width="840">
 
 *Figure 5. Jovian Judgement with 8 slots in the same boot, with the direct GPU links off and on.*
 
@@ -501,12 +504,12 @@ is [pi](https://github.com/earendil-works/pi) 0.86.1. It did the 542 Python task
 on five servers. Each task got one attempt, with temperature 0 and thinking at effort max. Jovian Judgement r24 has
 two runs. The official vLLM was in its default configuration. Appendix B.3 gives the method.
 
-<img src="figures/figure6-quality-through-an-agent.png" alt="Task accuracy through the pi agent" width="740">
+<img src="figures/figure6-quality-through-an-agent.png" alt="Task accuracy through the pi agent" width="840">
 
 *Figure 6. The tasks that pass, with the 95% Wilson interval. Each point is one run of the pi agent on one server,
 with one attempt for each task.*
 
-| Tasks that pass all tests | TensorFold | TensorFold fork | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
+| Tasks that pass all tests | TensorFold | TensorFold modified | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
 |---|---:|---:|---:|---:|---:|---:|
 | HumanEval+, 164 tasks | 152 (92.7%) | 152 (92.7%) | 156 (95.1%) | 153 (93.3%) | 153 (93.3%) | 155 (94.5%) |
 | MBPP+, 378 tasks | 323 (85.4%) | 324 (85.7%) | 322 (85.2%) | 322 (85.2%) | 316 (83.6%) | 324 (85.7%) |
@@ -517,7 +520,7 @@ of the second server minus the pass rate of the first server.
 
 | Pair | Only the first passes | Only the second passes | Second minus first, percentage points (95% interval) | Exact McNemar test, p |
 |---|---:|---:|---:|---:|
-| TensorFold and the TensorFold fork | 1 | 2 | +0.2 (−0.4 to +0.8) | 1.00 |
+| TensorFold and TensorFold modified | 1 | 2 | +0.2 (−0.4 to +0.8) | 1.00 |
 | TensorFold and Jovian Judgement r24 | 13 | 16 | +0.6 (−1.4 to +2.5) | 0.71 |
 | Jovian Judgement r24, the first run and the second run | 16 | 13 | −0.6 (−2.5 to +1.4) | 0.71 |
 | Jovian Judgement r24 and Jovian Judgement r28.1 | 18 | 9 | −1.7 (−3.5 to +0.2) | 0.12 |
@@ -533,14 +536,14 @@ of the second server minus the pass rate of the first server.
   first run of Jovian Judgement r24 for 31 tasks (p = 1.00).
 - **This result does not show that the servers are equal.** The 95% interval of the difference between TensorFold
   and Jovian Judgement is −1.4 to +2.5 percentage points.
-- **TensorFold and the TensorFold fork** have the same weights. Their results were different for 3 of the 542
+- **TensorFold and TensorFold modified** have the same weights. Their results were different for 3 of the 542
   tasks.
 - **Do not compare these scores with scores from single requests.** The agent can run its code, read the errors,
   and write the file again.
 
 The servers did different work for the same tasks.
 
-|  | TensorFold | TensorFold fork | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
+|  | TensorFold | TensorFold modified | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
 |---|---:|---:|---:|---:|---:|---:|
 | Model calls | 2,568 | 2,567 | 2,361 | 2,343 | 2,394 | 2,492 |
 | Output tokens, thoughts included | 621K | 617K | 889K | 774K | 797K | 808K |
@@ -559,7 +562,7 @@ complete.
 
 ## 8. Correctness
 
-**The TensorFold fork gave the same reply tokens as TensorFold in each equality test that we did.**
+**TensorFold modified gave the same reply tokens as TensorFold in each equality test that we did.**
 
 ### 8.1 A passphrase in a long prompt
 
@@ -577,11 +580,11 @@ new 200K prompts to each configuration, with a limit of 300 tokens. Each answer 
 had 47 to 98 tokens. These prompts were not the same text as the first prompt.
 
 On each server, the thinking-off probe showed the same prompt token counts and the same speeds for its two forms
-(Appendix B.2). We did not do the passphrase test on the TensorFold fork.
+(Appendix B.2). We did not do the passphrase test on TensorFold modified.
 
-### 8.2 The replies of the TensorFold fork
+### 8.2 The replies of TensorFold modified
 
-Appendix B.4 gives the four equality tests. The TensorFold fork gave the same replies as TensorFold in each test.
+Appendix B.4 gives the four equality tests. TensorFold modified gave the same replies as TensorFold in each test.
 These tests show equal replies for these requests. They do not show equal replies for each possible request.
 
 | Test | Result |
@@ -597,16 +600,16 @@ These tests show equal replies for these requests. They do not show equal replie
 The gates contain five requests with tool calls, one request with an image, and prompts of 8K, 32K, and 100K
 tokens. We did no equality test with a grammar or with more than 16 concurrent requests.
 
-## 9. The TensorFold fork
+## 9. TensorFold modified
 
-**In our tests, the TensorFold fork removed two problems of TensorFold and gave the same replies. It was not faster
+**In our tests, TensorFold modified removed two problems of TensorFold and gave the same replies. It was not faster
 than Jovian Judgement with a long shared context.**
 
-We made the TensorFold fork to do tests of five proposals that came from the analysis in Appendix E. AI tools for
+We made TensorFold modified to do tests of five proposals that came from the analysis in Appendix E. AI tools for
 code wrote the changes from the proposals. We examined the changes and did the tests. Each change has a setting,
 and each setting is off by default.
 
-| Test | TensorFold | TensorFold fork | Jovian Judgement r24 |
+| Test | TensorFold | TensorFold modified | Jovian Judgement r24 |
 |---|---:|---:|---:|
 | 56K context, top_p 0.95, top_k 20, 16 requests, tokens/s | 778 | 797 | 1,123 |
 | 56K context, top_p 0.95, no top_k, 16 requests, tokens/s | 482 | 806 | 1,140 |
@@ -614,7 +617,7 @@ and each setting is off by default.
 | First token for four cold requests with a shared prefix of 42K tokens, s | 9 to 22 | 5.5 | 4.4 to 8.8 |
 | Prefill of a cold prompt of 64K tokens, tokens/s | 9,263 | 9,370 | 11,141 |
 
-The table shows the three servers in the tests that the changes apply to. The values of the TensorFold fork are
+The table shows the three servers in the tests that the changes apply to. The values of TensorFold modified are
 from its last configuration (Appendix A.3), with one exception. The test with four cold requests had the sampler
 settings and burst reuse on, and CUDA IPC off. Jovian Judgement had its usual 8 slots in that test.
 
@@ -625,28 +628,28 @@ In our tests, the changes removed two problems of TensorFold:
 - Requests that arrive together with a shared prefix got their first token after one prefill (section 5).
 
 The changes did not remove one cache miss. A new turn directly after a prompt that stops near a grid point does the
-full prefill again. The TensorFold fork shows the cause in its log (Appendix C.6).
+full prefill again. TensorFold modified shows the cause in its log (Appendix C.6).
 
-The TensorFold fork was not faster than Jovian Judgement where Jovian Judgement was faster before:
+TensorFold modified was not faster than Jovian Judgement where Jovian Judgement was faster before:
 
 - In the long-context test, Jovian Judgement was 1.2 to 1.5 times faster at 4 to 16 requests.
 - In the prefill of a cold prompt from 16K to 256K tokens, Jovian Judgement was 10% to 26% faster.
 
-The TensorFold fork kept the results of TensorFold in these tests:
+TensorFold modified kept the results of TensorFold in these tests:
 
 - the speed of short greedy answers
 - the time to the first token
 - the cache entry for a prompt that a client sends a second time
 
-A profile of the GPU time of a decode round shows three large parts. The profile is from a different start of the
-TensorFold fork, with the three sampler settings and the profiler on. The requests had top_p 0.95 and top_k 20. At
+A profile of the GPU time of a decode round shows three large parts. The profile is from a different start of TensorFold
+modified, with the three sampler settings and the profiler on. The requests had top_p 0.95 and top_k 20. At
 16 requests with the long context, the routed experts have 34% of the GPU time of a round. The sparse attention has
 25%, and the transfers between the ranks have 23% (Appendix E.2). These parts are time spans that can overlap. Thus
 they are not a division of the round. To decrease the time of a round more, changes to these parts are necessary.
 Appendix E.3 gives these parts as large changes. We did not do them.
 
 Appendix E.4 gives each change and its setting. Appendix E.5 gives the settings of the release that we measured on
-the TensorFold fork. [`recipes/tensorfold-fork.md`](recipes/tensorfold-fork.md) gives the build steps.
+TensorFold modified. [`recipes/tensorfold-modified.md`](recipes/tensorfold-modified.md) gives the build steps.
 
 ## 10. Limits
 
@@ -670,7 +673,7 @@ than 10% between two servers is not a reliable result.**
 - **We did no test with more than 16 concurrent requests.** TensorFold has 40 slots.
 - **The quality result has a narrow scope.** It is from one agent and two data sets of small Python tasks. Each
   server has one run, and Jovian Judgement r24 has two. It does not show that the servers are equal.
-- **The TensorFold fork is not a release.** AI tools for code wrote its changes, and the TensorFold project did not
+- **TensorFold modified is not a release.** AI tools for code wrote its changes, and the TensorFold project did not
   examine them. Section 8.2 gives the scope of our equality tests.
 - **License.** The DFlash2 drafter weights that TensorFold uses have the CC BY-NC-ND 4.0 license (non-commercial).
 
@@ -682,7 +685,7 @@ In this paper, "Jovian Judgement" is the vLLM fork by local-inference-lab: the v
 recipe. The lab uses this name for the development branch of the fork (`dev/jovian-judgement`), for its release
 images, and for its package releases. We use the name for the two release images that we measured, and not for the
 latest code of the branch. With no release number, the name refers to release r24. "The official vLLM" is release 0.31.0 of the
-vLLM project. "The TensorFold fork" is the TensorFold of the first recipe with our changes (Appendix E.4).
+vLLM project. "TensorFold modified" is the TensorFold of the first recipe with our changes (Appendix E.4).
 "TensorFold" with no other word is the first recipe with no changes.
 
 ### A.1 The two recipes
@@ -782,10 +785,10 @@ We also did a start with a third configuration, which has the B12X expert kernel
 (`--moe-backend flashinfer_b12x`). The official vLLM does not permit this selection for GLM-5.3, and the start
 stopped. Thus the official vLLM used the FlashInfer CUTLASS kernels for the NVFP4 experts in all tests.
 
-### A.3 The TensorFold fork
+### A.3 TensorFold modified
 
-The TensorFold fork is TensorFold v0.6.2 with the 87 patches of recipe release 1.0.1, and with our changes
-([`patches/tensorfold-fork-engine.patch`](patches/tensorfold-fork-engine.patch)). The weights, the drafter, and the
+TensorFold modified is TensorFold v0.6.2 with the 87 patches of recipe release 1.0.1, and with our changes
+([`patches/tensorfold-modified-engine.patch`](patches/tensorfold-modified-engine.patch)). The weights, the drafter, and the
 other recipe settings are the same as for TensorFold. Each change has a setting, and each setting is off by default.
 In our tests, these settings were on:
 
@@ -798,9 +801,9 @@ In our tests, these settings were on:
 | The cause of each cache decision in the log | `TF_GLM_CACHE_REASONS=1` |
 | CUDA IPC for the all-gathers between the ranks. The release engine contains this transport. | `TF_GLM_COMM=ipc` |
 
-This is the last configuration of our tests, and the tables of this paper show it as "TensorFold fork". Where a
+This is the last configuration of our tests, and the tables of this paper show it as "TensorFold modified". Where a
 result is from a different group of settings, the text gives the group. Appendixes E.4 and E.5 give the changes and the other
-groups of settings that we measured. [`recipes/tensorfold-fork.md`](recipes/tensorfold-fork.md) gives the build
+groups of settings that we measured. [`recipes/tensorfold-modified.md`](recipes/tensorfold-modified.md) gives the build
 steps.
 
 ### A.4 The host
@@ -823,7 +826,7 @@ Section 6 gives the measured effect of the links on Jovian Judgement.
 Each engine divides the model between the four GPUs. At the end of each layer, the GPUs must send partial results
 to each other. There are two methods to move a tensor from one GPU to a different GPU.
 
-<img src="figures/figure7-gpu-to-gpu-copy-paths.png" alt="The two methods to move a tensor between two GPUs" width="740">
+<img src="figures/figure7-gpu-to-gpu-copy-paths.png" alt="The two methods to move a tensor between two GPUs" width="840">
 
 *Figure 7. The two methods to move a tensor between two of the four GPUs. With the direct GPU links off, a transfer
 is two copies through host memory. With the links on, the source GPU writes the data into the memory of the
@@ -931,7 +934,7 @@ in the TensorFold recipe come from this tool.
 - The total speed of `longctx.py` is for the time in which all C streams decode together.
 - The speed of each stream and the time to the first token are the median of the C streams.
 - The vLLM servers give the number of output tokens with each part of a stream. TensorFold gives it only at the end
-  of a stream. For TensorFold and the TensorFold fork, `longctx.py` thus counts the characters of the stream and
+  of a stream. For TensorFold and TensorFold modified, `longctx.py` thus counts the characters of the stream and
   scales them to the token count at the end.
 - The scaled count is exact at the end of a stream. Before the end, it is an estimate. It applies to the results of
   the two TensorFold servers in three tests. These are the long-context test, the test of Appendix C.5, and the
@@ -946,7 +949,7 @@ found the shared context in the cache. There are 20 of these waves.
 | Server | Waves | Speed from the probe, as a percentage of the speed from the log |
 |---|---:|---:|
 | TensorFold | 8 | 94% to 98% |
-| TensorFold fork | 12 | 95% to 98% |
+| TensorFold modified | 12 | 95% to 98% |
 
 In each of these waves, the value from the probe was 2% to 6% lower than the value from the log. The two values do
 not have the same definition. The log uses the decode time of each request, and the probe uses the time in which
@@ -1021,7 +1024,7 @@ not show equal answers. We measured the accuracy of five servers on Python tasks
 - **Eight tasks** were in operation at the same time. Each task had a time limit of 1,200 s.
 - **The grade** comes from the tests of EvalPlus. "Base tests" are the tests of the original data set. "All tests"
   are the base tests and the added tests of EvalPlus. Each task gets one attempt.
-- **The servers** were the TensorFold fork, TensorFold, Jovian Judgement r24 (two runs), Jovian Judgement r28.1, and
+- **The servers** were TensorFold modified, TensorFold, Jovian Judgement r24 (two runs), Jovian Judgement r28.1, and
   the official vLLM. The two releases of Jovian Judgement were in the usual 8-slot configuration with the direct GPU
   links on and the standard chat template. The official vLLM was in its default configuration, with 16 slots and
   the chat template with the thinking switch.
@@ -1033,10 +1036,10 @@ not show equal answers. We measured the accuracy of five servers on Python tasks
 The agent can run its code, read the errors, and write the file again. **Do not compare these scores with scores
 from single requests.** [`quality/README.md`](quality/README.md) gives the settings of the harness and the commands.
 
-### B.4 The equality tests of the TensorFold fork
+### B.4 The equality tests of TensorFold modified
 
-The changes of the TensorFold fork must not change the replies. For nine of its eleven groups of settings, we
-compared the replies of the TensorFold fork with the replies of TensorFold before the speed tests. The two other
+The changes of TensorFold modified must not change the replies. For nine of its eleven groups of settings, we
+compared the replies of TensorFold modified with the replies of TensorFold before the speed tests. The two other
 groups are the larger prefill chunks and the profiler (Appendix E.5). Section 8 gives the results.
 
 - **The gates of the recipe.** The tool `tf_bench.py` of the recipe compares reply hashes for greedy requests and
@@ -1056,7 +1059,7 @@ groups are the larger prefill chunks and the profiler (Appendix E.5). Section 8 
 | 1 | 3 October, 19:11 to 20:28 | TensorFold and Jovian Judgement r24: all speed tests |
 | 2 | 3 October, 22:17 to 22:56 | The official vLLM in two configurations: all speed tests |
 | 3 | 3 October, 23:41 to 23:59 | TensorFold and Jovian Judgement r24: the long-context test with top_k 20 |
-| 4 | 4 October, 00:43 to 04:11 | The TensorFold fork: equality tests and speed tests. The quality run on three servers. |
+| 4 | 4 October, 00:43 to 04:11 | TensorFold modified: equality tests and speed tests. The quality run on three servers. |
 | 5 | 4 October, 14:39 to 18:18 | Jovian Judgement r24: a second quality run and the test with four cold requests. Jovian Judgement r28.1: all tests. The official vLLM: the long-context test with top_k 20, the test with four cold requests, and a quality run. The prompt-reuse check on each of these servers. |
 
 One measurement is from before these sessions and before the last restart of the host. It is the prefill speed of
@@ -1076,9 +1079,9 @@ Jovian Judgement with the direct GPU links off and 16 slots (Appendix C.7).
     no top_k, and with top_k 20 again.
 12. We started Jovian Judgement with 16 slots and did the same three tests.
 13. In the fourth session, we started TensorFold and stored the references for the equality tests.
-14. We started the TensorFold fork 11 times, each time with one group of settings. After each start, we did the
+14. We started TensorFold modified 11 times, each time with one group of settings. After each start, we did the
     equality tests and then the speed tests for that group.
-15. We did the quality run on the TensorFold fork, then on TensorFold, and then on Jovian Judgement.
+15. We did the quality run on TensorFold modified, then on TensorFold, and then on Jovian Judgement.
 16. In the fifth session, we did the test with four cold requests and a second quality run on Jovian Judgement r24 in
     its usual configuration.
 17. We started release r28.1 of Jovian Judgement with 16 slots. We did the long-context test three times, and the
@@ -1105,7 +1108,7 @@ The test suite of steps 4, 6, 9, 19, and 21 is the sequence in [`recipes/method.
 A table cell with more than one run shows the mean of the runs. [`data/`](data/) contains each run, and
 [`data/README.md`](data/README.md) gives the name of each run.
 
-- **The sparkDash tests** have one run on TensorFold, on the TensorFold fork, and on Jovian Judgement. In tests before
+- **The sparkDash tests** have one run on TensorFold, on TensorFold modified, and on Jovian Judgement. In tests before
   these sessions, greedy cells on Jovian Judgement changed by 3% to 6% between runs. Those tests are not in this
   repository.
 - **The official vLLM.** We did the sparkDash tests two times on each server, and the tables show the second run.
@@ -1113,11 +1116,11 @@ A table cell with more than one run shows the mean of the runs. [`data/`](data/)
 - **The long-context test with no top_k** has two runs on TensorFold and on Jovian Judgement, approximately four hours
   apart. The difference was 3% or less on TensorFold and 5% or less on Jovian Judgement.
 - **The long-context test with top_p 0.95 and top_k 20** has two runs on each server. The difference between the two runs was
-  1% to 4% on TensorFold and 0% to 9% on Jovian Judgement. On the TensorFold fork, it was 1% to 9%. On Jovian
+  1% to 4% on TensorFold and 0% to 9% on Jovian Judgement. On TensorFold modified, it was 1% to 9%. On Jovian
   Judgement r28.1 with the policy `aligned`, it was 1% to 5%. The last item of this list gives the official vLLM.
 - **The quality run** has two runs on Jovian Judgement r24 and one run on each other server. The two runs of
-  release r24 passed 478 and 475 tasks, and they had a different result for 29 tasks. TensorFold and the TensorFold
-  fork have the same weights, and their two runs were different for 3 of 542 tasks (Appendix D.1).
+  release r24 passed 478 and 475 tasks, and they had a different result for 29 tasks. TensorFold and TensorFold
+  modified have the same weights, and their two runs were different for 3 of 542 tasks (Appendix D.1).
 - **Release r28.1 of Jovian Judgement** has two runs of the sparkDash tests: one with its default settings and one
   with the policy `aligned`. In the cells of the table in Appendix C.8, the difference between the two runs was
   9% or less.
@@ -1137,7 +1140,7 @@ from [`data/`](data/).
 
 The table shows one line for each test.
 
-| Test | TensorFold | TensorFold fork | Jovian Judgement r24 | Jovian Judgement r28.1 | Official vLLM: default / tuned |
+| Test | TensorFold | TensorFold modified | Jovian Judgement r24 | Jovian Judgement r28.1 | Official vLLM: default / tuned |
 |---|---:|---:|---:|---:|---:|
 | Short greedy answers (prose), 1 request, tokens/s | 247 | 261 | 225 | 239 | 185 / 191 |
 | Short greedy answers (prose), 16 requests, tokens/s | 1,091 | 1,134 | 1,105 | 1,079 | 866 / 958 |
@@ -1151,7 +1154,7 @@ The table shows one line for each test.
 | Python tasks that pass all tests through the pi agent, of 542 | 475 | 476 | 478 and 475 | 469 | 479 / no test |
 | Median time for a model call in the agent run, s | 0.88 | 0.80 | 1.48 and 1.61 | 0.87 | 1.63 / no test |
 
-In this table, the values of the TensorFold fork are from its last configuration (Appendix A.3), with one exception.
+In this table, the values of TensorFold modified are from its last configuration (Appendix A.3), with one exception.
 The test with four cold requests had the sampler settings and burst reuse on, and CUDA IPC off. The column of Jovian
 Judgement r28.1 shows the release with its default settings. In the test with four cold requests, the two releases
 of Jovian Judgement had 8 slots. "No value" is a test that gave no speed (section 4).
@@ -1164,27 +1167,27 @@ Section 2 gives the summary of this test and Figure 2.
 |---|---|---:|---:|---:|---:|---:|
 | Prose | TensorFold | 247 | 419 | 594 | 844 | 1,091 |
 |  | TensorFold, published values | 264 | 434 | 586 | 821 | 1,061 |
-|  | TensorFold fork | 261 | 427 | 588 | 871 | 1,134 |
+|  | TensorFold modified | 261 | 427 | 588 | 871 | 1,134 |
 |  | Jovian Judgement r24 | 225 | 378 | 604 | 799 | 1,105 |
 |  | Jovian Judgement r28.1 | 239 | 367 | 575 | 775 | 1,079 |
 |  | Official vLLM, default | 185 | 277 | 427 | 593 | 866 |
 |  | Official vLLM, tuned | 191 | 301 | 435 | 637 | 958 |
 | Code | TensorFold | 426 | 626 | 773 | 1,040 | 1,319 |
 |  | TensorFold, published values | 430 | 613 | 760 | 1,014 | 1,268 |
-|  | TensorFold fork | 422 | 590 | 807 | 1,077 | 1,350 |
+|  | TensorFold modified | 422 | 590 | 807 | 1,077 | 1,350 |
 |  | Jovian Judgement r24 | 315 | 510 | 721 | 934 | 1,265 |
 |  | Jovian Judgement r28.1 | 316 | 503 | 566 | 852 | 1,123 |
 |  | Official vLLM, default | 210 | 352 | 485 | 689 | 955 |
 |  | Official vLLM, tuned | 247 | 379 | 506 | 710 | 826 |
 | Count task | TensorFold | 498 | 816 | 1,020 | 1,427 | 1,930 |
 |  | TensorFold, published values | 540 | 878 | 1,018 | 1,487 | 2,041 |
-|  | TensorFold fork | 500 | 806 | 1,054 | 1,501 | 2,015 |
+|  | TensorFold modified | 500 | 806 | 1,054 | 1,501 | 2,015 |
 |  | Jovian Judgement r24 | 342 | 586 | 890 | 1,433 | 1,739 |
 |  | Jovian Judgement r28.1 | 340 | 557 | 904 | 1,339 | 1,600 |
 |  | Official vLLM, default | 245 | 428 | 649 | 982 | 1,461 |
 |  | Official vLLM, tuned | 259 | 437 | 641 | 1,097 | 1,785 |
 | JSON | TensorFold | 349 | 561 | 853 | 1,260 | 1,475 |
-|  | TensorFold fork | 352 | 555 | 885 | 1,303 | 1,457 |
+|  | TensorFold modified | 352 | 555 | 885 | 1,303 | 1,457 |
 |  | Jovian Judgement r24 | 325 | 516 | 732 | 1,044 | 1,516 |
 |  | Jovian Judgement r28.1 | 307 | 510 | 749 | 1,026 | 1,486 |
 |  | Official vLLM, default | 218 | 347 | 492 | 794 | 1,011 |
@@ -1204,7 +1207,7 @@ stream and the time to the first token.
   accepted draft tokens in each round. We did not measure this.
 - **TensorFold and its published values.** TensorFold gave the decode speeds that its recipe publishes. The
   difference was 8% or less in each of the 15 cells that we compared.
-- **The TensorFold fork** gave 94% to 106% of the speed of TensorFold in each cell. Its changes do not apply to
+- **TensorFold modified** gave 94% to 106% of the speed of TensorFold in each cell. Its changes do not apply to
   greedy requests.
 - **The official vLLM.** In the default configuration, it gave 67% to 84% of the decode speed of Jovian Judgement. The
   mean was 72%. In the tuned configuration, it gave 65% to 103%, and the mean was 78%.
@@ -1225,7 +1228,7 @@ TensorFold at 16 requests, and the difference was 1% at one request.
 | Server | 1 | 8 | 12 | 16 |
 |---|---:|---:|---:|---:|
 | TensorFold | 233 | 746 | 885 | 1,000 |
-| TensorFold fork | 219 | 761 | 889 | 1,033 |
+| TensorFold modified | 219 | 761 | 889 | 1,033 |
 | Jovian Judgement r24 | 230 | 763 | 928 | 1,062 |
 | Jovian Judgement r28.1 | 227 | 742 | 896 | 1,031 |
 | Official vLLM, default | 163 | 572 | 722 | 848 |
@@ -1239,7 +1242,7 @@ Section 3 gives the summary of this test and Figure 3.
 |---|---:|---:|---:|---:|---:|---:|
 | TensorFold | 8,300 | 8,729 | 9,093 | 9,263 | 9,100 | 8,679 |
 | TensorFold, published values | 8,416 | 6,903 | 6,508 | 5,527 | 8,272 | 7,842 |
-| TensorFold fork | 7,274 | 8,868 | 9,220 | 9,370 | 9,200 | 8,766 |
+| TensorFold modified | 7,274 | 8,868 | 9,220 | 9,370 | 9,200 | 8,766 |
 | Jovian Judgement r24, direct GPU links on | 10,787 | 11,160 | 11,235 | 11,141 | 10,160 | 10,030 |
 | Jovian Judgement r24, direct GPU links off (8 slots) | 6,802 | 7,012 | 7,090 | 7,070 | 6,950 | 6,718 |
 | Jovian Judgement r28.1 | 10,353 | 10,752 | 10,989 | 10,929 | 9,907 | 9,850 |
@@ -1254,7 +1257,7 @@ the second of two runs.
   tokens. A 256K prompt got its first token after 26.1 s on Jovian Judgement and after 30.2 s on TensorFold.
 - **TensorFold and its published values.** From 16K to 64K, TensorFold was faster on our host than its published
   values. We did not find the cause.
-- **The TensorFold fork** gave 101% to 102% of the speed of TensorFold from 16K to 256K tokens. At 8K tokens it gave
+- **TensorFold modified** gave 101% to 102% of the speed of TensorFold from 16K to 256K tokens. At 8K tokens it gave
   88%. Its changes do not apply to the prefill of one prompt.
 - **The official vLLM gave 60% to 69% of the prefill speed of Jovian Judgement.** In its default configuration, its
   speed was near to the speed of Jovian Judgement with the direct GPU links off. The difference was 1% or less. In
@@ -1271,16 +1274,16 @@ the second of two runs.
 Section 4 gives the summary of this test, the table, and Figure 4.
 
 - **Two runs.** With top_k 20, each cell is the mean of two runs. With top_p 0.95 and no top_k, each cell is the
-  mean of two runs, but the cells of the TensorFold fork are one run. With top_p 1.0, each cell is one run. The
+  mean of two runs, but the cells of TensorFold modified are one run. With top_p 1.0, each cell is one run. The
   time to the first token of release r28.1 with its default settings is from one run.
   [`data/concurrent_waves.csv`](data/concurrent_waves.csv) and
-  [`data/fork_arms.csv`](data/fork_arms.csv) contain each run.
+  [`data/modified_arms.csv`](data/modified_arms.csv) contain each run.
 - **The cache.** The time to the first token is from the test with top_p 0.95 and no top_k. In that test, each
   request found the shared context in the cache, with one exception that the end of this item gives. In the first
   of the two runs with top_k 20, the wave of 4 requests
   did not find the context in the cache (Appendix C.6). The decode speed is for the time after the prefill.
-  For that cell, the two runs gave 480 and 463 tokens/s on TensorFold. They gave 484 and 444 tokens/s on the
-  TensorFold fork, and 588 and 540 tokens/s on Jovian Judgement. On Jovian Judgement r28.1 with its default settings,
+  For that cell, the two runs gave 480 and 463 tokens/s on TensorFold. They gave 484 and 444 tokens/s on TensorFold
+  modified, and 588 and 540 tokens/s on Jovian Judgement. On Jovian Judgement r28.1 with its default settings,
   no request found the context in the cache.
 - **The token count** of the two TensorFold servers is an estimate in this test (Appendix B.1).
 
@@ -1292,19 +1295,19 @@ The results are:
 - **With top_p 0.95 and no top_k,** Jovian Judgement was 1.7, 1.9, and 2.4 times faster than TensorFold. With top_k off, TensorFold
   makes each sampler decision on the CPU. The top_k setting changed the speed of TensorFold by 45% to 62%. It did not
   change the speed of Jovian Judgement.
-- **The TensorFold fork with top_p 0.95** had the same speed with top_k 20 and with no top_k. The difference was 3%
+- **TensorFold modified with top_p 0.95** had the same speed with top_k 20 and with no top_k. The difference was 3%
   or less. With top_k 20, it was equal to TensorFold. With no top_k, it was 1.5 to 1.7 times faster than TensorFold.
-- **The TensorFold fork with top_p 1.0 and no top_k** did not have the decrease of TensorFold. Its speed was 16%
+- **TensorFold modified with top_p 1.0 and no top_k** did not have the decrease of TensorFold. Its speed was 16%
   lower than with top_k 20 at 4 requests, and 1% lower at 8 and 16 requests. The time for a round was not longer
   (see the table below). At 4 requests, each round wrote fewer tokens: 2.4, and 2.8 to 3.2 with the other settings.
-- **Jovian Judgement stayed 1.2 to 1.5 times faster than the TensorFold fork** for each group of sampler settings.
+- **Jovian Judgement stayed 1.2 to 1.5 times faster than TensorFold modified** for each group of sampler settings.
 - **The official vLLM with top_p 0.95** gave 68% to 75% of the speed of Jovian Judgement in the default
   configuration. In the tuned configuration, it gave 80% to 87%. These ranges contain the cells with top_k 20 and
   the cells with no top_k.
 - **The official vLLM and TensorFold with no top_k.** The official vLLM was 1.2 to 1.7 times faster than
   TensorFold in the default configuration, and 1.4 to 2.0 times faster in the tuned configuration. In the
-  tuned configuration, it had the speed of the TensorFold fork at 4 and 8 requests, with a difference of 3% or
-  less. At 16 requests, it was 19% faster than the TensorFold fork.
+  tuned configuration, it had the speed of TensorFold modified at 4 and 8 requests, with a difference of 3% or
+  less. At 16 requests, it was 19% faster than TensorFold modified.
 - **The official vLLM and TensorFold with top_k 20.** In the default configuration, the official vLLM was 17%
   slower than TensorFold at 4 and 8 requests, and 8% faster at 16 requests. In the tuned configuration, it had
   the speed of TensorFold at 4 and 8 requests, with a difference of 1% or less. At 16 requests, it was
@@ -1319,7 +1322,7 @@ The results are:
   [`data/concurrent_waves.csv`](data/concurrent_waves.csv) gives these rows with the status `no_overlap`.
 - **Jovian Judgement r28.1 with the policy `aligned`** had the speed of release r24. The difference was
   5% or less in each cell.
-- **TensorFold and the TensorFold fork gave the first token in the least time.** With the context in the cache,
+- **TensorFold and TensorFold modified gave the first token in the least time.** With the context in the cache,
   their time to the first token was approximately half that of Jovian Judgement.
 
 The request log of TensorFold gives the number of rounds of each request. The time for one round is the decode
@@ -1327,14 +1330,14 @@ time of a request divided by its rounds. TensorFold wrote 2.8 to 3.2 tokens in e
 and each number of requests. The table shows the median of the requests of a wave, in milliseconds. A cell with two
 waves shows the mean of the two medians. Waves that did not find the context in the cache are not in the table.
 
-| Requests | TensorFold, top_k 20 | TensorFold, no top_k | TensorFold fork, top_k 20 | TensorFold fork, no top_k | TensorFold fork, top_p 1.0 |
+| Requests | TensorFold, top_k 20 | TensorFold, no top_k | TensorFold modified, top_k 20 | TensorFold modified, no top_k | TensorFold modified, top_p 1.0 |
 |---:|---:|---:|---:|---:|---:|
 | 4 | 24 | 34 | 25 | 26 | 24 |
 | 8 | 35 | 49 | 34 | 35 | 34 |
 | 16 | 55 | 90 | 55 | 56 | 52 |
 
 On TensorFold with no top_k, the sampler on the CPU makes a round longer, and the effect increases with the number
-of requests. On the TensorFold fork, the time for a round does not change with the sampler settings.
+of requests. On TensorFold modified, the time for a round does not change with the sampler settings.
 [`data/tensorfold_round_times.csv`](data/tensorfold_round_times.csv) gives each wave of requests.
 
 ### C.5 Sampler settings and TensorFold
@@ -1342,7 +1345,7 @@ of requests. On the TensorFold fork, the time for a round does not change with t
 With top_p 1.0 and no top_k, TensorFold gave a total of 40 tokens/s for four streams in the long-context test. We
 stopped that run after its first wave. Then we did tests with four streams and a 1K context to find the cause.
 
-<img src="figures/figure8-tensorfold-sampling-sensitivity.png" alt="TensorFold decode speed for each group of sampler settings" width="740">
+<img src="figures/figure8-tensorfold-sampling-sensitivity.png" alt="TensorFold decode speed for each group of sampler settings" width="840">
 
 *Figure 8. TensorFold with four streams, approximately 1K tokens of context, and 400 tokens for each stream. Each
 bar is one run.*
@@ -1367,10 +1370,10 @@ bar is one run.*
 - **A top_k value moves the sampler to the GPU.** These rows gave 549 tokens/s with top_k 50 and 792 tokens/s with
   the server defaults, which contain top_k 20.
 - **The other servers showed no decrease.** At top_p 1.0 with no top_k and 4 requests, the long-context test gave
-  579 tokens/s on Jovian Judgement. It gave 382 and 445 tokens/s on the official vLLM, and 391 tokens/s on the
-  TensorFold fork.
-- **The TensorFold fork** gave 760 tokens/s in the test of this section with top_p 1.0 and no top_k (thinking on).
-  TensorFold gave 46 tokens/s. This run of the TensorFold fork had the three sampler settings on, and burst reuse
+  579 tokens/s on Jovian Judgement. It gave 382 and 445 tokens/s on the official vLLM, and 391 tokens/s on TensorFold
+  modified.
+- **TensorFold modified** gave 760 tokens/s in the test of this section with top_p 1.0 and no top_k (thinking on).
+  TensorFold gave 46 tokens/s. This run of TensorFold modified had the three sampler settings on, and burst reuse
   and CUDA IPC off.
 
 A client that sends no sampler settings does not get this decrease on TensorFold, because the server defaults are
@@ -1386,14 +1389,14 @@ the large prompt has 83.6K tokens.
 | Prompt | Server | Cold | Same prompt again | Same prompt and a new turn | Answer of the model and a new turn |
 |---|---|---:|---:|---:|---:|
 | 13.5K | TensorFold | 1.98, 2.54 | 0.06, 0.04 | 0.29, 1.94 | 0.27, 0.25 |
-|  | TensorFold fork | 1.92, 2.47 | 0.05, 0.04 | 0.28, 1.95 | 0.27, 0.28 |
+|  | TensorFold modified | 1.92, 2.47 | 0.05, 0.04 | 0.28, 1.95 | 0.27, 0.28 |
 |  | Jovian Judgement r24 | 1.23, 1.23 | 1.28, 1.30 | 0.41, 0.41 | 0.43, 0.42 |
 |  | Jovian Judgement r28.1 | 1.27, 1.26 | 0.04, 0.04 | 1.35, 1.34 | 0.34, 0.33 |
 |  | Jovian Judgement r28.1, policy aligned | 1.24, 1.23 | 0.34, 0.33 | 0.41, 0.41 | 0.43, 0.42 |
 |  | Official vLLM, default | 1.99, 1.96 | 0.61, 0.61 | 0.77, 0.77 | 0.78, 0.78 |
 |  | Official vLLM, tuned | 2.01, 2.00 | 0.62, 0.62 | 0.78, 0.78 | 0.80, 0.79 |
 | 83.6K | TensorFold | 10.3, 10.3 | 0.16, 0.02 | 0.37, 10.4 | 0.32, 0.29 |
-|  | TensorFold fork | 10.2, 10.2 | 0.18, 0.02 | 0.39, 10.4 | 0.34, 0.28 |
+|  | TensorFold modified | 10.2, 10.2 | 0.18, 0.02 | 0.39, 10.4 | 0.34, 0.28 |
 |  | Jovian Judgement r24 | 8.0, 8.0 | 7.9, 7.9 | 0.56, 0.56 | 0.57, 0.56 |
 |  | Jovian Judgement r28.1 | 8.3, 8.1 | 0.14, 0.13 | 8.2, 8.2 | 0.42, 0.42 |
 |  | Jovian Judgement r28.1, policy aligned | 8.1, 8.1 | 0.49, 0.47 | 0.58, 0.57 | 0.58, 0.57 |
@@ -1402,13 +1405,13 @@ the large prompt has 83.6K tokens.
 
 - **A cold prompt.** Jovian Judgement gave the first token of the large prompt after 8.0 s. TensorFold used 10.3 s, and
   the official vLLM used 12.2 s. These times agree with the prefill speeds of Appendix C.3.
-- **The same prompt again.** TensorFold, the TensorFold fork, the official vLLM, and Jovian Judgement r28.1 used
+- **The same prompt again.** TensorFold, TensorFold modified, the official vLLM, and Jovian Judgement r28.1 used
   their cache. Jovian Judgement r24 did the prefill again. With MTP draft tokens, release r24 finds no cache entry
   for a prompt that stops at the same point as an earlier prompt.
 - **The answer of the model and a new turn.** Each server used its cache for a conversation that has one more turn.
   The first token came after 0.3 s on TensorFold and after 0.7 s on the official vLLM. It came after 0.6 s on
   Jovian Judgement r24 and after 0.4 s on release r28.1.
-- **The same prompt and a new turn, with no answer between.** TensorFold and the TensorFold fork did the full prefill
+- **The same prompt and a new turn, with no answer between.** TensorFold and TensorFold modified did the full prefill
   again in one of the two rounds. The cause is below. Jovian Judgement r28.1 with its default settings did the full
   prefill again in each round. With the policy `aligned`, it used its cache.
 
@@ -1445,16 +1448,16 @@ full reply. "Dense retention" is release r28.1 with `--prefix-cache-retention-in
 
 **Requests that arrive together.** Four requests started at the same time on a server with an empty cache. Each
 prompt had 42,250 tokens, and the four prompts were different only at the end. Each request had temperature 1,
-top_p 0.95, top_k 20, and 128 output tokens. The first table shows TensorFold and the TensorFold fork. The TensorFold fork had the three sampler settings and burst reuse on, and CUDA IPC off.
+top_p 0.95, top_k 20, and 128 output tokens. The first table shows TensorFold and TensorFold modified. TensorFold modified had the three sampler settings and burst reuse on, and CUDA IPC off.
 
-| Request | TensorFold: time to first token, s | TensorFold: cached tokens | TensorFold fork: time to first token, s | TensorFold fork: cached tokens |
+| Request | TensorFold: time to first token, s | TensorFold: cached tokens | TensorFold modified: time to first token, s | TensorFold modified: cached tokens |
 |---:|---:|---:|---:|---:|
 | 1 | 9.0 | 0 | 5.5 | 0 |
 | 2 | 21.8 | 0 | 5.5 | 42,240 |
 | 3 | 18.6 | 0 | 5.5 | 42,240 |
 | 4 | 14.4 | 0 | 5.5 | 42,240 |
 
-TensorFold did the prefill of the shared part four times. The TensorFold fork did it one time, and the other three
+TensorFold did the prefill of the shared part four times. TensorFold modified did it one time, and the other three
 requests copied the engine state at token 42,240. The replies had the same token ids on the two servers.
 
 For the vLLM servers, the requests had a different first line and no priority field, and each prompt had 42,251
@@ -1484,14 +1487,14 @@ wave found no cached tokens. The table shows the median time to the first token 
 | Server | First wave of four requests, s | A subsequent wave of four requests, s |
 |---|---:|---:|
 | TensorFold | 24.2 | 0.6 |
-| TensorFold fork | 7.8 | 0.6 |
+| TensorFold modified | 7.8 | 0.6 |
 | Jovian Judgement r24 | 5.8 | 1.1 |
 
-TensorFold did the prefill of the context for each of the four requests. The TensorFold fork did it one time, in
+TensorFold did the prefill of the context for each of the four requests. TensorFold modified did it one time, in
 its last configuration. The time on Jovian Judgement is approximately the time for one prefill of this context. On the
 official vLLM, the first wave got its first token after 1.6 s.
 
-**The causes of the cache misses on TensorFold.** The TensorFold fork can write the cause of each cache decision to
+**The causes of the cache misses on TensorFold.** TensorFold modified can write the cause of each cache decision to
 its log. In the reuse test, the two requests that did the full prefill again had the causes `token_mismatch:13502`
 and `token_mismatch:83581`.
 
@@ -1506,7 +1509,7 @@ and `token_mismatch:83581`.
 
 This miss occurs when a prompt stops less than three tokens after a grid point, and the client then removes the
 start of the answer. It comes from the shape of our probe and from the grid. It is not an error in the cache search.
-The TensorFold fork shows the cause, but it does not remove this miss. A conversation with the answer of the model
+TensorFold modified shows the cause, but it does not remove this miss. A conversation with the answer of the model
 between the two user turns used the cache in each test.
 
 ### C.7 The direct GPU links and Jovian Judgement
@@ -1590,7 +1593,7 @@ Each task got one attempt in each run. Appendix B.3 gives the method.
 
 Section 7 gives the summary of this test and Figure 6.
 
-| Data set | Tests | TensorFold | TensorFold fork | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
+| Data set | Tests | TensorFold | TensorFold modified | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
 |---|---|---:|---:|---:|---:|---:|---:|
 | HumanEval+, 164 tasks | Base tests | 162 (98.8%) | 162 (98.8%) | 162 (98.8%) | 161 (98.2%) | 161 (98.2%) | 161 (98.2%) |
 |  | All tests | 152 (92.7%) | 152 (92.7%) | 156 (95.1%) | 153 (93.3%) | 153 (93.3%) | 155 (94.5%) |
@@ -1611,9 +1614,9 @@ difference is the pass rate of the second server minus the pass rate of the firs
 
 | Pair | The two servers pass | Only the first passes | Only the second passes | No server passes | Second minus first, percentage points (95% interval) | Exact McNemar test, p |
 |---|---:|---:|---:|---:|---:|---:|
-| TensorFold and the TensorFold fork | 474 | 1 | 2 | 65 | +0.2 (−0.4 to +0.8) | 1.00 |
+| TensorFold and TensorFold modified | 474 | 1 | 2 | 65 | +0.2 (−0.4 to +0.8) | 1.00 |
 | TensorFold and Jovian Judgement r24 | 462 | 13 | 16 | 51 | +0.6 (−1.4 to +2.5) | 0.71 |
-| The TensorFold fork and Jovian Judgement r24 | 464 | 12 | 14 | 52 | +0.4 (−1.5 to +2.2) | 0.85 |
+| TensorFold modified and Jovian Judgement r24 | 464 | 12 | 14 | 52 | +0.4 (−1.5 to +2.2) | 0.85 |
 | Jovian Judgement r24, the first run and the second run | 462 | 16 | 13 | 51 | −0.6 (−2.5 to +1.4) | 0.71 |
 | Jovian Judgement r24 and Jovian Judgement r28.1 | 460 | 18 | 9 | 55 | −1.7 (−3.5 to +0.2) | 0.12 |
 | Jovian Judgement r24, the second run, and Jovian Judgement r28.1 | 458 | 17 | 11 | 56 | −1.1 (−3.0 to +0.8) | 0.34 |
@@ -1623,7 +1626,7 @@ difference is the pass rate of the second server minus the pass rate of the firs
 - **TensorFold and Jovian Judgement** had a different result for 29 tasks. TensorFold passed 13 of these tasks, and Jovian
   Judgement passed 16. The difference of the pass rates is 0.6 percentage points, with a 95% interval of −1.4 to
   +2.5. The test did not find a difference (p = 0.71). It does not show that the two servers are equal.
-- **TensorFold and the TensorFold fork** have the same weights. Their results were different for 3 of the 542 tasks.
+- **TensorFold and TensorFold modified** have the same weights. Their results were different for 3 of the 542 tasks.
 - **The two runs of Jovian Judgement r24** had a different result for 29 tasks. The first run passed 16 of these
   tasks, and the second run passed 13. Thus a difference of this size between two servers is in the range of the
   variation between two runs of one server.
@@ -1645,7 +1648,7 @@ The first prompt of each task had 1,384 tokens on each server
 ([`data/quality_pi_tasks.csv`](data/quality_pi_tasks.csv)). After that, the servers did different work for the same
 tasks.
 
-|  | TensorFold | TensorFold fork | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
+|  | TensorFold | TensorFold modified | Jovian Judgement r24 | Jovian Judgement r24, second run | Jovian Judgement r28.1 | Official vLLM, default |
 |---|---:|---:|---:|---:|---:|---:|
 | Model calls | 2,568 | 2,567 | 2,361 | 2,343 | 2,394 | 2,492 |
 | Output tokens, thoughts included | 621K | 617K | 889K | 774K | 797K | 808K |
@@ -1669,12 +1672,12 @@ tasks.
   1.48 s and 1.61 s on release r24. The two releases made almost the same number of calls. The sum of the call
   times was 7,971 s on release r28.1. It was 11,469 s and 11,419 s on release r24. A possible cause is the cache
   state that release r28.1 keeps at the end of each reply (section 5). We did not measure this cause.
-- **The TensorFold fork used 11% less time for its model calls than TensorFold,** for almost the same number of
+- **TensorFold modified used 11% less time for its model calls than TensorFold,** for almost the same number of
   tokens. We have one run for each, and thus we do not know if this difference is larger than the variation.
 - **Each task with no solution file** had a model call that stopped at the limit of 32,768 tokens. Almost all of
   these tokens were thoughts.
-- **The time limit** stopped one task on TensorFold and on the TensorFold fork during a command that the agent
-  started. The file that the agent wrote before the command passed all tests. On the TensorFold fork, the limit also
+- **The time limit** stopped one task on TensorFold and on TensorFold modified during a command that the agent
+  started. The file that the agent wrote before the command passed all tests. On TensorFold modified, the limit also
   stopped a second task during a command. The file of that task did not pass. TensorFold completed that task, and
   its file did not pass. On Jovian Judgement r28.1, the limit stopped two tasks during a command. The file of one
   task passed all tests, and the file of the other task passed the base tests only. On the official vLLM, the limit stopped one task during a
@@ -1699,11 +1702,11 @@ official vLLM had 16 slots. The relay of the harness recorded the time of each m
   gives 469 tasks (86.5%) for the same 542 tasks, with thinking on and greedy decode. The card does not give its
   harness. Our value for TensorFold through the agent is 475 tasks (87.6%). The two values come from different
   methods.
-- TensorFold and the TensorFold fork had the same result for 539 of the 542 tasks.
+- TensorFold and TensorFold modified had the same result for 539 of the 542 tasks.
 - The two runs of Jovian Judgement r24 had the same result for 513 of the 542 tasks. Thus one run for each server
   cannot show a difference of a few tasks.
 
-## Appendix E. Why the servers are different, and the changes of the TensorFold fork
+## Appendix E. Why the servers are different, and the changes of TensorFold modified
 
 Appendixes E.1 to E.3 come from the source code, from the start logs, and from one profile. We did not measure the effect
 of each function. Where the text gives a cause, it is a possible cause, unless a test of this paper isolates it.
@@ -1790,8 +1793,8 @@ during prefill and calculates with 16-bit values. Jovian Judgement uses NVFP4 ke
 format is a possible cause of a part of the prefill difference. We did not measure it.
 
 **The parts of a decode round.** TensorFold has a profiler for the GPU time of a round (`TF_GLM_SEGPROF`). In
-release 1.0.1, this setting stopped each request with an error. The TensorFold fork corrects the error. We made the
-profile on the TensorFold fork with the three sampler settings on. The profiler measures one of four rounds a second
+release 1.0.1, this setting stopped each request with an error. TensorFold modified corrects the error. We made the
+profile on TensorFold modified with the three sampler settings on. The profiler measures one of four rounds a second
 time. Each report line is the mean of 40 measured rounds. The table shows five of the 19 report lines, and the times
 are in milliseconds.
 
@@ -1806,7 +1809,7 @@ are in milliseconds.
 The parts are time spans on the GPU, and they are not a division of the round. The shared expert operates at the
 same time as other parts. Thus the parts can sum to more than the GPU time of the round. The last column is the head
 and the remainder, and it is then negative. The two lines for the 1K context contain rounds of two waves.
-[`data/fork_round_profile.csv`](data/fork_round_profile.csv) contains all 19 report lines.
+[`data/modified_round_profile.csv`](data/modified_round_profile.csv) contains all 19 report lines.
 
 - At 16 requests with the long context, a round has 57 rows and 51 ms of GPU time. The routed experts have 34% of
   this time, the sparse attention 25%, and the transfers between the ranks 23%.
@@ -1814,7 +1817,7 @@ and the remainder, and it is then negative. The two lines for the 1K context con
 - The sparse attention is the part that increases with the context. For approximately 30 rows, it used 2.6 ms with
   the 1K context and 7.2 ms with the 56K context.
 - The GPU time of these lines is near to the time for a round in a run with no profiler. Appendix C.4 gives 25 ms,
-  34 ms, and 55 ms for a round of the TensorFold fork with top_k 20. The two values are from different runs.
+  34 ms, and 55 ms for a round of TensorFold modified with top_k 20. The two values are from different runs.
 
 ### E.3 Functions of Jovian Judgement and their equivalents in TensorFold
 
@@ -1823,34 +1826,34 @@ and the remainder, and it is then negative. The two lines for the 1K context con
 | PCIe all-reduce for small tensors | Not the same. Patches 0058 and 0070 add an all-gather through CUDA IPC. The release uses NCCL. | A large code change. TensorFold adds the partial results as FP32 values in a fixed sequence. An all-reduce in BF16 changes the results. |
 | PCIe all-reduce in two steps for medium tensors | Yes: patch 0078 (`TF_GLM_TWOSHOT_ROWS=8`) | The recipe has it. |
 | All-reduce, residual add, and norm in one kernel | In part: patch 0069 (`TF_GLM_FUSE=all`) | A large code change |
-| Sampler on the GPU for top_k and top_p | In part: patch 0065, for greedy rows and top_k rows only | Yes. The TensorFold fork has it (Appendix E.4). |
+| Sampler on the GPU for top_k and top_p | In part: patch 0065, for greedy rows and top_k rows only | Yes. TensorFold modified has it (Appendix E.4). |
 | MTP draft tokens for concurrent requests | No. The recipe uses the DFlash2 drafter. MTP operates with one request only. | A large code change |
 | Draft depth that changes with the number of accepted tokens | In part: the draft policies of patches 0018 and 0035 | Settings. We found no effect (Appendix E.5). |
 | Prefetch of weights into the L2 cache | Yes: patch 0046, for a maximum of 64 rows | Settings. We found no effect (Appendix E.5). |
-| Scheduler that divides the compute time between prefill and decode | In part: `TF_GLM_FILL_ROWS` and the priorities of patch 0066. The share is a count of steps. | A small code change. The TensorFold fork has it, with no GPU test (Appendix E.4). |
-| Prefix cache with shared pages | A different design: copies of the engine state | A first step is in the TensorFold fork: burst reuse (Appendix E.4). |
+| Scheduler that divides the compute time between prefill and decode | In part: `TF_GLM_FILL_ROWS` and the priorities of patch 0066. The share is a count of steps. | A small code change. TensorFold modified has it, with no GPU test (Appendix E.4). |
+| Prefix cache with shared pages | A different design: copies of the engine state | A first step is in TensorFold modified: burst reuse (Appendix E.4). |
 | CUDA graphs for each batch width | Yes: patches 0030 and 0077 | The recipe has it. |
 | NVFP4 kernels for the experts | No. The recipe uses EXL3 experts and FP8 dense layers. | A large change. It needs different weights and a new quality reference. |
 | FlashKDA for the prefill of the linear attention | Its own chunked kernels (patch 0012 and later patches) | A large code change |
 | B12X kernels for the sparse attention and its index | Its own kernels (patches 0060 and 0076) | A large code change |
 
 Many functions of Jovian Judgement have an equivalent in the recipe. The sampler on the CPU was the largest difference
-that we found in the source code, and the TensorFold fork removes it. But the sampler is not the only cause of the
-difference in the long-context test. With the GPU sampler, Jovian Judgement was 1.2 to 1.5 times faster than the
-TensorFold fork (Appendix C.4). The profile shows three large parts of a round: the experts, the sparse attention,
+that we found in the source code, and TensorFold modified removes it. But the sampler is not the only cause of the
+difference in the long-context test. With the GPU sampler, Jovian Judgement was 1.2 to 1.5 times faster than TensorFold
+modified (Appendix C.4). The profile shows three large parts of a round: the experts, the sparse attention,
 and the transfers. The table gives changes to these three parts as large changes. We did not measure how much each
 part adds to the difference between the two engines.
 
-### E.4 The changes of the TensorFold fork
+### E.4 The changes of TensorFold modified
 
-Section 9 gives the result of the TensorFold fork.
+Section 9 gives the result of TensorFold modified.
 
-We made the TensorFold fork to do tests of five proposals that came from the analysis in Appendixes E.1 to E.3. AI tools for code
+We made TensorFold modified to do tests of five proposals that came from the analysis in Appendixes E.1 to E.3. AI tools for code
 wrote the changes from the proposals. We examined the changes and did the tests.
-[`recipes/tensorfold-fork.md`](recipes/tensorfold-fork.md) gives the build steps and the method of each change.
-[`patches/tensorfold-fork-engine.patch`](patches/tensorfold-fork-engine.patch) contains the changes.
+[`recipes/tensorfold-modified.md`](recipes/tensorfold-modified.md) gives the build steps and the method of each change.
+[`patches/tensorfold-modified-engine.patch`](patches/tensorfold-modified-engine.patch) contains the changes.
 
-| Proposal | Change in the TensorFold fork | Setting | Result |
+| Proposal | Change in TensorFold modified | Setting | Result |
 |---|---|---|---|
 | 1. A sampler for the full vocabulary that sends only one token for each rank | Each rank finds its best token and its two best scores on the GPU. The sampler accepts the best token if the result is certain. | `TENSORFOLD_GPU_SAMPLE_FULL=1` | The decrease at top_p 1.0 did not occur (Appendix C.5). |
 | 2. The top_p rule on the GPU | The GPU keeps the candidates of a row with no top_k, and it calculates the top_p limit. The step with 16,384 candidates at top_p 1.0 is off. | `TENSORFOLD_GPU_SAMPLE_NUCLEUS=1`, `TENSORFOLD_SAMPLE_SKIP_FUTILE=1` | The speed with no top_k was equal to the speed with top_k 20 (Appendix C.4). |
@@ -1860,7 +1863,7 @@ wrote the changes from the proposals. We examined the changes and did the tests.
 
 The results of the first three rows are for the sampler settings and the requests of our tests.
 
-Each setting is off by default. With all settings off, the TensorFold fork does the same steps as the release. The
+Each setting is off by default. With all settings off, TensorFold modified does the same steps as the release. The
 new sampler paths accept a token only if the result is certain. A row that is not certain uses the CPU rule of the
 release. Thus the changes keep the distribution and the tokens of the release (section 8.2).
 
@@ -1967,17 +1970,17 @@ We did no test of `TF_GLM_FILL_ROWS=4096`, which gives full prefill chunks while
 - **The times of the agent run are not a speed test with equal work.** The servers wrote different numbers of
   tokens for the same tasks.
 
-**The analysis and the TensorFold fork**
+**The analysis and TensorFold modified**
 
 - **Appendixes E.1 to E.3 come from the source code, the start logs, and one profile.** We did not measure the effect of each
   function of Jovian Judgement. The profile is from a run with the profiler on, and its parts are not a division of the
   round time.
 - **Some values are not in `raw/`.** These are the start times of the servers, the GPU load during the decrease of
   Appendix C.5, and the host data of Appendix A.4. They come from our notes of the sessions.
-- **The TensorFold fork is not a release.** AI tools for code wrote its changes, and the TensorFold project did not
+- **TensorFold modified is not a release.** AI tools for code wrote its changes, and the TensorFold project did not
   examine them. Section 8.2 gives the scope of our equality tests. We did no GPU test of the scheduler credit from
   measured time.
-- **Each group of settings of the TensorFold fork has one start of the server.** Each of its tests has one run. The
+- **Each group of settings of TensorFold modified has one start of the server.** Each of its tests has one run. The
   long-context test with top_k 20 has two runs in the configuration of Appendix A.3.
 
 **License.** The DFlash2 drafter weights that TensorFold uses have the CC BY-NC-ND 4.0 license (non-commercial).
@@ -1995,8 +1998,8 @@ We did no test of `TF_GLM_FILL_ROWS=4096`, which gives full prefill chunks while
 5. For the official vLLM, use the commands in [`recipes/vllm-official.md`](recipes/vllm-official.md).
 6. Run sparkDash and then the probes on each server. Refer to [`recipes/method.md`](recipes/method.md) for the
    commands.
-7. For the TensorFold fork, build the image and do the equality tests first. Refer to
-   [`recipes/tensorfold-fork.md`](recipes/tensorfold-fork.md).
+7. For TensorFold modified, build the image and do the equality tests first. Refer to
+   [`recipes/tensorfold-modified.md`](recipes/tensorfold-modified.md).
 8. For the quality run, use the commands in [`quality/README.md`](quality/README.md).
 
 **The data, the tables, and the figures.** The directory [`raw/`](raw/) contains a copy of our raw output.
@@ -2038,7 +2041,7 @@ speed, but only a test can show that it does. The other libraries also have kern
 This model is too large for one GPU. Thus the server divides the model between the four GPUs. The model has 45
 layers, and each token goes through each layer. A layer has two parts: an attention part and a feed-forward part.
 
-<img src="figures/figure9-b12x-two-types-of-work.png" alt="The two types of work for one layer of the model on four GPUs" width="740">
+<img src="figures/figure9-b12x-two-types-of-work.png" alt="The two types of work for one layer of the model on four GPUs" width="840">
 
 *Figure 9. The work for one layer of the model. The white boxes are work in each GPU, and the gray bars are work
 between the GPUs. In each part of the layer, each GPU calculates a partial result. Then an all-reduce adds the four
@@ -2084,7 +2087,7 @@ not measure the effect of each idea.
 GPU memory, and the subsequent kernel reads it again. One kernel for a group of steps starts one time. It can also
 write and read less data.
 
-<img src="figures/figure10-b12x-one-kernel-for-three-steps.png" alt="Three steps as two operations, and one kernel that does the three steps" width="740">
+<img src="figures/figure10-b12x-one-kernel-for-three-steps.png" alt="Three steps as two operations, and one kernel that does the three steps" width="840">
 
 *Figure 10. Three steps of the draft head: the all-reduce, the addition of a saved value, and the normalization.
 Panel A shows the three steps as two operations. Panel B shows the one kernel of B12X that does the three steps.
@@ -2109,7 +2112,7 @@ and a large prefill step moves a large quantity. One method is not the best for 
 of B12X has three methods. The size and the layout of the message select the method. NCCL does each message that
 the three methods do not accept. NCCL is the general library of NVIDIA for transfers between GPUs.
 
-<img src="figures/figure11-b12x-method-for-each-size.png" alt="The method of the all-reduce of Jovian Judgement for each message size" width="740">
+<img src="figures/figure11-b12x-method-for-each-size.png" alt="The method of the all-reduce of Jovian Judgement for each message size" width="840">
 
 *Figure 11. The method of the all-reduce of Jovian Judgement r24 for each message size. The limits in bytes are
 from the start log. The numbers of rows and the three examples are a calculation from the source code (see the text
@@ -2210,7 +2213,7 @@ If one of these conditions is not true, use the official vLLM. Its kernels opera
 The scripts, the probes, the data, and the text in this repository have the MIT license. Refer to
 [`LICENSE`](LICENSE). The recipes, the engines, and the model weights have their own licenses.
 
-- [`patches/tensorfold-fork-engine.patch`](patches/tensorfold-fork-engine.patch) is a change to TensorFold. It has
+- [`patches/tensorfold-modified-engine.patch`](patches/tensorfold-modified-engine.patch) is a change to TensorFold. It has
   the Apache License 2.0 of TensorFold.
 - The task prompts in `quality/datasets/` come from HumanEval (MIT license) and MBPP (CC BY 4.0), through EvalPlus
   (Apache License 2.0).

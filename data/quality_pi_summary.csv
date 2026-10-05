@@ -2,9 +2,9 @@ run,engine,configuration,data_set,tasks,base_tests_pass,all_tests_pass,base_test
 tensorfold,TensorFold,recipe 1.0.1,HumanEval+,164,162,152,98.8,95.7,99.7,92.7,87.6,95.8
 tensorfold,TensorFold,recipe 1.0.1,MBPP+,378,369,323,97.6,95.5,98.7,85.4,81.5,88.6
 tensorfold,TensorFold,recipe 1.0.1,both,542,531,475,98.0,96.4,98.9,87.6,84.6,90.1
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on",HumanEval+,164,162,152,98.8,95.7,99.7,92.7,87.6,95.8
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on",MBPP+,378,370,324,97.9,95.9,98.9,85.7,81.8,88.9
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on",both,542,532,476,98.2,96.6,99.0,87.8,84.8,90.3
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on",HumanEval+,164,162,152,98.8,95.7,99.7,92.7,87.6,95.8
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on",MBPP+,378,370,324,97.9,95.9,98.9,85.7,81.8,88.9
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on",both,542,532,476,98.2,96.6,99.0,87.8,84.8,90.3
 vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",HumanEval+,164,162,156,98.8,95.7,99.7,95.1,90.7,97.5
 vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",MBPP+,378,370,322,97.9,95.9,98.9,85.2,81.3,88.4
 vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",both,542,532,478,98.2,96.6,99.0,88.2,85.2,90.6

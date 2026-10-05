@@ -4,7 +4,7 @@
   burst_reuse.py make --workload burst --lines 2800 --streams 4 --output-tokens 128 --temperature 1 --top-k 20 \
       --top-p .95 --thinking-on max --output burst.json
   burst_reuse.py run --fixtures burst.json --base-url http://127.0.0.1:8020 --concurrency 4 --output release.jsonl
-  burst_reuse.py compare release.jsonl fork.jsonl
+  burst_reuse.py compare release.jsonl modified.jsonl
 
 A vLLM server does not accept the text priority field and does not give the reply token ids in the same form:
 use 'make --no-priority' and 'run --no-token-ids' for it. 'make --tag X' puts X into the first line of the prompt, so a

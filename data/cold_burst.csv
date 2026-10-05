@@ -3,14 +3,14 @@ server,request,prompt_tokens,cached_tokens_reported,completion_tokens,ttft_s,rep
 "TensorFold, recipe 1.0.1",sibling-1,42250,0,128,21.834,735d6e558f6f6533,
 "TensorFold, recipe 1.0.1",sibling-2,42250,0,128,18.553,2dd64f2903dd3661,
 "TensorFold, recipe 1.0.1",sibling-3,42250,0,128,14.428,49c4c60f5302ac29,
-"TensorFold fork, all switches off",sibling-0,42250,0,128,41.834,ee3cf5652602cf89,first long prompt after the server start: the prompt kernels were not yet used
-"TensorFold fork, all switches off",sibling-1,42250,0,128,50.74,735d6e558f6f6533,first long prompt after the server start: the prompt kernels were not yet used
-"TensorFold fork, all switches off",sibling-2,42250,0,128,47.48,2dd64f2903dd3661,first long prompt after the server start: the prompt kernels were not yet used
-"TensorFold fork, all switches off",sibling-3,42250,0,128,53.443,49c4c60f5302ac29,first long prompt after the server start: the prompt kernels were not yet used
-"TensorFold fork, GPU sampler and burst reuse on",sibling-0,42250,0,128,5.453,ee3cf5652602cf89,
-"TensorFold fork, GPU sampler and burst reuse on",sibling-1,42250,42240,128,5.452,735d6e558f6f6533,
-"TensorFold fork, GPU sampler and burst reuse on",sibling-2,42250,42240,128,5.451,2dd64f2903dd3661,
-"TensorFold fork, GPU sampler and burst reuse on",sibling-3,42250,42240,128,5.45,49c4c60f5302ac29,
+"TensorFold modified, all switches off",sibling-0,42250,0,128,41.834,ee3cf5652602cf89,first long prompt after the server start: the prompt kernels were not yet used
+"TensorFold modified, all switches off",sibling-1,42250,0,128,50.74,735d6e558f6f6533,first long prompt after the server start: the prompt kernels were not yet used
+"TensorFold modified, all switches off",sibling-2,42250,0,128,47.48,2dd64f2903dd3661,first long prompt after the server start: the prompt kernels were not yet used
+"TensorFold modified, all switches off",sibling-3,42250,0,128,53.443,49c4c60f5302ac29,first long prompt after the server start: the prompt kernels were not yet used
+"TensorFold modified, GPU sampler and burst reuse on",sibling-0,42250,0,128,5.453,ee3cf5652602cf89,
+"TensorFold modified, GPU sampler and burst reuse on",sibling-1,42250,42240,128,5.452,735d6e558f6f6533,
+"TensorFold modified, GPU sampler and burst reuse on",sibling-2,42250,42240,128,5.451,2dd64f2903dd3661,
+"TensorFold modified, GPU sampler and burst reuse on",sibling-3,42250,42240,128,5.45,49c4c60f5302ac29,
 "Jovian Judgement r24, 8 slots",sibling-0,42251,,128,4.36,,the same requests with a different first line and no priority field
 "Jovian Judgement r24, 8 slots",sibling-1,42251,,128,8.448,,the same requests with a different first line and no priority field
 "Jovian Judgement r24, 8 slots",sibling-2,42251,,128,8.787,,the same requests with a different first line and no priority field

@@ -101,7 +101,7 @@ For the long-context test with the context in a system message, add `--context-a
       --top-p 0.95 --top-k 20 --thinking-on max --context-as-system \
       --raw longctx-system-p95-topk20-raw.jsonl > longctx-system-p95-topk20.log
 
-**9. Four cold requests with a shared prefix (the vLLM servers).** [`tensorfold-fork.md`](tensorfold-fork.md) gives
+**9. Four cold requests with a shared prefix (the vLLM servers).** [`tensorfold-modified.md`](tensorfold-modified.md) gives
 this test for the two TensorFold servers. A vLLM server does not accept the priority field as text, and it gives no
 token ids. Make the requests with a new first line for each start of a server, and record the times only:
 
@@ -131,9 +131,9 @@ The script uses `transformers`. We ran it in the image of Jovian Judgement with 
 TensorFold does not use `min_tokens`, and it obeys `ignore_eos`. It reads `top_k: -1` as "no top_k". If a request
 gives no `top_k`, TensorFold uses top_k 20. The last group of settings in step 7 gets this default.
 
-## Tests of the TensorFold fork, and the quality run
+## Tests of TensorFold modified, and the quality run
 
-[`tensorfold-fork.md`](tensorfold-fork.md) gives the equality tests and the speed tests of the TensorFold fork. Do the
+[`tensorfold-modified.md`](tensorfold-modified.md) gives the equality tests and the speed tests of TensorFold modified. Do the
 equality tests before the speed tests.
 
 [`../quality/README.md`](../quality/README.md) gives the commands of the quality run through the pi agent. Use the
@@ -170,5 +170,5 @@ Put the output of each server into one directory. `scripts/build_data.py` reads 
 | `isolate.log` | step 7 |
 | `rank0.log` | the request log of a TensorFold server, for the time of a round |
 
-The directories of the TensorFold fork and of the quality run have other file names.
-[`tensorfold-fork.md`](tensorfold-fork.md) and [`../quality/README.md`](../quality/README.md) give them.
+The directories of TensorFold modified and of the quality run have other file names.
+[`tensorfold-modified.md`](tensorfold-modified.md) and [`../quality/README.md`](../quality/README.md) give them.

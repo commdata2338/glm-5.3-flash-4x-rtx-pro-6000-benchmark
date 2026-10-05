@@ -25,24 +25,24 @@ RUNS = {  # folder in raw/: folder under --results
     "vllm-official-pcie-16-slots-pass2": "stock-vllm-v0.31.0/stock-pcie-16-pass2",
     "tensorfold-session3-top-k": "tensorfold-topk20-20261003/tensorfold",
     "jovian-judgement-r24-links-on-16-slots-session3-top-k": "tensorfold-topk20-20261003/vllm-fork-16",
-    # the TensorFold fork: one folder for each start of the server with one group of settings
-    "tensorfold-fork/all-settings-off": "tensorfold-fork-20261004/fork-off",
-    "tensorfold-fork/sampler": "tensorfold-fork-20261004/fork-sampler",
-    "tensorfold-fork/sampler-burst": "tensorfold-fork-20261004/fork-s+burst",
-    "tensorfold-fork/sampler-draft-block-4": "tensorfold-fork-20261004/fork-s+block4",
-    "tensorfold-fork/sampler-draft-depth": "tensorfold-fork-20261004/fork-s+depth",
-    "tensorfold-fork/sampler-weight-prefetch": "tensorfold-fork-20261004/fork-s+l2pf",
-    "tensorfold-fork/sampler-graph-step": "tensorfold-fork-20261004/fork-s+graphstep",
-    "tensorfold-fork/sampler-prefill-8192": "tensorfold-fork-20261004/fork-s+prefill8192",
-    "tensorfold-fork/sampler-profiler": "tensorfold-fork-20261004/fork-s+prof",
-    "tensorfold-fork/sampler-ipc": "tensorfold-fork-20261004/fork-s+ipc",
-    "tensorfold-fork/sampler-burst-ipc": "tensorfold-fork-20261004/fork-best",
-    "tensorfold-fork/burst-test": "tensorfold-fork-20261004/burst",
-    "tensorfold-fork/reply-equality": "tensorfold-fork-20261004/corpus",
-    "tensorfold-fork/gates": "tensorfold-fork-20261004/gates",
+    # TensorFold modified: one folder for each start of the server with one group of settings
+    "tensorfold-modified/all-settings-off": "tensorfold-fork-20261004/fork-off",
+    "tensorfold-modified/sampler": "tensorfold-fork-20261004/fork-sampler",
+    "tensorfold-modified/sampler-burst": "tensorfold-fork-20261004/fork-s+burst",
+    "tensorfold-modified/sampler-draft-block-4": "tensorfold-fork-20261004/fork-s+block4",
+    "tensorfold-modified/sampler-draft-depth": "tensorfold-fork-20261004/fork-s+depth",
+    "tensorfold-modified/sampler-weight-prefetch": "tensorfold-fork-20261004/fork-s+l2pf",
+    "tensorfold-modified/sampler-graph-step": "tensorfold-fork-20261004/fork-s+graphstep",
+    "tensorfold-modified/sampler-prefill-8192": "tensorfold-fork-20261004/fork-s+prefill8192",
+    "tensorfold-modified/sampler-profiler": "tensorfold-fork-20261004/fork-s+prof",
+    "tensorfold-modified/sampler-ipc": "tensorfold-fork-20261004/fork-s+ipc",
+    "tensorfold-modified/sampler-burst-ipc": "tensorfold-fork-20261004/fork-best",
+    "tensorfold-modified/burst-test": "tensorfold-fork-20261004/burst",
+    "tensorfold-modified/reply-equality": "tensorfold-fork-20261004/corpus",
+    "tensorfold-modified/gates": "tensorfold-fork-20261004/gates",
     # task accuracy through the pi agent: the records, the files that the agent wrote, and the grades
     "quality-pi/tensorfold": "quality-pi-20261004/tensorfold-release-full-c8",
-    "quality-pi/tensorfold-fork": "quality-pi-20261004/tensorfold-fast-full-c8",
+    "quality-pi/tensorfold-modified": "quality-pi-20261004/tensorfold-fast-full-c8",
     "quality-pi/jovian-judgement-r24": "quality-pi-20261004/vllm-full-c8",
     # session 5: Jovian Judgement r28.1, the official vLLM with top_k 20, the cold requests, the prompt-reuse check,
     # and three more quality runs
@@ -71,13 +71,13 @@ SINGLE = {  # file in raw/: file under --results
     "vllm-official-start-attempt2-mtp-quantization-map.log": "stock-vllm-v0.31.0/stock-auto-16/attempt2-mtp-quant-map-failed/startup.log",
     "vllm-official-start-attempt3-autotune.log": "stock-vllm-v0.31.0/stock-auto-16/attempt3-autotune-stalled/startup.log",
     "vllm-official-b12x-experts-refused.log": "stock-vllm-v0.31.0/stock-b12x-16/startup.log",
-    "tensorfold-fork/sampler-check-on-four-gpus.log": "tensorfold-fork-20261004/cuda-check-2.log",
+    "tensorfold-modified/sampler-check-on-four-gpus.log": "tensorfold-fork-20261004/cuda-check-2.log",
     "jovian-judgement-r24-links-off-8-slots-thinking-off-quicklook.jsonl": "tensorfold-vs-vllm-20261003-r2/thinkoff-live8-quicklook.jsonl",
-    # receipts: the check of the chat template, the tests of the TensorFold fork with no GPU, and the comparison of
-    # the installed package of the fork image with the patched source tree
+    # receipts: the check of the chat template, the tests of TensorFold modified with no GPU, and the comparison of
+    # the installed package of its image with the patched source tree
     "chat-template-check.log": "tensorfold-vs-vllm-20261003-r2/template-check.log",
-    "tensorfold-fork/tests-with-no-gpu.log": "tensorfold-fork-20261004/cpu-tests.log",
-    "tensorfold-fork/package-compare.log": "tensorfold-fork-20261004/package-compare.log",
+    "tensorfold-modified/tests-with-no-gpu.log": "tensorfold-fork-20261004/cpu-tests.log",
+    "tensorfold-modified/package-compare.log": "tensorfold-fork-20261004/package-compare.log",
 }
 KEEP = re.compile(r"\.(json|jsonl|log|txt)$")
 SKIP = re.compile(r"^(load\.log|warmup.*|wave-check.*)$")  # helper output that holds no result

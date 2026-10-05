@@ -1,11 +1,11 @@
-# The TensorFold fork: changes, build, and tests
+# TensorFold modified: changes, build, and tests
 
-The TensorFold fork is TensorFold v0.6.2 (`56e2e3ec55bc`) with the 87 patches of recipe release 1.0.1 and with our
-changes. The file [`patches/tensorfold-fork-engine.patch`](../patches/tensorfold-fork-engine.patch) contains our
+TensorFold modified is TensorFold v0.6.2 (`56e2e3ec55bc`) with the 87 patches of recipe release 1.0.1 and with our
+changes. The file [`patches/tensorfold-modified-engine.patch`](../patches/tensorfold-modified-engine.patch) contains our
 changes: 17 files, 1,640 added lines, and 34 removed lines. Seven of the files are tests. The weights, the drafter,
 and all other parts of the recipe are the same as in [`tensorfold.md`](tensorfold.md).
 
-Each change has a setting. With each setting at its default value, the TensorFold fork does the same steps as the
+Each change has a setting. With each setting at its default value, TensorFold modified does the same steps as the
 release.
 
 ## The settings
@@ -47,11 +47,11 @@ the profiler on.
   arithmetic, the row goes to the CPU rule, which uses exact fractions.
 - Rows that are not certain go to the CPU in one group for each round.
 
-## How to build the TensorFold fork
+## How to build TensorFold modified
 
 1. In the directory of the recipe, run `scripts/apply-patches.sh`. It clones TensorFold v0.6.2 into `TensorFold/`
    and applies the 87 patches.
-2. In `TensorFold/`, apply our patch: `git apply <this repository>/patches/tensorfold-fork-engine.patch`.
+2. In `TensorFold/`, apply our patch: `git apply <this repository>/patches/tensorfold-modified-engine.patch`.
 3. Build the image of the release recipe (`tensorfold-glm53:1.0.0`).
 4. Make a child image that replaces the installed `tensorfold` package with `src/tensorfold` of the patched tree.
 5. Set `IMAGE` in `scripts/config.sh` of the recipe to the child image.
@@ -59,17 +59,17 @@ the profiler on.
 
 The 87 patches change only files below `src/`. Our patch also adds tests in `tests/` and two tools in `tools/`.
 
-For step 4, put this Dockerfile into `TensorFold/` with the name `Dockerfile.fork`:
+For step 4, put this Dockerfile into `TensorFold/` with the name `Dockerfile.modified`:
 
     FROM tensorfold-glm53:1.0.0
     COPY src/tensorfold /usr/local/lib/python3.12/dist-packages/tensorfold
 
 Then build the child image in `TensorFold/`:
 
-    docker build -f Dockerfile.fork -t tensorfold-glm53:fork .
+    docker build -f Dockerfile.modified -t tensorfold-glm53:modified .
 
 Our child image had no other change. We compared all 503 files of the installed package with the patched tree, and
-they were equal (`raw/tensorfold-fork/package-compare.log`). The kernels, the weights, and the launch table of the
+they were equal (`raw/tensorfold-modified/package-compare.log`). The kernels, the weights, and the launch table of the
 release stay in use.
 
 Start the server with the settings in the environment. The launcher of the recipe gives each variable that starts
@@ -82,10 +82,10 @@ On our host, the time for a start was 182 s, with the kernels and the launch tab
 
 ## Tests that the replies are equal
 
-We did three tests on the release and then on the TensorFold fork. `$URL` is the base URL of the server.
+We did three tests on the release and then on TensorFold modified. `$URL` is the base URL of the server.
 
-**1. The gates of the recipe.** The tool of the recipe stores reference hashes from the release. Then it compares the
-TensorFold fork with these hashes, at 4, 8, and 16 concurrent requests:
+**1. The gates of the recipe.** The tool of the recipe stores reference hashes from the release. Then it compares TensorFold
+modified with these hashes, at 4, 8, and 16 concurrent requests:
 
     python3 tools/bench/tf_bench.py --base $URL/v1 --id baseline --ref-tag=-fp8 --reference-dir refs \
       --results-dir results --gate-levels 4,8,16 --no-telemetry --gate-write-ref gate gatelong
@@ -98,15 +98,15 @@ TensorFold fork with these hashes, at 4, 8, and 16 concurrent requests:
     python3 probes/reply_equality.py --base-url $URL --requests probes/reply_equality_requests.jsonl \
       --output release-c8.jsonl --concurrency 8
     python3 probes/reply_equality.py --base-url $URL --requests probes/reply_equality_requests.jsonl \
-      --output fork-c8.jsonl --concurrency 8 --reference release-c8.jsonl
+      --output modified-c8.jsonl --concurrency 8 --reference release-c8.jsonl
 
 **3. Four cold requests with a shared prefix of 42K tokens.**
 
     python3 probes/burst_reuse.py make --workload burst --lines 2800 --streams 4 --output-tokens 128 \
       --temperature 1 --top-k 20 --top-p .95 --thinking-on max --output burst.json
     python3 probes/burst_reuse.py run --fixtures burst.json --base-url $URL --concurrency 4 --output release.jsonl
-    python3 probes/burst_reuse.py run --fixtures burst.json --base-url $URL --concurrency 4 --output fork.jsonl
-    python3 probes/burst_reuse.py compare release.jsonl fork.jsonl
+    python3 probes/burst_reuse.py run --fixtures burst.json --base-url $URL --concurrency 4 --output modified.jsonl
+    python3 probes/burst_reuse.py compare release.jsonl modified.jsonl
 
 Before the GPU tests, a synthetic check on the four GPUs compared 256 rows of each new sampler path with the CPU
 rule. The file `tools/sampler_device_check.py` in the patch is this check. It does not load the model.
@@ -119,7 +119,7 @@ rule. The file `tools/sampler_device_check.py` in the patch is this check. It do
 | Gates of the recipe, the settings of the last column of the table above | pass |
 | 36 requests, 8 at a time, for nine groups of settings. For three of the groups, also 1 at a time. | 36 of 36 replies equal in each run |
 | Four cold requests with a shared prefix, burst reuse on | the reply tokens of the 4 requests equal |
-| Tests with no GPU (sampler, cache, and scheduler) | 121 pass (`raw/tensorfold-fork/tests-with-no-gpu.log`) |
+| Tests with no GPU (sampler, cache, and scheduler) | 121 pass (`raw/tensorfold-modified/tests-with-no-gpu.log`) |
 
 The gates contain five requests with tool calls, one request with an image, and prompts of 8K, 32K, and 100K
 tokens. We did no equality test with a grammar or with more than 16 concurrent requests.
@@ -155,6 +155,6 @@ The commands for the long-context test with a sampler are:
 
 The directory `burst/` of the session has the files `burst-<name>.jsonl` of `probes/burst_reuse.py`.
 
-**The profile of a round.** Start the TensorFold fork with `TF_GLM_SEGPROF=4` and `TF_GLM_SEGPROF_REPORT=40`. Then
+**The profile of a round.** Start TensorFold modified with `TF_GLM_SEGPROF=4` and `TF_GLM_SEGPROF_REPORT=40`. Then
 the log of rank 0 gets one line for each 40 measured rounds. The line gives the GPU time of a round for each part of
 the model. The profiler measures one of four rounds a second time, and thus the server is slower with this setting.

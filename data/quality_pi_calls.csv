@@ -1,6 +1,6 @@
 run,engine,configuration,model_calls,median_call_s,mean_call_s,p90_call_s,sum_of_call_s,run_minutes
 tensorfold,TensorFold,recipe 1.0.1,2568,0.88,2.7,3.43,6942,23.1
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on",2567,0.8,2.41,3.12,6182,23.1
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on",2567,0.8,2.41,3.12,6182,23.1
 vllm_links_on_8,Jovian Judgement r24,"8 slots, GPU links on, stock template",2361,1.48,4.86,5.88,11469,32.8
 vllm_links_on_8_run2,Jovian Judgement r24,"8 slots, GPU links on, stock template, second run (session 5)",2343,1.61,4.87,6.34,11419,25.3
 jovian_r281_8,Jovian Judgement r28.1,"8 slots, GPU links on, stock template",2394,0.87,3.33,3.95,7971,37.3

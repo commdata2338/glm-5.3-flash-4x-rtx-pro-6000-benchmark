@@ -17,14 +17,14 @@ tables. The two types come from the same files.
 | `integrity.csv`, `integrity_recheck.csv` | `integrity.py`: the passphrase test, and the test with a limit of 300 tokens |
 | `thinking_off_forms.csv` | `thinkoff_probe.py`: the chat form and the raw form on each server |
 | `tensorfold_sampling_sensitivity.csv` | The eight sampler tests of Appendix C.5 |
-| `tensorfold_round_times.csv` | The time of a decode round, from the request logs of TensorFold and of the TensorFold fork |
+| `tensorfold_round_times.csv` | The time of a decode round, from the request logs of TensorFold and of TensorFold modified |
 | `longctx_estimate_check.csv` | The check of the token estimate of `longctx.py`: the total speed from the probe and the sum of the request speeds from the log, for each wave |
 | `gpu_to_gpu_copy.csv` | `p2p_test.py`: the copy test for each GPU pair |
 | `b12x_allreduce_limits.csv` | The size limits of the B12X PCIe all-reduce, from the start log of Jovian Judgement r24 (Appendix G) |
-| `fork_arms.csv` | The TensorFold fork: the waves of `longctx.py` for each group of settings |
-| `fork_cold_burst.csv` | `burst_reuse.py`: four cold requests with a shared prefix, on each server |
-| `fork_prefill_direct.csv` | `prefill_direct.py`: two prefill chunk sizes |
-| `fork_round_profile.csv` | The report lines of the profiler |
+| `modified_arms.csv` | TensorFold modified: the waves of `longctx.py` for each group of settings |
+| `cold_burst.csv` | `burst_reuse.py`: four cold requests with a shared prefix, on each server |
+| `modified_prefill_direct.csv` | `prefill_direct.py`: two prefill chunk sizes |
+| `modified_round_profile.csv` | The report lines of the profiler |
 | `quality_pi_tasks.csv` | The quality run: one row for each task and server |
 | `quality_pi_summary.csv` | The pass counts and the 95% Wilson intervals |
 | `quality_pi_paired.csv` | The paired counts, the difference of the pass rates with its interval, and the exact McNemar test |
@@ -46,7 +46,7 @@ The column `run` of the CSV files has these values.
 |---|---|---|
 | `tensorfold` | TensorFold | 1 |
 | `tensorfold_session3` | TensorFold, the long-context test with top_k 20 and with no top_k | 3 |
-| `tensorfold_fork_best` | TensorFold fork, the configuration of Appendix A.3 | 4 |
+| `tensorfold_modified_best` | TensorFold modified, the configuration of Appendix A.3 | 4 |
 | `vllm_links_on_16` | Jovian Judgement r24, 16 slots, direct GPU links on, template with the thinking switch | 1 |
 | `vllm_links_on_16_session3` | The same configuration, the long-context test with top_k 20 and with no top_k | 3 |
 | `vllm_links_off_8`, `vllm_links_on_8` | Jovian Judgement r24, 8 slots, standard template, direct GPU links off and on. The quality run used `vllm_links_on_8`. | 1 and 4 |
@@ -63,8 +63,8 @@ The column `run` of the CSV files has these values.
 
 In the quality files, the run of the official vLLM has the name `official_default_16`.
 
-In `fork_arms.csv`, the column `arm` gives the directory of one start of the TensorFold fork, and the column
-`settings` gives the settings that were on. `fork-best` is the configuration of Appendix A.3.
+In `modified_arms.csv`, the column `arm` gives the directory of one start of TensorFold modified, and the column
+`settings` gives the settings that were on. `modified-best` is the configuration of Appendix A.3.
 
 Some values of the paper are not in this directory or in `raw/`. These are the start times of the servers, the GPU
 load in Appendix C.5, and the host data in Appendix A.4. They come from our notes of the sessions.

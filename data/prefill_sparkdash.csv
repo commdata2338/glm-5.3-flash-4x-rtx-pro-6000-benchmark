@@ -65,9 +65,9 @@ jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",65536,65562,11019.49,5.95
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",131072,131099,10703.81,12.248
 jovian_r281_16_aligned,Jovian Judgement r28.1,"16 slots, GPU links on, thinking-switch template, checkpoint policy aligned, session 5",262144,262168,10077.95,26.014
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",8192,8219,7273.65,1.13
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",16384,16408,8868.06,1.85
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",32768,32795,9220.4,3.557
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",65536,65562,9369.82,6.997
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",131072,131096,9199.98,14.25
-tensorfold_fork_best,TensorFold fork,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",262144,262170,8765.89,29.908
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",8192,8219,7273.65,1.13
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",16384,16408,8868.06,1.85
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",32768,32795,9220.4,3.557
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",65536,65562,9369.82,6.997
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",131072,131096,9199.98,14.25
+tensorfold_modified_best,TensorFold modified,"GPU sampler, burst reuse and IPC all-gathers on, 40 slots",262144,262170,8765.89,29.908

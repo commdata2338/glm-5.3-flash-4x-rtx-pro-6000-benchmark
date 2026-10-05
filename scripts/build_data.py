@@ -20,8 +20,8 @@ Layout on the test host (the folder names are the run labels used on the host):
   stock-vllm-v0.31.0/<name>-pass2/                 the sparkDash jobs a second time on the same server
   tensorfold-topk20-20261003/tensorfold/           TensorFold, second session: the long-context test with top_k 20
   tensorfold-topk20-20261003/vllm-fork-16/         Jovian Judgement r24, 16 slots, second session: the same three passes
-  tensorfold-fork-20261004/fork-NAME/              the TensorFold fork, one folder for each group of settings
-  tensorfold-fork-20261004/burst/                  four cold requests with the same long prefix, release and fork
+  tensorfold-fork-20261004/fork-NAME/              TensorFold modified, one folder for each group of settings
+  tensorfold-fork-20261004/burst/                  four cold requests with the same long prefix, on each server
   quality-pi-20261004/RUN/                         task accuracy through the pi agent: records and grades
   followup-20261004/jovian-r281-16/                Jovian Judgement r28.1, 16 slots: the suite, then the three passes
   followup-20261004/jovian-r24-16/                 Jovian Judgement r24, 16 slots, in the same session
@@ -112,12 +112,20 @@ SYSTEM_RUNS = {
 }
 SYSTEM_PASSES = (("longctx-system-p95-topk20.log", 0.95, "20", 1), ("longctx-system-p95-topk-off.log", 0.95, "off", 1),
                  ("longctx-system-p1.log", 1.0, "off", 1), ("longctx-system-p95-topk20-pass2.log", 0.95, "20", 2))
-# Session 4 of the paper: the TensorFold fork. Each folder is one start of the server with one group of settings.
-# All the fork's switches are off in the release; a row names the switches that are on.
-FORK = "tensorfold-fork-20261004"
-RUNS["tensorfold_fork_best"] = ("TensorFold fork", "GPU sampler, burst reuse and IPC all-gathers on, 40 slots",
-                                f"{FORK}/fork-best")
-FORK_ARMS = {
+# Session 4 of the paper: TensorFold modified. Each folder is one start of the server with one group of settings.
+# All its switches are off in the release; a row names the switches that are on. The result folders of the test
+# host have the name of that time ("fork"); the arm names in data/ say "modified".
+MODIFIED = "tensorfold-fork-20261004"
+RUNS["tensorfold_modified_best"] = ("TensorFold modified", "GPU sampler, burst reuse and IPC all-gathers on, 40 slots",
+                                    f"{MODIFIED}/fork-best")
+
+
+def arm_name(folder):
+    """The name of an arm in data/: the folder of the test host with "modified" in the place of "fork"."""
+    return folder.replace("fork-", "modified-", 1)
+
+
+MODIFIED_ARMS = {   # the folder of the arm on the test host: its settings
     "fork-sampler": "GPU sampler for rows with no top_k",
     "fork-s+burst": "GPU sampler, burst reuse",
     "fork-s+block4": "GPU sampler, draft block of 4 rows",
@@ -129,7 +137,7 @@ FORK_ARMS = {
     "fork-s+ipc": "GPU sampler, IPC all-gathers",
     "fork-best": "GPU sampler, burst reuse, IPC all-gathers",
 }
-FORK_PROBES = {  # log name: (probe, top_p, top_k, thinking)
+MODIFIED_PROBES = {  # log name: (probe, top_p, top_k, thinking)
     "longctx-topk20": ("long_context_sampled", 0.95, "20", "on, effort max"),
     "longctx-topkoff": ("long_context_sampled", 0.95, "off", "on, effort max"),
     "longctx-p1": ("long_context_sampled", 1.0, "off", "on, effort max"),
@@ -138,9 +146,9 @@ FORK_PROBES = {  # log name: (probe, top_p, top_k, thinking)
 }
 BURST = {  # log name: (server, note)
     "burst-release": ("TensorFold, recipe 1.0.1", ""),
-    "burst-fork-off": ("TensorFold fork, all switches off",
+    "burst-fork-off": ("TensorFold modified, all switches off",
                        "first long prompt after the server start: the prompt kernels were not yet used"),
-    "burst-fork-s+burst": ("TensorFold fork, GPU sampler and burst reuse on", ""),
+    "burst-fork-s+burst": ("TensorFold modified, GPU sampler and burst reuse on", ""),
 }
 BURST_VLLM = {  # log name under followup-20261004/burst: server. These servers give no reply token ids.
     "burst-jovian-r24-8slot": "Jovian Judgement r24, 8 slots",
@@ -167,7 +175,7 @@ REUSE_CHECK = {
 SEGMENTS = ("experts", "shared", "dsa", "kda", "dense", "head", "exchange", "glue")
 QUALITY = {  # run folder under quality-pi-20261004: (run id, engine, configuration)
     "tensorfold-release-full-c8": ("tensorfold", "TensorFold", "recipe 1.0.1"),
-    "tensorfold-fast-full-c8": ("tensorfold_fork_best", "TensorFold fork",
+    "tensorfold-fast-full-c8": ("tensorfold_modified_best", "TensorFold modified",
                                 "GPU sampler, burst reuse and IPC all-gathers on"),
     "vllm-full-c8": ("vllm_links_on_8", "Jovian Judgement r24", "8 slots, GPU links on, stock template"),
     "jovian-r24-full-c8-run2": ("vllm_links_on_8_run2", "Jovian Judgement r24",
@@ -176,8 +184,8 @@ QUALITY = {  # run folder under quality-pi-20261004: (run id, engine, configurat
     "official-default-full-c8": ("official_default_16", "Official vLLM 0.31.0",
                                  "16 slots, default kernels and all-reduce"),
 }
-QUALITY_PAIRS = (("tensorfold", "vllm_links_on_8"), ("tensorfold", "tensorfold_fork_best"),
-                 ("tensorfold_fork_best", "vllm_links_on_8"),
+QUALITY_PAIRS = (("tensorfold", "vllm_links_on_8"), ("tensorfold", "tensorfold_modified_best"),
+                 ("tensorfold_modified_best", "vllm_links_on_8"),
                  # session 5: two runs of one configuration, the newer release, and the official vLLM
                  ("vllm_links_on_8", "vllm_links_on_8_run2"), ("vllm_links_on_8", "jovian_r281_8"),
                  ("vllm_links_on_8_run2", "jovian_r281_8"),
@@ -210,12 +218,12 @@ def wave_rows(path):
             if line.startswith("{") and '"concurrency"' in line]
 
 
-def fork_rows(root):
-    """The TensorFold fork: the waves of each arm, the cold burst, the direct prompt probe, the parts of a round."""
+def modified_rows(root):
+    """TensorFold modified: the waves of each arm, the cold burst, the direct prompt probe, the parts of a round."""
     arms, burst, prefill, profile = [], [], [], []
-    for folder, settings in FORK_ARMS.items():
+    for folder, settings in MODIFIED_ARMS.items():
         logs = []
-        directory = src(root, f"{FORK}/{folder}")
+        directory = src(root, f"{MODIFIED}/{folder}")
         for log in directory.glob("longctx-*.log"):
             stem, number = log.stem, 1
             match = re.fullmatch(r"(.+)-run(\d+)", stem)
@@ -223,12 +231,12 @@ def fork_rows(root):
                 stem, number = match.group(1), int(match.group(2))
             if stem == "longctx-p1" and number > 1 and (directory / "longctx-p1short.log").is_file():
                 number -= 1  # the window tool counted the short-context run as the first run of this name
-            if stem in FORK_PROBES:
-                logs.append((list(FORK_PROBES).index(stem), number, log))
+            if stem in MODIFIED_PROBES:
+                logs.append((list(MODIFIED_PROBES).index(stem), number, log))
         for index, number, log in sorted(logs):
-            probe, top_p, top_k, thinking = FORK_PROBES[list(FORK_PROBES)[index]]
+            probe, top_p, top_k, thinking = MODIFIED_PROBES[list(MODIFIED_PROBES)[index]]
             for r in wave_rows(log):
-                arms.append([folder, settings, probe, 0.0 if probe == "greedy_1k" else 1.0, top_p, top_k, number,
+                arms.append([arm_name(folder), settings, probe, 0.0 if probe == "greedy_1k" else 1.0, top_p, top_k, number,
                              thinking, r["concurrency"], r.get("context_tokens"), r.get("output_tokens"),
                              r.get("aggregate_decode_tps"), r.get("median_decode_tps"), r.get("median_ttft_s"),
                              r.get("status")])
@@ -236,9 +244,9 @@ def fork_rows(root):
         if path.is_file():
             for line in path.read_text().splitlines():
                 r = json.loads(line)
-                prefill.append([folder, settings, r["target_tokens"], r["prompt_tokens"], r["prefill_tok_s"], r["ttft_s"]])
+                prefill.append([arm_name(folder), settings, r["target_tokens"], r["prompt_tokens"], r["prefill_tok_s"], r["ttft_s"]])
     for name, (server, note) in BURST.items():
-        path = src(root, f"{FORK}/burst") / f"{name}.jsonl"
+        path = src(root, f"{MODIFIED}/burst") / f"{name}.jsonl"
         if path.is_file():
             for line in path.read_text().splitlines():
                 r = json.loads(line)
@@ -255,7 +263,7 @@ def fork_rows(root):
                               (usage.get("prompt_tokens_details") or {}).get("cached_tokens"),
                               usage["completion_tokens"], round(r["ttft_s"], 3), "",
                               "the same requests with a different first line and no priority field"])
-    log = src(root, f"{FORK}/fork-s+prof") / "rank0.log"
+    log = src(root, f"{MODIFIED}/fork-s+prof") / "rank0.log"
     if log.is_file():
         # A report line covers the 160 rounds before it. Its context is the prompt size of the last request that
         # ended with a full answer; before the first such request, it is the size of the short request that starts
@@ -293,14 +301,14 @@ def fork_rows(root):
                             float(match.group(3)), *[parts[k] for k in SEGMENTS], float(spans["sampler"]),
                             float(spans["commit"])])
             last_report = i
-    write("fork_arms.csv", ["arm", "settings", "probe", "temperature", "top_p", "top_k", "pass", "thinking", "concurrency",
+    write("modified_arms.csv", ["arm", "settings", "probe", "temperature", "top_p", "top_k", "pass", "thinking", "concurrency",
                             "context_tokens", "output_tokens", "total_tok_s", "median_stream_tok_s", "median_ttft_s",
                             "status"], arms)
-    write("fork_cold_burst.csv", ["server", "request", "prompt_tokens", "cached_tokens_reported", "completion_tokens",
+    write("cold_burst.csv", ["server", "request", "prompt_tokens", "cached_tokens_reported", "completion_tokens",
                                   "ttft_s", "reply_tokens_sha256_first16", "note"], burst)
-    write("fork_prefill_direct.csv", ["arm", "settings", "target_tokens", "prompt_tokens", "prefill_tok_s", "ttft_s"],
+    write("modified_prefill_direct.csv", ["arm", "settings", "target_tokens", "prompt_tokens", "prefill_tok_s", "ttft_s"],
           prefill)
-    write("fork_round_profile.csv", ["context_tokens", "requests_in_the_wave", "rounds_from_more_than_one_wave",
+    write("modified_round_profile.csv", ["context_tokens", "requests_in_the_wave", "rounds_from_more_than_one_wave",
                                      "profiled_rounds", "rows_a_round", "verify_gpu_ms",
                                      *[f"{k}_ms" for k in SEGMENTS], "sampler_span_ms", "commit_span_ms"], profile)
 
@@ -347,7 +355,7 @@ ROUND_WAVES = {
     "tensorfold-topk20-20261003/tensorfold": ("tensorfold_session3", [
         (0.95, "20", 1, 4), (0.95, "20", 1, 8), (0.95, "20", 1, 16), (0.95, "off", 1, 4), (0.95, "off", 1, 8),
         (0.95, "off", 1, 16), (0.95, "20", 2, 4), (0.95, "20", 2, 8), (0.95, "20", 2, 16)]),
-    f"{FORK}/fork-best": ("tensorfold_fork_best", [
+    f"{MODIFIED}/fork-best": ("tensorfold_modified_best", [
         (0.95, "20", 1, 4), (0.95, "20", 1, 8), (0.95, "20", 1, 16), (0.95, "off", 1, 4), (0.95, "off", 1, 8),
         (0.95, "off", 1, 16), (1.0, "off", 1, 4), (1.0, "off", 1, 8), (1.0, "off", 1, 12), (1.0, "off", 1, 16),
         (0.95, "20", 2, 4), (0.95, "20", 2, 8), (0.95, "20", 2, 16)]),
@@ -356,7 +364,7 @@ ROUND_WAVES = {
 
 def probe_totals(run):
     """(top_p, top_k, pass, concurrent requests) -> the total tokens/s of the long-context probe for one run."""
-    name, key, value = ("fork_arms.csv", "arm", "fork-best") if run == "tensorfold_fork_best" else \
+    name, key, value = ("modified_arms.csv", "arm", "modified-best") if run == "tensorfold_modified_best" else \
         ("concurrent_waves.csv", "run", run)
     with open(DATA / name, newline="") as handle:
         return {(float(r["top_p"]), r["top_k"], int(r["pass"]), int(r["concurrency"])): float(r["total_tok_s"])
@@ -619,7 +627,7 @@ def main():
             r["context_tokens"], r["output_tokens"], r["aggregate_decode_tps"], r["median_decode_tps"]]
            for (label, temperature, top_p, top_k, thinking), r in zip(SENSITIVITY, rows)])
 
-    fork_rows(root)
+    modified_rows(root)
     b12x_limit_rows(root)
     reuse_check_rows(root)
     round_time_rows(root)
