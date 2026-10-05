@@ -1,6 +1,6 @@
 # GLM-5.3-Flash on four RTX PRO 6000 Blackwell GPUs: tests of TensorFold and vLLM on one host
 
-Authors: [commdata2338](https://github.com/commdata2338) and [Claude Opus 5.5](https://www.anthropic.com/claude), an AI model of Anthropic. Version 1.2, 4 October 2026.
+Authors: [commdata2338](https://github.com/commdata2338) and [Claude Opus 5.5](https://www.anthropic.com/claude), an AI model of Anthropic. Version 1.3, 4 October 2026.
 
 Each result is from one run on one host, unless the text gives a different number of runs. Tell us if you find an
 error.
@@ -75,7 +75,7 @@ different weights, draft methods, kernels, and settings.
 
 **What we found.** Figure 1 and the points below it give the primary results.
 
-<img src="figures/figure1-three-loads.png" alt="Three loads on each inference stack" width="840">
+<img src="figures/figure1-three-loads.png" alt="Three loads on each inference stack" width="1012">
 
 *Figure 1. Three loads on each inference stack. Panel A is the decode test with one greedy code request. Panel B is the
 prefill of one cold prompt of 64K tokens. Panel C is the test with a shared context of 56K tokens and 16 requests,
@@ -229,7 +229,7 @@ less for prose, code, and JSON.**
 The decode test of sparkDash sends greedy requests with thinking off. Each stream writes 400 tokens. The test has
 four prompt types, and 1 to 16 concurrent requests.
 
-<img src="figures/figure2-decode-by-output-type.png" alt="Total decode speed for each output type on each inference stack" width="840">
+<img src="figures/figure2-decode-by-output-type.png" alt="Total decode speed for each output type on each inference stack" width="1012">
 
 *Figure 2. Decode test of sparkDash: greedy, thinking off, 400 tokens for each stream. The two axes are
 logarithmic. Thus an equal distance between two lines is an equal ratio of their speeds. For the official vLLM, the
@@ -269,7 +269,7 @@ vLLM. It also gives a second greedy test with a context of 1K tokens.
 The prefill test of sparkDash sends one cold prompt of 8K to 256K tokens. The speed is the prompt tokens divided by
 the time to the first token.
 
-<img src="figures/figure3-cold-prompt-prefill.png" alt="Prefill speed for each prompt size on each inference stack" width="840">
+<img src="figures/figure3-cold-prompt-prefill.png" alt="Prefill speed for each prompt size on each inference stack" width="1012">
 
 *Figure 3. Prefill test of sparkDash with one cold prompt. The speed axis starts at 5,000 tokens/s. For the
 official vLLM, the figure shows the second of two runs.*
@@ -308,7 +308,7 @@ This test has the shape of an agent load. C requests start at the same time. Eac
 tokens of source code and a different short question. Each request writes 2,000 tokens at temperature 1, with
 thinking at effort max. We did the test with three groups of sampler settings.
 
-<img src="figures/figure4-long-context-thinking-on.png" alt="Decode speed and time to the first token with a long shared context" width="840">
+<img src="figures/figure4-long-context-thinking-on.png" alt="Decode speed and time to the first token with a long shared context" width="1012">
 
 *Figure 4. Shared context of 56K tokens, thinking on, temperature 1, 2,000 tokens for each stream. Panels A to C
 show the total decode speed for three groups of sampler settings. Panel D shows the median time to the first token
@@ -477,7 +477,7 @@ We measured Jovian Judgement with the links off and then with the links on. The 
 two measurements were in the same boot of the host. The change is the effect of two settings together
 (Appendix C.7).
 
-<img src="figures/figure5-jovian-judgement-gpu-links.png" alt="Jovian Judgement with the direct GPU links off and on" width="840">
+<img src="figures/figure5-jovian-judgement-gpu-links.png" alt="Jovian Judgement with the direct GPU links off and on" width="1012">
 
 *Figure 5. Jovian Judgement with 8 slots in the same boot, with the direct GPU links off and on.*
 
@@ -506,7 +506,7 @@ is [pi](https://github.com/earendil-works/pi) 0.86.1. It did the 542 Python task
 on five inference stacks. Each task got one attempt, with temperature 0 and thinking at effort max. Jovian Judgement r24 has
 two runs. The official vLLM was in its default configuration. Appendix B.3 gives the method.
 
-<img src="figures/figure6-quality-through-an-agent.png" alt="Task accuracy through the pi agent" width="840">
+<img src="figures/figure6-quality-through-an-agent.png" alt="Task accuracy through the pi agent" width="1012">
 
 *Figure 6. The tasks that pass, with the 95% Wilson interval. Each point is one run of the pi agent on one inference stack,
 with one attempt for each task.*
@@ -828,7 +828,7 @@ Section 6 gives the measured effect of the links on Jovian Judgement.
 Each engine divides the model between the four GPUs. At the end of each layer, the GPUs must send partial results
 to each other. There are two methods to move a tensor from one GPU to a different GPU.
 
-<img src="figures/figure7-gpu-to-gpu-copy-paths.png" alt="The two methods to move a tensor between two GPUs" width="840">
+<img src="figures/figure7-gpu-to-gpu-copy-paths.png" alt="The two methods to move a tensor between two GPUs" width="1012">
 
 *Figure 7. The two methods to move a tensor between two of the four GPUs. With the direct GPU links off, a transfer
 is two copies through host memory. With the links on, the source GPU writes the data into the memory of the
@@ -1347,7 +1347,7 @@ of requests. On TensorFold modified, the time for a round does not change with t
 With top_p 1.0 and no top_k, TensorFold gave a total of 40 tokens/s for four streams in the long-context test. We
 stopped that run after its first wave. Then we did tests with four streams and a 1K context to find the cause.
 
-<img src="figures/figure8-tensorfold-sampling-sensitivity.png" alt="TensorFold decode speed for each group of sampler settings" width="840">
+<img src="figures/figure8-tensorfold-sampling-sensitivity.png" alt="TensorFold decode speed for each group of sampler settings" width="1012">
 
 *Figure 8. TensorFold with four streams, approximately 1K tokens of context, and 400 tokens for each stream. Each
 bar is one run.*
@@ -2043,7 +2043,7 @@ speed, but only a test can show that it does. The other libraries also have kern
 This model is too large for one GPU. Thus the server divides the model between the four GPUs. The model has 45
 layers, and each token goes through each layer. A layer has two parts: an attention part and a feed-forward part.
 
-<img src="figures/figure9-b12x-two-types-of-work.png" alt="The two types of work for one layer of the model on four GPUs" width="840">
+<img src="figures/figure9-b12x-two-types-of-work.png" alt="The two types of work for one layer of the model on four GPUs" width="1012">
 
 *Figure 9. The work for one layer of the model. The white boxes are work in each GPU, and the gray bars are work
 between the GPUs. In each part of the layer, each GPU calculates a partial result. Then an all-reduce adds the four
@@ -2089,7 +2089,7 @@ not measure the effect of each idea.
 GPU memory, and the subsequent kernel reads it again. One kernel for a group of steps starts one time. It can also
 write and read less data.
 
-<img src="figures/figure10-b12x-one-kernel-for-three-steps.png" alt="Three steps as two operations, and one kernel that does the three steps" width="840">
+<img src="figures/figure10-b12x-one-kernel-for-three-steps.png" alt="Three steps as two operations, and one kernel that does the three steps" width="1012">
 
 *Figure 10. Three steps of the draft head: the all-reduce, the addition of a saved value, and the normalization.
 Panel A shows the three steps as two operations. Panel B shows the one kernel of B12X that does the three steps.
@@ -2114,7 +2114,7 @@ and a large prefill step moves a large quantity. One method is not the best for 
 of B12X has three methods. The size and the layout of the message select the method. NCCL does each message that
 the three methods do not accept. NCCL is the general library of NVIDIA for transfers between GPUs.
 
-<img src="figures/figure11-b12x-method-for-each-size.png" alt="The method of the all-reduce of Jovian Judgement for each message size" width="840">
+<img src="figures/figure11-b12x-method-for-each-size.png" alt="The method of the all-reduce of Jovian Judgement for each message size" width="1012">
 
 *Figure 11. The method of the all-reduce of Jovian Judgement r24 for each message size. The limits in bytes are
 from the start log. The numbers of rows and the three examples are a calculation from the source code (see the text

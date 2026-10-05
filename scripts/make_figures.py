@@ -3,9 +3,10 @@
   python3 scripts/make_figures.py
 
 One style for all figures:
-  - 5.6 inches wide, so each figure has the same scale. The paper shows each figure 840 pixels wide (the `width`
-    of its `img` tag): 150 pixels for each inch. The column of a README on GitHub is 838 pixels wide, and thus a
-    figure fills it. The margins of a chart are in inches (`margins`).
+  - 7.0 inches wide, so each figure has the same scale. The paper shows each figure 1,012 pixels wide (the
+    `width` of its `img` tag). That is the column of the file view of a README on GitHub: 145 pixels for each inch.
+    On the first page of a repository the column is 838 pixels wide, and GitHub makes the figure that wide: 120
+    pixels for each inch. A figure is wide and not tall. The margins of a chart are in inches (`margins`).
   - IBM Plex Sans (scripts/fonts/, SIL Open Font License), no text below 9.5 points.
   - One line below the plot and no line at the left. Light horizontal lines show the values.
   - The two recipes (TensorFold and Jovian Judgement r24) have thick lines. TensorFold modified, Jovian Judgement
@@ -44,7 +45,7 @@ FAMILY = "IBM Plex Sans" if any(FONTS.glob("IBMPlexSans-*.ttf")) else "DejaVu Sa
 
 INK, MUTED, RULE, GRID = "#1a1a1a", "#5d5b55", "#8f8d86", "#e7e5df"
 BLUE, ORANGE, AQUA, VIOLET = "#2a78d6", "#eb6834", "#1baf7a", "#4a3aa7"
-WIDTH = 5.6   # inches, for each figure
+WIDTH = 7.0   # inches, for each figure
 SMALL = 9.5   # points: value labels, notes, and long panel titles
 STYLE = {  # run id: (label, color, marker, line style, line width, marker size)
     "tensorfold": ("TensorFold", BLUE, "o", "-", 2.1, 6.0),
@@ -101,12 +102,10 @@ def series(ax, run, points):
             linewidth=width, markersize=size, label=name, zorder=4 if width > 2 else 3)
 
 
-def legend(fig, runs, left, ncol=2, y=0.995):
-    """The legend above the panels. `left` is the left edge of the plots, in inches. With two columns, one line of
-    the legend has two related servers: TensorFold and TensorFold modified, then the two releases of Jovian
-    Judgement, then the two configurations of the official vLLM."""
-    if ncol == 2:
-        runs = runs[0::2] + runs[1::2]   # matplotlib fills a legend one column after the other
+def legend(fig, runs, left, ncol=3, y=0.995):
+    """The legend above the panels. `left` is the left edge of the plots, in inches. A column of the legend has
+    two related servers: TensorFold and TensorFold modified, then the two releases of Jovian Judgement, then the
+    two configurations of the official vLLM."""
     handles = [Line2D([], [], color=STYLE[r][1], marker=STYLE[r][2], linestyle=STYLE[r][3], linewidth=STYLE[r][4],
                       markersize=STYLE[r][5], label=STYLE[r][0]) for r in runs]
     fig.legend(handles=handles, loc="upper left", ncol=ncol, bbox_to_anchor=(left / WIDTH - 0.016, y),
@@ -188,10 +187,10 @@ def long_cells(run, setting, field="total_tok_s"):
 
 def figure_three_loads():
     """Figure 1. Three loads on each server: the best server is not the same for each load."""
-    titles = ["A  Code answer\n1 request\ngreedy", "B  Cold prompt\n64K tokens\nprefill",
-              "C  56K context\n16 requests\ntop_p 0.95\ntop_k 20"]
-    limits = [(700, [0, 300, 600]), (19000, [0, 8000, 16000]), (1850, [0, 800, 1600])]
-    height = 3.75 + NOTE_ROOM
+    titles = ["A  Short code answer\n1 request, greedy", "B  Cold 64K prompt\nprefill",
+              "C  Shared 56K context\n16 requests\ntop_p 0.95, top_k 20"]
+    limits = [(600, [0, 250, 500]), (17000, [0, 6000, 12000]), (1700, [0, 600, 1200])]
+    height = 3.3 + NOTE_ROOM
     fig, axes = plt.subplots(1, 3, figsize=(WIDTH, height), sharey=True)
     for panel, ax in enumerate(axes):
         limit, ticks = limits[panel]
@@ -207,14 +206,14 @@ def figure_three_loads():
                         fontsize=SMALL, style="italic")
                 continue
             ax.barh(position, value, height=0.56, color=STYLE[run][1], zorder=3)
-            ax.text(value + limit * 0.03, position, f"{value:,.0f}", va="center", fontsize=SMALL)
+            ax.text(value + limit * 0.025, position, f"{value:,.0f}", va="center", fontsize=SMALL)
         ax.set(xlim=(0, limit), ylim=(-0.62, len(SERVERS) - 0.38), xticks=ticks)
         ax.xaxis.set_major_formatter(thousands)
         ax.set_title(titles[panel], loc="left", fontsize=SMALL, linespacing=1.25)
         ax.set_xlabel("Prompt tokens/s" if panel == 1 else "Total tokens/s")
         rows_axis(ax)
     axes[0].set_yticks(range(len(SERVERS))[::-1], [row_label(run) for run in SERVERS])
-    fig.subplots_adjust(**margins(height, left=1.30, right=0.12, top=0.90, bottom=0.52 + NOTE_ROOM), wspace=0.18)
+    fig.subplots_adjust(**margins(height, left=1.30, right=0.14, top=0.72, bottom=0.50 + NOTE_ROOM), wspace=0.20)
     fork_note(fig)
     save(fig, "figure1-three-loads")
 
@@ -222,7 +221,7 @@ def figure_three_loads():
 def figure_decode():
     """Figure 2. The decode test of sparkDash on the six configurations, with a logarithmic speed axis."""
     left = 0.80
-    height = 5.3 + NOTE_ROOM
+    height = 4.65 + NOTE_ROOM
     fig, axes = plt.subplots(2, 2, figsize=(WIDTH, height), sharey=True)
     panels = (("prose", "A  Prose"), ("code", "B  Code"), ("structured", "C  Count task"), ("json", "D  JSON"))
     for ax, (kind, title) in zip(axes.flat, panels):
@@ -235,11 +234,11 @@ def figure_decode():
         ax.yaxis.set_major_formatter(thousands)
         ax.set(xlim=(0.9, 18), ylim=(160, 2500))
         ax.set_title(title, loc="left")
-    fig.supylabel("Total decode, tokens/s (log scale)", fontsize=SMALL, color=MUTED, x=0.016)
+    fig.supylabel("Total decode, tokens/s (log scale)", fontsize=SMALL, color=MUTED, x=0.014)
     fig.supxlabel("Concurrent requests (log scale)", fontsize=SMALL, color=MUTED, y=(0.08 + NOTE_ROOM) / height)
     legend(fig, SERVERS, left)
-    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=1.04, bottom=0.56 + NOTE_ROOM), hspace=0.36,
-                        wspace=0.09)
+    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=0.84, bottom=0.54 + NOTE_ROOM), hspace=0.46,
+                        wspace=0.07)
     fork_note(fig)
     save(fig, "figure2-decode-by-output-type")
 
@@ -247,7 +246,7 @@ def figure_decode():
 def figure_prefill():
     """Figure 3. Prefill of one cold prompt on the six configurations. The speed axis starts at 5,000."""
     left = 0.86
-    height = 4.0 + NOTE_ROOM
+    height = 3.3 + NOTE_ROOM
     fig, ax = plt.subplots(figsize=(WIDTH, height))
     for run in SERVERS:
         series(ax, run, sparkdash("prefill_sparkdash.csv", run, "prompt_tokens", "prefill_tok_s"))
@@ -257,7 +256,7 @@ def figure_prefill():
     ax.yaxis.set_major_formatter(thousands)
     ax.set_title("The speed axis starts at 5,000", loc="left", fontsize=SMALL, fontweight="normal", color=MUTED)
     legend(fig, SERVERS, left)
-    fig.subplots_adjust(**margins(height, left=left, right=0.14, top=1.04, bottom=0.58 + NOTE_ROOM))
+    fig.subplots_adjust(**margins(height, left=left, right=0.14, top=0.86, bottom=0.56 + NOTE_ROOM))
     fork_note(fig)
     save(fig, "figure3-cold-prompt-prefill")
 
@@ -265,11 +264,11 @@ def figure_prefill():
 def figure_long_context():
     """Figure 4. Long shared context with thinking on: decode for three groups of sampler settings, and first token."""
     left = 0.76
-    panels = [("k20", "total_tok_s", "A  Decode\ntop_p 0.95, top_k 20"),
-              ("off", "total_tok_s", "B  Decode\ntop_p 0.95, no top_k"),
-              ("p1", "total_tok_s", "C  Decode\ntop_p 1.0, no top_k"),
-              ("off", "median_ttft_s", "D  First token\ncontext in the cache\ntop_p 0.95, no top_k")]
-    height = 5.75 + NOTE_ROOM
+    panels = [("k20", "total_tok_s", "A  Decode: top_p 0.95, top_k 20"),
+              ("off", "total_tok_s", "B  Decode: top_p 0.95, no top_k"),
+              ("p1", "total_tok_s", "C  Decode: top_p 1.0, no top_k"),
+              ("off", "median_ttft_s", "D  First token, context in the cache\ntop_p 0.95, no top_k")]
+    height = 4.85 + NOTE_ROOM
     fig, axes = plt.subplots(2, 2, figsize=(WIDTH, height))
     for ax, (setting, field, title) in zip(axes.flat, panels):
         decode = field == "total_tok_s"
@@ -281,7 +280,7 @@ def figure_long_context():
                 if points[-1][0] == 16:
                     ends.append(points[-1][1])
         log2_axis(ax, [4, 8, 16])
-        ax.set(xlim=(3.6, 26), ylim=(0, 1200 if decode else 6),
+        ax.set(xlim=(3.6, 22.5), ylim=(0, 1200 if decode else 6),
                yticks=list(range(0, 1201, 200)) if decode else [0, 2, 4, 6])
         ax.set_ylabel("Decode, tokens/s" if decode else "First token, seconds")
         if decode:
@@ -296,13 +295,13 @@ def figure_long_context():
                         color=MUTED, style="italic")
     alone = long_cells("tensorfold", "p1")[0]
     axes[1, 0].annotate(f"{alone[1]:.0f}", alone, xytext=(8, 5), textcoords="offset points", fontsize=SMALL)
-    axes[1, 0].text(0.30, 0.06, "TensorFold:\nno test at 8 or 16", transform=axes[1, 0].transAxes, fontsize=SMALL,
-                    color=MUTED, style="italic", linespacing=1.2)
+    axes[1, 0].text(0.22, 0.075, "TensorFold: no test at 8 or 16", transform=axes[1, 0].transAxes, fontsize=SMALL,
+                    color=MUTED, style="italic")
     for ax in axes[1]:
         ax.set_xlabel("Concurrent requests (log scale)")
     legend(fig, LONG_SERVERS, left)
-    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=1.20, bottom=0.55 + NOTE_ROOM), hspace=0.62,
-                        wspace=0.38)
+    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=0.86, bottom=0.55 + NOTE_ROOM), hspace=0.56,
+                        wspace=0.27)
     fork_note(fig)
     save(fig, "figure4-long-context-thinking-on")
 
@@ -311,7 +310,7 @@ def figure_gpu_links():
     """Figure 5. Jovian Judgement with the direct GPU links off and on: prefill, decode, and cold first token."""
     left = 0.82
     runs = ["vllm_links_off_8", "vllm_links_on_8"]
-    height = 5.3 + NOTE_ROOM
+    height = 4.55 + NOTE_ROOM
     fig = plt.figure(figsize=(WIDTH, height))
     grid = fig.add_gridspec(2, 2, height_ratios=[1, 1.15])
     a, b, c = fig.add_subplot(grid[0, :]), fig.add_subplot(grid[1, 0]), fig.add_subplot(grid[1, 1])
@@ -344,16 +343,16 @@ def figure_gpu_links():
           xlabel="Concurrent requests", ylabel="Decode, tokens/s")
     b.set_xticklabels(["4", "8"])
     b.yaxis.set_major_formatter(thousands)
-    b.set_title("B  Decode, 56K context\nthinking on\ntop_p 1.0, no top_k", loc="left", fontsize=SMALL, linespacing=1.25)
+    b.set_title("B  Decode, 56K context, thinking on\ntop_p 1.0, no top_k", loc="left", fontsize=SMALL, linespacing=1.25)
     c.set(xlim=(-0.55, 1.55), ylim=(0, 14), xticks=[0, 1], yticks=[0, 4, 8, 12],
           xlabel="Cold prompt size, tokens", ylabel="First token, seconds")
     c.set_xticklabels(["13.5K", "83.6K"])
-    c.set_title("C  First token\ncold prompt", loc="left", fontsize=SMALL, linespacing=1.25)
+    c.set_title("C  First token, cold prompt", loc="left", fontsize=SMALL)
     for ax in (b, c):
         ax.tick_params(axis="x", length=0)
-    legend(fig, runs, left, ncol=1)
-    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=0.84, bottom=0.55 + NOTE_ROOM), hspace=0.95,
-                        wspace=0.38)
+    legend(fig, runs, left, ncol=2)
+    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=0.60, bottom=0.55 + NOTE_ROOM), hspace=0.84,
+                        wspace=0.28)
     fork_note(fig)
     save(fig, "figure5-jovian-judgement-gpu-links")
 
@@ -369,7 +368,7 @@ def figure_quality():
              ("official_default_16", "Official vLLM,\ndefault (NVFP4)", "official_default_16_pass2")]
     order = [(run, label, style) for run, label, style in order if any(r["run"] == run for r in rows)]
     left = 1.58
-    height = 0.84 + 0.52 * len(order) + 0.58 + NOTE_ROOM
+    height = 0.62 + 0.50 * len(order) + 0.56 + NOTE_ROOM
     fig, axes = plt.subplots(1, 2, figsize=(WIDTH, height), sharey=True)
     for ax, dataset in zip(axes, ("HumanEval+", "MBPP+")):
         tasks = None
@@ -383,9 +382,9 @@ def figure_quality():
                 ax.plot([low, high], [position + offset] * 2, color=color, linewidth=1.6, zorder=2, solid_capstyle="butt")
                 ax.plot([value], [position + offset], marker=marker, color=color, markerfacecolor=face,
                         markeredgecolor=color, markeredgewidth=1.3, markersize=6.5, linestyle="none", zorder=3)
-                ax.text(high + 0.7, position + offset, f"{value:.1f}", va="center", fontsize=SMALL)
+                ax.text(high + 0.6, position + offset, f"{value:.1f}", va="center", fontsize=SMALL)
         ax.set_yticks(range(len(order))[::-1], [label for _, label, _ in order])
-        ax.set(ylim=(-0.6, len(order) - 0.4), xlim=(76, 107), xticks=[80, 85, 90, 95, 100])
+        ax.set(ylim=(-0.6, len(order) - 0.4), xlim=(76, 104.5), xticks=[80, 85, 90, 95, 100])
         rows_axis(ax)
         ax.set_title(f"{dataset} ({tasks} tasks)", loc="left", fontsize=SMALL)
         ax.set_xlabel("Tasks that pass, %")
@@ -393,9 +392,9 @@ def figure_quality():
                     markersize=6.5, linestyle="-", linewidth=1.6, label="Base tests"),
              Line2D([], [], marker="o", color=INK, markerfacecolor=INK, markeredgecolor=INK, markersize=6.5,
                     linestyle="-", linewidth=1.6, label="Base tests and the added tests of EvalPlus")]
-    fig.legend(handles=marks, loc="upper left", ncol=1, bbox_to_anchor=(left / WIDTH - 0.016, 0.995), handlelength=2.6,
-               labelspacing=0.4, borderaxespad=0.2)
-    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=0.84, bottom=0.58 + NOTE_ROOM), wspace=0.07)
+    fig.legend(handles=marks, loc="upper left", ncol=2, bbox_to_anchor=(left / WIDTH - 0.016, 0.995), handlelength=2.6,
+               columnspacing=1.6, borderaxespad=0.2)
+    fig.subplots_adjust(**margins(height, left=left, right=0.11, top=0.62, bottom=0.56 + NOTE_ROOM), wspace=0.07)
     fork_note(fig)
     save(fig, "figure6-quality-through-an-agent")
 
@@ -408,7 +407,7 @@ def figure_copy_paths():
     box = dict(boxstyle="round,pad=0.02,rounding_size=0.10", linewidth=0.7, edgecolor="#b3b1aa", facecolor="#f7f6f2")
     source, destination = 2.7, 7.3  # the x position of the two GPUs and of their PCIe links
     arrow = dict(arrowstyle="-|>", mutation_scale=13, linewidth=2.0, zorder=5, shrinkA=0, shrinkB=0)
-    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 3.7))
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 3.35))
     for ax in axes:
         ax.set(xlim=(0, 10), ylim=(0, 8))
         ax.axis("off")
@@ -418,17 +417,17 @@ def figure_copy_paths():
         ax.text(5.0, 4.36, "CPU root complex\nwith the IOMMU", ha="center", va="center", fontsize=SMALL, color=MUTED,
                 linespacing=1.2)
         for x, name in ((source, "Source GPU"), (destination, "Destination GPU")):
-            ax.add_patch(FancyBboxPatch((x - 2.1, 0.6), 4.2, 1.2, **box))
-            ax.text(x, 1.2, name, ha="center", va="center", fontsize=SMALL)
+            ax.add_patch(FancyBboxPatch((x - 1.95, 0.6), 3.9, 1.2, **box))
+            ax.text(x, 1.2, name, ha="center", va="center")
             ax.plot([x, x], [1.84, 3.46], color="#cfcdc6", linewidth=3.0, solid_capstyle="butt", zorder=1)
-        ax.text(5.0, 2.65, "PCIe 5.0\nx16 link\nfor each GPU", ha="center", va="center", fontsize=SMALL, color=MUTED,
-                linespacing=1.15)
+        ax.text(5.0, 2.65, "PCIe 5.0 x16 link\nfor each GPU", ha="center", va="center", fontsize=SMALL, color=MUTED,
+                linespacing=1.2)
     left, right = axes
     # Links off: one copy up into host memory, then one copy down to the destination.
     left.add_patch(FancyArrowPatch((source, 1.84), (source, 6.26), color=AQUA, **arrow))
     left.add_patch(FancyArrowPatch((destination, 6.26), (destination, 1.86), color=AQUA, **arrow))
-    left.text(source - 0.5, 5.55, "1", ha="center", va="center", fontweight="semibold")
-    left.text(destination + 0.5, 5.55, "2", ha="center", va="center", fontweight="semibold")
+    left.text(source - 0.45, 5.55, "1", ha="center", va="center", fontweight="semibold")
+    left.text(destination + 0.45, 5.55, "2", ha="center", va="center", fontweight="semibold")
     left.set_title("A  Links off: two copies", loc="left")
     left.text(0.6, 0.0, f"Measured: {staged:.1f} GiB/s", va="bottom", fontsize=10, fontweight="medium")
     # Links on: one write that goes up to the root complex and down to the destination.
@@ -445,41 +444,34 @@ def figure_sampling():
     """Figure 8. TensorFold with four streams and a 1K context: the decode speed for each group of sampler settings."""
     rows = read("tensorfold_sampling_sensitivity.csv")
     order = [("greedy", "Greedy"),
-             ("temperature 1, server defaults (top_p 0.95, top_k 20)", "top_p 0.95, top_k 20\n(server defaults)"),
+             ("temperature 1, server defaults (top_p 0.95, top_k 20)", "top_p 0.95, top_k 20 (server defaults)"),
              ("temperature 1, top_p 1.0, top_k 50", "top_p 1.0, top_k 50"),
              ("temperature 1, top_p 0.99, no top_k", "top_p 0.99, no top_k"),
              ("temperature 1, top_p 0.95, no top_k", "top_p 0.95, no top_k"),
              ("temperature 1, top_p 1.0, no top_k", "top_p 1.0, no top_k")]
-    # One group of rows for each thinking mode, with the name of the group above its first row.
-    positions, labels, values, headings, y = [], [], [], [], 0.0
-    for heading, thinking in (("Thinking on", "on, effort max"), ("Thinking off", "off")):
-        headings.append((y, heading))
-        y -= 0.9
-        for setting, label in order:
-            for r in rows:
-                if r["setting"] == setting and r["thinking"] == thinking:
-                    positions.append(y)
-                    labels.append(label)
-                    values.append(float(r["total_tok_s"]))
-                    y -= 1.0
-        y -= 0.5
-    height = 0.40 * len(positions) + 0.5 * len(headings) + 1.5
+    bars = [(r, label) for thinking in ("on, effort max", "off") for setting, label in order for r in rows
+            if r["setting"] == setting and r["thinking"] == thinking]
+    count_on = sum(r["thinking"] != "off" for r, _ in bars)
+    # One row for each test, with a gap between the tests with thinking on and the tests with thinking off.
+    positions = [len(bars) - i + (1 if i < count_on else 0) for i in range(len(bars))]
+    height = 3.6
     fig, ax = plt.subplots(figsize=(WIDTH, height))
-    for position, value in zip(positions, values):
+    for position, (r, _) in zip(positions, bars):
+        value = float(r["total_tok_s"])
         ax.barh(position, value, height=0.56, color=BLUE, zorder=3)
         ax.text(value + 14, position, f"{value:,.0f}", va="center", fontsize=SMALL)
-    ax.set_yticks(positions, labels)
-    ax.set(ylim=(min(positions) - 0.7, 0.5), xlim=(0, 1000), xticks=[0, 250, 500, 750, 1000],
+    ax.set_yticks(positions, [label for _, label in bars])
+    ax.set(ylim=(min(positions) - 0.6, max(positions) + 0.8), xlim=(0, 1000), xticks=[0, 250, 500, 750, 1000],
            xlabel="Total decode, tokens/s (four streams)")
     ax.xaxis.set_major_formatter(thousands)
     rows_axis(ax)
     across = blended_transform_factory(fig.transFigure, ax.transData)
-    for position, label in headings:
+    for position, label in ((positions[0], "Thinking on"), (positions[count_on], "Thinking off")):
         ax.text(0.02, position, label, transform=across, va="center", fontweight="semibold")
-    fig.text(0.02, 1 - 0.14 / height, "Sampled rows have temperature 1", fontsize=SMALL, color=MUTED, va="top")
-    fig.text(0.02, 0.09 / height, "Thinking off: the other sampler settings have no test.", fontsize=SMALL, color=MUTED,
+    fig.text(0.02, 1 - 0.12 / height, "Sampled rows have temperature 1", fontsize=SMALL, color=MUTED, va="top")
+    fig.text(0.02, 0.08 / height, "Thinking off: the other sampler settings have no test.", fontsize=SMALL, color=MUTED,
              style="italic", va="bottom")
-    fig.subplots_adjust(**margins(height, left=1.75, right=0.42, top=0.46, bottom=0.88))
+    fig.subplots_adjust(**margins(height, left=3.75, right=0.40, top=0.42, bottom=0.82))
     save(fig, "figure8-tensorfold-sampling-sensitivity")
 
 
@@ -491,7 +483,7 @@ ARROW = dict(arrowstyle="-|>", mutation_scale=13, linewidth=2.0, zorder=5, shrin
 def figure_b12x_work():
     """Figure 9. Diagram: the two types of work for one layer of the model on the four GPUs. Each of the two parts
     of a layer has work in each GPU (white) and then an all-reduce between the GPUs (gray)."""
-    fig, ax = plt.subplots(figsize=(WIDTH, 4.5))
+    fig, ax = plt.subplots(figsize=(WIDTH, 4.3))
     ax.set(xlim=(0, 10), ylim=(0.42, 9.2))
     ax.axis("off")
     between = dict(BOX, facecolor="#e4e2db", zorder=3)
@@ -503,17 +495,17 @@ def figure_b12x_work():
     for part, (name, row, bar) in enumerate((("Attention", 7.05, 5.35), ("Feed-forward\n(experts)", 3.6, 1.9))):
         for i, x in enumerate(columns):
             ax.add_patch(FancyBboxPatch((x + 0.14, row), 1.96, 0.9, zorder=2, **CHIP))
-            ax.text(x + 1.12, row + 0.45, name, ha="center", va="center", fontsize=SMALL, zorder=4, linespacing=1.15)
+            ax.text(x + 1.12, row + 0.45, name, ha="center", va="center", fontsize=SMALL, zorder=4, linespacing=1.1)
             ax.add_patch(FancyArrowPatch((x + 1.12, row - 0.06), (x + 1.12, bar + 0.96), color=RULE, **ARROW))
             if part == 0:   # the sum goes down to the second part of the layer, in each GPU
                 ax.add_patch(FancyArrowPatch((x + 1.12, bar - 0.06), (x + 1.12, 4.56), color=RULE, **ARROW))
         ax.text(columns[0] + 1.3, (row + bar + 0.9) / 2, "a part", va="center", color=MUTED, fontsize=SMALL, style="italic")
         ax.add_patch(FancyBboxPatch((0.25, bar), 9.5, 0.9, **between))
         ax.text(5.0, bar + 0.45, "All-reduce: add the four parts, and give the sum to each GPU", ha="center",
-                va="center", fontweight="semibold", fontsize=SMALL, zorder=4)
+                va="center", fontweight="semibold", zorder=4)
     ax.text(columns[0] + 1.3, 4.93, "the sum", va="center", color=MUTED, fontsize=SMALL, style="italic")
-    ax.add_patch(FancyArrowPatch((2.6, 1.5), (2.6, 0.7), color=RULE, **ARROW))
-    ax.text(2.85, 1.07, "the sum goes to the subsequent layer, in each GPU", va="center", color=MUTED, fontsize=SMALL)
+    ax.add_patch(FancyArrowPatch((5.0, 1.5), (5.0, 0.7), color=RULE, **ARROW))
+    ax.text(5.25, 1.07, "the sum goes to the subsequent layer, in each GPU", va="center", color=MUTED, fontsize=SMALL)
     fig.subplots_adjust(left=0.01, right=0.99, bottom=0.01, top=0.99)
     save(fig, "figure9-b12x-two-types-of-work")
 
@@ -524,36 +516,34 @@ def figure_b12x_fusion():
     result."""
     steps = ("Add the four partial results", "Add the saved value", "Normalize the result")
     dash = dict(color="#cfcdc6", linewidth=0.8, linestyle=(0, (3, 3)))
-    note = dict(va="center", color=MUTED, fontsize=SMALL, style="italic", linespacing=1.15)
-    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 3.9))
+    note = dict(va="center", color=MUTED, fontsize=SMALL, style="italic")
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 3.4))
     for ax in axes:
         ax.set(xlim=(0, 10), ylim=(0, 8.1))
         ax.axis("off")
     left, right = axes
-    left.add_patch(FancyBboxPatch((0.7, 6.55), 8.6, 1.0, **BOX))
-    left.text(5.0, 7.05, steps[0], ha="center", va="center", fontsize=SMALL)
+    left.add_patch(FancyBboxPatch((0.9, 6.55), 8.2, 1.0, **BOX))
+    left.text(5.0, 7.05, steps[0], ha="center", va="center")
     left.add_patch(FancyArrowPatch((5.0, 6.5), (5.0, 5.22), color=VIOLET, **ARROW))
-    left.text(5.35, 5.86, "the sum,\nin GPU memory", **note)
-    left.add_patch(FancyBboxPatch((0.7, 2.75), 8.6, 2.4, **BOX))
-    left.text(5.0, 4.55, steps[1], ha="center", va="center", fontsize=SMALL)
-    left.plot([1.4, 8.6], [3.95, 3.95], **dash)
-    left.text(5.0, 3.35, steps[2], ha="center", va="center", fontsize=SMALL)
-    left.add_patch(FancyArrowPatch((5.0, 2.7), (5.0, 1.52), color=VIOLET, **ARROW))
-    left.text(5.35, 2.1, "2 results,\nin GPU memory", **note)
+    left.text(5.3, 5.86, "the sum, in GPU memory", **note)
+    left.add_patch(FancyBboxPatch((0.9, 2.75), 8.2, 2.4, **BOX))
+    left.text(5.0, 4.55, steps[1], ha="center", va="center")
+    left.plot([1.6, 8.4], [3.95, 3.95], **dash)
+    left.text(5.0, 3.35, steps[2], ha="center", va="center")
+    left.add_patch(FancyArrowPatch((5.0, 2.7), (5.0, 1.62), color=VIOLET, **ARROW))
+    left.text(5.3, 2.16, "2 results, in GPU memory", **note)
     left.set_title("A  Two operations", loc="left")
-    left.text(0.7, 0.0, "2 operations,\n3 results in GPU memory", va="bottom", fontsize=10, fontweight="medium",
-              linespacing=1.2)
-    right.add_patch(FancyBboxPatch((0.7, 2.75), 8.6, 4.8, **BOX))
+    left.text(0.9, 0.2, "2 operations, 3 results in GPU memory", va="bottom", fontsize=10, fontweight="medium")
+    right.add_patch(FancyBboxPatch((0.9, 2.75), 8.2, 4.8, **BOX))
     for j, step in enumerate(steps):
-        right.text(5.0, 6.75 - j * 1.6, step, ha="center", va="center", fontsize=SMALL)
+        right.text(5.0, 6.75 - j * 1.6, step, ha="center", va="center")
     for y in (5.95, 4.35):
-        right.plot([1.4, 8.6], [y, y], **dash)
-    right.add_patch(FancyArrowPatch((5.0, 2.7), (5.0, 1.52), color=ORANGE, **ARROW))
-    right.text(5.35, 2.1, "2 results,\nin GPU memory", **note)
+        right.plot([1.6, 8.4], [y, y], **dash)
+    right.add_patch(FancyArrowPatch((5.0, 2.7), (5.0, 1.62), color=ORANGE, **ARROW))
+    right.text(5.3, 2.16, "2 results, in GPU memory", **note)
     right.set_title("B  One kernel of B12X", loc="left")
-    right.text(0.7, 0.0, "1 kernel,\n2 results in GPU memory", va="bottom", fontsize=10, fontweight="medium",
-               linespacing=1.2)
-    fig.subplots_adjust(left=0.01, right=0.99, bottom=0.03, top=0.91, wspace=0.04)
+    right.text(0.9, 0.2, "1 kernel, 2 results in GPU memory", va="bottom", fontsize=10, fontweight="medium")
+    fig.subplots_adjust(left=0.01, right=0.99, bottom=0.03, top=0.90, wspace=0.04)
     save(fig, "figure10-b12x-one-kernel-for-three-steps")
 
 
@@ -573,8 +563,8 @@ def figure_b12x_sizes():
     bands = [(first, oneshot, "#fde0d2", "One-shot", f"1 to {rows1} rows"),
              (oneshot, twoshot, "#f8c1a6", "Two-shot", f"{start2} to {rows2} rows,\nin groups of {gpus}"),
              (twoshot, dma, GRID, "NCCL", f"{rows2 + 1} to {rows3 - 1} rows"),
-             (dma, last, "#f2a37d", "DMA with the\ncopy engines", f"{rows3} to {batch:,}\nrows")]
-    fig, ax = plt.subplots(figsize=(WIDTH, 3.45))
+             (dma, last, "#f2a37d", "DMA with the\ncopy engines", f"{rows3} to {batch:,} rows")]
+    fig, ax = plt.subplots(figsize=(WIDTH, 3.15))
     low_y, high_y = 0.36, 1.02
     for low, high, color, name, count in bands:
         ax.fill_betweenx([low_y, high_y], low, high, color=color, linewidth=0, zorder=2)
@@ -593,13 +583,13 @@ def figure_b12x_sizes():
     ticks = [first, oneshot, twoshot, dma, last]
     ax.set_xticks(ticks, [f"{t // kib:,} KiB" if t < mib else f"{t // mib:,} MiB" for t in ticks])
     ax.xaxis.set_minor_locator(NullLocator())
-    ax.set(xlim=(first * 0.82, last * 1.22), ylim=(low_y, 1.58), yticks=[])
+    ax.set(xlim=(first * 0.82, last * 1.22), ylim=(low_y, 1.60), yticks=[])
     ax.grid(visible=False)
     ax.spines["bottom"].set_position(("data", low_y))
     ax.set_xlabel("Size of one message (logarithmic scale)")
-    fig.text(0.03, 0.03, "NCCL also does each message that a method of B12X does not accept\n(for example, 11 rows).",
-             fontsize=SMALL, color=MUTED, va="bottom", linespacing=1.25)
-    fig.subplots_adjust(left=0.03, right=0.97, bottom=0.35, top=0.98)
+    fig.text(0.03, 0.035, "NCCL also does each message that a method of B12X does not accept (for example, 11 rows).",
+             fontsize=SMALL, color=MUTED, va="bottom")
+    fig.subplots_adjust(left=0.03, right=0.97, bottom=0.31, top=0.98)
     save(fig, "figure11-b12x-method-for-each-size")
 
 
