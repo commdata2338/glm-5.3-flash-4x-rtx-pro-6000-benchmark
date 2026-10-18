@@ -5,6 +5,11 @@ Authors: [commdata2338](https://github.com/commdata2338) and [Claude Opus 5.5](h
 Each result is from one run on one host, unless the text gives a different number of runs. Tell us if you find an
 error.
 
+**A related paper.** [DeepSeek-V4.1-Flash-1017 on four RTX PRO 6000 Blackwell GPUs](https://github.com/commdata2338/deepseek-v4.1-flash-1017-4x-rtx-pro-6000-benchmark)
+does the tests of this paper with DeepSeek-V4.1-Flash-1017. Its engine is Karmic Kraken, a later release line of the
+vLLM fork by local-inference-lab. It compares the results with the best configuration of this paper: Jovian Judgement
+r38 with the policy `aligned`.
+
 **Update of 5 October 2026 (version 1.5).** This version adds release r38 of Jovian Judgement. Its tests are from a
 sixth session. The results of the other inference stacks did not change.
 
